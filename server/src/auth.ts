@@ -1,7 +1,8 @@
 /**
- * Auth primitives — session tokens, gravatar, audit log, WS tickets,
- * Express middleware. Identity itself comes from OAuth (Google + GitHub)
- * — see oauth.ts. No native deps; everything is Node stdlib.
+ * Auth primitives — session tokens, password hashes, gravatar, audit log,
+ * WS tickets, and Express middleware. Identity can come from password login
+ * or OAuth (Google + GitHub) — see oauth.ts. No native deps; everything is
+ * Node stdlib.
  *
  * Threat model:
  *  - DB compromise: session/ws-ticket tokens are stored as sha256(token);
@@ -11,11 +12,45 @@
  *    prod is the deploy-side responsibility.
  *  - CSRF: tokens are sent via Authorization header (not cookies), so no
  *    cross-origin form auto-submit can carry them.
- *  - Identity binding: OAuth provider attests to email ownership; we never
- *    accept self-asserted passwords.
+ *  - Identity binding: OAuth provider attests to email ownership; password
+ *    users are provisioned from server-side environment secrets and stored as
+ *    scrypt hashes, never as plaintext.
  */
-import { randomBytes, createHash } from 'node:crypto'
+import { randomBytes, createHash, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
+import { promisify } from 'node:util'
 import { pool } from './db/pool.js'
+
+const scrypt = promisify(scryptCallback)
+const PASSWORD_KEY_LENGTH = 64
+const PASSWORD_SALT_LENGTH = 16
+
+/** Hash a password with a self-describing scrypt record.
+ *
+ * The format is `scrypt:<salt-base64>:<derived-key-base64>` so future auth
+ * upgrades can coexist with existing rows without another column or a
+ * plaintext secret.
+ */
+export async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(PASSWORD_SALT_LENGTH)
+  const derived = await scrypt(password, salt, PASSWORD_KEY_LENGTH)
+  return `scrypt:${salt.toString('base64')}:${(derived as Buffer).toString('base64')}`
+}
+
+/** Verify a password without leaking whether the account exists. */
+export async function verifyPassword(password: string, encoded: string | null): Promise<boolean> {
+  if (!encoded?.startsWith('scrypt:')) return false
+  const [, saltText, derivedText] = encoded.split(':')
+  if (!saltText || !derivedText) return false
+  try {
+    const salt = Buffer.from(saltText, 'base64')
+    const expected = Buffer.from(derivedText, 'base64')
+    if (salt.length !== PASSWORD_SALT_LENGTH || expected.length !== PASSWORD_KEY_LENGTH) return false
+    const actual = (await scrypt(password, salt, PASSWORD_KEY_LENGTH)) as Buffer
+    return timingSafeEqual(actual, expected)
+  } catch {
+    return false
+  }
+}
 
 /** Generate a fresh 256-bit URL-safe session token. */
 export function generateSessionToken(): string {

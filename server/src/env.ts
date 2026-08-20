@@ -333,6 +333,10 @@ export const env = {
    */
   ADMIN_EMAILS: (process.env.CUMORA_ADMIN_EMAILS ?? '')
     .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+  /** Optional local/password bootstrap account. The password is never
+   * logged or returned; it is consumed once to create the initial admin. */
+  ADMIN_USERNAME: (process.env.CUMORA_ADMIN_USERNAME ?? 'admin').trim().toLowerCase(),
+  ADMIN_PASSWORD: process.env.CUMORA_ADMIN_PASSWORD ?? '',
   /**
    * Real-email feature. When all three core vars are set, agents can send
    * mail (Resend) and receive mail (Cloudflare Email Worker → /webhooks/

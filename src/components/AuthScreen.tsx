@@ -1,6 +1,6 @@
 /**
- * Sign-in screen — OAuth only (Google + GitHub). No password forms, no
- * signup, no forgot. Provider buttons trigger a full-page redirect to
+ * Sign-in screen — password login plus OAuth (Google + GitHub). No signup
+ * or forgot-password flow. Provider buttons trigger a full-page redirect to
  * /api/auth/start/<provider> on the configured server origin (relative
  * URL goes through the Vite proxy in dev; baked-in absolute URL in
  * packaged builds). The provider returns to /auth/done with a fragment
@@ -11,7 +11,7 @@
  * picking the server is a sign-in-time decision — the auth token is
  * per-server.
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { api, getServerOrigin, setServerOrigin } from '@/api/client'
 import { isCapacitorIOS, isElectron } from '@/lib/runtime'
 import { isNativePlatform, nativePlatform, runAppleSignIn, runOAuth } from '@/lib/native'
@@ -26,9 +26,11 @@ const PRESETS: ServerPreset[] = [
 ]
 
 export function AuthScreen() {
-  const [busy, setBusy] = useState<'google' | 'github' | 'apple' | null>(null)
+  const [busy, setBusy] = useState<'password' | 'google' | 'github' | 'apple' | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [picker, setPicker] = useState(false)
+  const [username, setUsername] = useState('admin')
+  const [password, setPassword] = useState('')
 
   // AuthGate strips a successful fragment after consuming it. A failure
   // fragment looks like `#token=&companyId=&error=...` — surface that
@@ -82,6 +84,22 @@ export function AuthScreen() {
       } else {
         setErr(msg)
       }
+      setBusy(null)
+    }
+  }
+
+  async function goPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!username.trim() || !password) {
+      setErr('Enter your username and password.')
+      return
+    }
+    setBusy('password'); setErr(null)
+    try {
+      const r = await api.authLogin(username.trim(), password)
+      useAuth.getState().setSession(r.token, { id: r.user.id, email: r.user.email, name: r.user.displayName }, r.companyId)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'sign-in failed')
       setBusy(null)
     }
   }
@@ -176,6 +194,41 @@ export function AuthScreen() {
           </div>
         </div>
         <div className="w-full flex flex-col gap-3">
+          <form onSubmit={goPassword} className="flex flex-col gap-2">
+            <label className="text-[11px] text-ink-500" htmlFor="auth-username">Username</label>
+            <input
+              id="auth-username"
+              type="text"
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="admin"
+              disabled={busy !== null}
+              className="h-11 px-3 rounded-[10px] border border-ink-200 bg-white text-[14px] text-ink-900 focus:outline-none focus:border-ink-400 disabled:opacity-60"
+            />
+            <label className="text-[11px] text-ink-500 mt-1" htmlFor="auth-password">Password</label>
+            <input
+              id="auth-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={busy !== null}
+              className="h-11 px-3 rounded-[10px] border border-ink-200 bg-white text-[14px] text-ink-900 focus:outline-none focus:border-ink-400 disabled:opacity-60"
+            />
+            <button
+              type="submit"
+              disabled={busy !== null}
+              className="h-11 mt-1 rounded-[10px] bg-ink-800 hover:bg-ink-900 text-white transition-colors text-[14px] disabled:opacity-60"
+            >
+              {busy === 'password' ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+          <div className="flex items-center gap-3 py-1 text-[11px] text-ink-300">
+            <span className="h-px flex-1 bg-ink-100" />
+            <span>or</span>
+            <span className="h-px flex-1 bg-ink-100" />
+          </div>
           {/* Sign in with Apple — iOS-only for now. Apple Review
               Guideline 4.8 requires SIWA be offered as an equivalent
               option whenever an iOS app exposes any third-party

@@ -10,8 +10,8 @@ import { BUSY_STATUS_LEASE_MS } from '../status.js'
 import { notifyMessage, computeMessageRecipients } from '../push.js'
 import { randomUUID, randomBytes, createHash, timingSafeEqual } from 'node:crypto'
 import {
-  deleteSession, authMiddleware, type AuthedRequest,
-  audit, createWsTicket, gravatarUrlForEmail,
+  deleteSession, createSession, authMiddleware, type AuthedRequest,
+  audit, createWsTicket, gravatarUrlForEmail, verifyPassword,
 } from '../auth.js'
 import { joinAllHands, onboardStarterAgents, seedMemberDms } from '../onboardCompany.js'
 import {
@@ -637,7 +637,88 @@ api.get('/metrics', async (req, res) => {
   res.send(renderProm())
 })
 
-/* ============== Auth — OAuth only (Google + GitHub) ============== */
+/* ============== Auth — password + OAuth (Google + GitHub) ============== */
+
+/** Password login for the env-bootstrapped admin and any future local users.
+ * The response shape intentionally matches the native OAuth login path so the
+ * renderer can install the session without a second special case. */
+api.post('/auth/login', safe(async (req, res) => {
+  const body = (req.body ?? {}) as { username?: unknown; password?: unknown }
+  const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : ''
+  const password = typeof body.password === 'string' ? body.password : ''
+  if (!username || !password) {
+    res.status(400).json({ error: 'username and password are required' })
+    return
+  }
+
+  const ip = req.socket.remoteAddress ?? null
+  const failureKey = username.slice(0, 320)
+  const { rows: failures } = await pool.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM auth_attempts
+      WHERE email = $1 AND ip IS NOT DISTINCT FROM $2
+        AND success = FALSE AND created_at > NOW() - INTERVAL '15 minutes'`,
+    [failureKey, ip],
+  )
+  if (Number(failures[0]?.count ?? 0) >= 10) {
+    await pool.query(
+      `INSERT INTO auth_attempts (email, ip, success, reason) VALUES ($1, $2, FALSE, 'locked')`,
+      [failureKey, ip],
+    )
+    await audit({ kind: 'login_failed', ip, userAgent: req.headers['user-agent'] as string | undefined, detail: { method: 'password', reason: 'locked' } })
+    res.status(401).json({ error: 'invalid username or password' })
+    return
+  }
+
+  const { rows } = await pool.query<{
+    id: string; email: string; display_name: string; password_hash: string | null
+    suspended_at: string | null; suspension_reason: string | null
+  }>(
+    `SELECT id, email, display_name, password_hash, suspended_at, suspension_reason
+       FROM users
+      WHERE deleted_at IS NULL AND (LOWER(username) = $1 OR LOWER(email) = $1)
+      LIMIT 1`,
+    [username],
+  )
+  const account = rows[0]
+  const valid = await verifyPassword(password, account?.password_hash ?? null)
+  if (!account || !valid || account.suspended_at) {
+    await pool.query(
+      `INSERT INTO auth_attempts (email, ip, success, reason) VALUES ($1, $2, FALSE, $3)`,
+      [failureKey, ip, account?.suspended_at ? 'suspended' : 'bad_password'],
+    )
+    await audit({
+      kind: account?.suspended_at ? 'login_suspended' : 'login_failed',
+      userId: account?.id ?? null,
+      ip, userAgent: req.headers['user-agent'] as string | undefined,
+      detail: { method: 'password', reason: account?.suspended_at ? account.suspension_reason : 'bad_password' },
+    })
+    res.status(401).json({ error: account?.suspended_at ? 'account suspended' : 'invalid username or password' })
+    return
+  }
+
+  const { token } = await createSession(account.id, {
+    ip: ip ?? undefined,
+    ua: req.headers['user-agent'] as string | undefined,
+  })
+  await pool.query(
+    `INSERT INTO auth_attempts (email, ip, success, reason) VALUES ($1, $2, TRUE, 'ok')`,
+    [failureKey, ip],
+  )
+  const { rows: companies } = await pool.query<{ company_id: string }>(
+    `SELECT company_id FROM company_members WHERE user_id = $1 ORDER BY joined_at ASC LIMIT 1`,
+    [account.id],
+  )
+  await audit({
+    kind: 'login', userId: account.id, companyId: companies[0]?.company_id ?? null,
+    ip, userAgent: req.headers['user-agent'] as string | undefined,
+    detail: { method: 'password', username },
+  })
+  res.json({
+    token,
+    user: { id: account.id, email: account.email, displayName: account.display_name },
+    companyId: companies[0]?.company_id ?? null,
+  })
+}))
 
 /** 302 to the provider's consent screen. State is opaque to the client —
  *  we mint it server-side, save to Redis (5min TTL), and verify on the

@@ -1,4 +1,63 @@
 import { pool } from './db/pool.js'
+import { env } from './env.js'
+import { gravatarUrlForEmail, hashPassword } from './auth.js'
+
+/** Create the env-backed local super admin once, then keep its password
+ * stable across restarts. This is intentionally separate from the OAuth
+ * seed: the account has no provider identity and can only use /auth/login. */
+async function ensurePasswordAdmin(): Promise<void> {
+  const username = env.ADMIN_USERNAME
+  const password = env.ADMIN_PASSWORD
+  if (!username || !password) {
+    console.warn('[seed] CUMORA_ADMIN_PASSWORD is unset; password admin bootstrap skipped')
+    return
+  }
+  if (username.length < 3 || password.length < 16) {
+    throw new Error('CUMORA_ADMIN_USERNAME must be at least 3 characters and CUMORA_ADMIN_PASSWORD at least 16 characters')
+  }
+
+  const email = `${username}@local.cumora`
+  const existing = await pool.query<{ id: string; password_hash: string | null }>(
+    `SELECT id, password_hash FROM users WHERE LOWER(username) = $1 LIMIT 1`, [username],
+  )
+  let userId = existing.rows[0]?.id
+  if (!userId) {
+    userId = `u-${username}`
+    const passwordHash = await hashPassword(password)
+    await pool.query(
+      `INSERT INTO users (id, email, username, display_name, password_hash, email_verified_at, is_admin, tier)
+       VALUES ($1, $2, $3, $4, $5, NOW(), TRUE, 'max')
+       ON CONFLICT (id) DO UPDATE SET is_admin = TRUE`,
+      [userId, email, username, username, passwordHash],
+    )
+    console.log(`[seed] password super admin created: ${username}`)
+  } else {
+    await pool.query(`UPDATE users SET is_admin = TRUE WHERE id = $1`, [userId])
+    if (!existing.rows[0].password_hash) {
+      await pool.query(`UPDATE users SET password_hash = $2, email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = $1`, [userId, await hashPassword(password)])
+    }
+  }
+
+  const avatar = gravatarUrlForEmail(email)
+  await pool.query(
+    `UPDATE companies SET owner_user_id = COALESCE(owner_user_id, $1) WHERE id = 'personal'`, [userId],
+  )
+  await pool.query(
+    `INSERT INTO company_members (company_id, user_id, role) VALUES ('personal', $1, 'owner')
+     ON CONFLICT (company_id, user_id) DO UPDATE SET role = 'owner'`, [userId],
+  )
+  await pool.query(
+    `INSERT INTO participants (id, kind, name, role, initial, avatar_bg, avatar_url, status, company_id)
+     VALUES ($1, 'human', $2, NULL, $3, '#6B7BE6', $4, 'avail', 'personal')
+     ON CONFLICT (id, company_id) DO UPDATE SET name = EXCLUDED.name, avatar_url = EXCLUDED.avatar_url`,
+    [userId, username, username.charAt(0).toUpperCase(), avatar],
+  )
+  await pool.query(
+    `UPDATE conversations
+        SET members = members || jsonb_build_array($1::text)
+      WHERE company_id = 'personal' AND NOT (members ? $1)`, [userId],
+  )
+}
 
 /**
  * Ensure the placeholder 'yetone' user row exists so FK references from
@@ -112,6 +171,7 @@ interface SeedMsg {
 const SEED_MESSAGES: SeedMsg[] = []
 
 export async function seedIfEmpty(): Promise<void> {
+  await ensurePasswordAdmin()
   // Always make sure the dev account exists so login works on a fresh DB.
   // Email: yetone@dev.local  Password: cumora-dev (DEV ONLY).
   await ensureDevUser()

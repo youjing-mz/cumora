@@ -663,6 +663,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_events_company  ON agent_events(company_id,
 CREATE TABLE IF NOT EXISTS users (
   id              TEXT PRIMARY KEY,
   email           TEXT NOT NULL UNIQUE,
+  username        TEXT,
   display_name    TEXT NOT NULL,
   -- "scrypt:<salt-base64>:<derived-base64>" — single-column scheme,
   -- self-describing for future hash-algo upgrades.
@@ -671,6 +672,9 @@ CREATE TABLE IF NOT EXISTS users (
   last_login_at   TIMESTAMP WITH TIME ZONE
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(LOWER(email));
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_lower
+  ON users(LOWER(username)) WHERE username IS NOT NULL;
 
 -- Email verification — email_verified_at is set when the user clicks the
 -- verification link. NULL means "unverified".

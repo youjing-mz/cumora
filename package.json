@@ -28,6 +28,7 @@
     "server:dev": "tsx watch server/src/index.ts",
     "server:start": "tsx server/src/index.ts",
     "server:typecheck": "tsc -p server/tsconfig.json --noEmit",
+    "deploy:remote": "bash scripts/deploy-remote.sh",
     "guard:big-brain": "node scripts/guard-big-brain.mjs",
     "guard:llm-tracked": "node scripts/guard-llm-tracked.mjs",
     "lint": "biome lint .",
