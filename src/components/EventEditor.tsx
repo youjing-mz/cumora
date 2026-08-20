@@ -14,6 +14,7 @@ import { DateTimePicker } from '@/components/DateTimePicker'
 import { Input } from '@/components/Input'
 import { TextArea } from '@/components/TextArea'
 import type { CalendarEvent, CalendarEventKind, RecurrenceRule, Participant } from '@/types'
+import { useI18n } from '@/i18n'
 
 /** Prefilled defaults passed in when creating a NEW event from a calendar
  *  drag-select or right-click. Ignored when `event` is supplied (edit
@@ -50,6 +51,7 @@ function fromLocalInput(s: string): string {
 }
 
 export function EventEditor({ event, prefill, onClose }: Props) {
+  const { t, locale } = useI18n()
   const create = useCalendar((s) => s.create)
   const update = useCalendar((s) => s.update)
   const remove = useCalendar((s) => s.remove)
@@ -213,17 +215,17 @@ export function EventEditor({ event, prefill, onClose }: Props) {
       >
         <div className="px-6 py-5 border-b border-ink-100 shrink-0">
           <h2 className="font-display font-medium text-[20px] tracking-tight">
-            {isEdit ? 'Edit event' : 'New event'}
+            {isEdit ? t('calendar.editEvent') : t('calendar.newEvent')}
           </h2>
           <div className="text-[12.5px] text-ink-500 italic font-display mt-0.5">
             {kind === 'agent_task'
-              ? 'Pick an agent and a time. When it fires, your prompt lands in the conversation and wakes them.'
-              : 'A personal time marker — no agent gets pinged.'}
+              ? t('calendar.agentEventHint')
+              : t('calendar.personalEventHint')}
           </div>
         </div>
 
         <div className="px-6 py-5 overflow-y-auto overflow-x-hidden flex-1 min-h-0 space-y-5">
-          <Field label="Title">
+          <Field label={t('calendar.title')}>
             <Input
               type="text"
               value={title}
@@ -234,7 +236,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             />
           </Field>
 
-          <Field label="Kind" hint="Agent task fires a prompt; personal is just a time marker.">
+          <Field label={t('calendar.kind')} hint="Agent task fires a prompt; personal is just a time marker.">
             <div className="flex gap-2">
               {(['agent_task', 'personal'] as const).map((k) => (
                 <button
@@ -247,23 +249,23 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                     color: kind === k ? 'white' : 'var(--ink-700)',
                     border: '1.5px solid ' + (kind === k ? 'var(--skype)' : 'var(--ink-100)'),
                   }}
-                >{k === 'agent_task' ? 'Agent task' : 'Personal'}</button>
+                >{k === 'agent_task' ? t('calendar.agentTask') : t('calendar.personal')}</button>
               ))}
             </div>
           </Field>
 
-          <Field label="When">
+          <Field label={t('calendar.when')}>
             <label className="flex items-center gap-2 text-[13px] text-ink-700 mb-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={allDay}
                 onChange={(e) => setAllDay(e.target.checked)}
               />
-              All-day
+              {t('calendar.allDay')}
             </label>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-ink-400 mb-1">Starts</div>
+                <div className="text-[10px] uppercase tracking-wider text-ink-400 mb-1">{t('calendar.starts')}</div>
                 <DateTimePicker
                   mode={allDay ? 'date' : 'datetime'}
                   value={startAt}
@@ -275,7 +277,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
               </div>
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-ink-400 mb-1">
-                  Ends <span className="normal-case text-ink-300">— optional</span>
+                  {t('calendar.ends')} <span className="normal-case text-ink-300">{t('calendar.optional')}</span>
                 </div>
                 <DateTimePicker
                   mode={allDay ? 'date' : 'datetime'}
@@ -291,19 +293,19 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             </div>
           </Field>
 
-          <Field label="Repeat" hint="Leave off for a one-shot event.">
+          <Field label={t('calendar.repeat')} hint="Leave off for a one-shot event.">
             <label className="flex items-center gap-2 text-[13px] text-ink-700 mb-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={recurEnabled}
                 onChange={(e) => setRecurEnabled(e.target.checked)}
               />
-              Recurring
+              {t('calendar.recurring')}
             </label>
             {recurEnabled && (
               <div className="space-y-2 pl-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[12.5px] text-ink-500">every</span>
+                  <span className="text-[12.5px] text-ink-500">{t('calendar.every')}</span>
                   <Input
                     type="number"
                     min={1}
@@ -317,10 +319,10 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                     className="ev-input"
                     style={{ width: 'auto' }}
                   >
-                    <option value="daily">day{recur.interval > 1 ? 's' : ''}</option>
-                    <option value="weekly">week{recur.interval > 1 ? 's' : ''}</option>
-                    <option value="monthly">month{recur.interval > 1 ? 's' : ''}</option>
-                    <option value="yearly">year{recur.interval > 1 ? 's' : ''}</option>
+                    <option value="daily">{t('calendar.day')}{recur.interval > 1 && locale === 'en' ? 's' : ''}</option>
+                    <option value="weekly">{t('calendar.week')}{recur.interval > 1 && locale === 'en' ? 's' : ''}</option>
+                    <option value="monthly">{t('calendar.month')}{recur.interval > 1 && locale === 'en' ? 's' : ''}</option>
+                    <option value="yearly">{t('calendar.year')}{recur.interval > 1 && locale === 'en' ? 's' : ''}</option>
                   </select>
                 </div>
                 {recur.freq === 'weekly' && (
@@ -350,13 +352,13 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                 )}
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="text-[11.5px] text-ink-500 flex items-center gap-1.5">
-                    <span>until</span>
+                    <span>{t('calendar.until')}</span>
                     <div style={{ width: 180 }}>
                       <DateTimePicker
                         mode="date"
                         value={recur.until ? `${recur.until.slice(0, 10)}T00:00` : ''}
                         allowClear
-                        placeholder="never"
+                        placeholder={t('calendar.never')}
                         onChange={(v) => setRecur({
                           ...recur,
                           until: v ? new Date(`${v.slice(0, 10)}T00:00:00`).toISOString() : null,
@@ -365,7 +367,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                     </div>
                   </div>
                   <label className="text-[11.5px] text-ink-500 flex items-center gap-1.5">
-                    or max
+                    {t('calendar.orMax')}
                     <Input
                       type="number"
                       min={1}
@@ -374,21 +376,21 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                       onChange={(e) => setRecur({ ...recur, count: e.target.value ? Math.max(1, Number(e.target.value)) : null })}
                       style={{ width: 80 }}
                     />
-                    times
+                    {t('calendar.times')}
                   </label>
                 </div>
               </div>
             )}
           </Field>
 
-          <Field label="Reminder" hint="Heads-up to you (and any human assignee) before each occurrence.">
+          <Field label={t('calendar.reminder')} hint="Heads-up to you (and any human assignee) before each occurrence.">
             <label className="flex items-center gap-2 text-[13px] text-ink-700 mb-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={reminderEnabled}
                 onChange={(e) => setReminderEnabled(e.target.checked)}
               />
-              Remind me before
+              {t('calendar.remindBefore')}
             </label>
             {reminderEnabled && (
               <div className="space-y-2 pl-1">
@@ -420,7 +422,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                     onChange={(e) => setReminderMinutes(Math.max(0, Number(e.target.value) || 0))}
                     style={{ width: 80 }}
                   />
-                  <span className="text-[11.5px] text-ink-500">minutes before</span>
+                  <span className="text-[11.5px] text-ink-500">{t('calendar.minutesBefore')}</span>
                 </div>
                 <div className="flex gap-1.5">
                   {(['toast', 'email', 'both'] as const).map((ch) => {
@@ -446,7 +448,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
 
           {kind === 'agent_task' && (
             <>
-              <Field label="Assign to" hint="The agent (or human) who'll receive the dispatch.">
+              <Field label={t('calendar.assignTo')} hint="The agent (or human) who'll receive the dispatch.">
                 <div className="grid grid-cols-1 gap-1 max-h-[200px] overflow-auto pr-1">
                   {candidates.map((p) => {
                     const on = assigneeId === p.id
@@ -476,26 +478,26 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                   })}
                   {candidates.length === 0 && (
                     <div className="text-[12.5px] text-ink-500 italic font-display py-4 text-center">
-                      No teammates available — add an agent first.
+                      {t('calendar.noTeammates')}
                     </div>
                   )}
                 </div>
               </Field>
 
-              <Field label="Post in" hint="Where the dispatch message lands when it fires. Leave blank to use your DM with the assignee.">
+              <Field label={t('calendar.postIn')} hint="Where the dispatch message lands when it fires. Leave blank to use your DM with the assignee.">
                 <select
                   value={targetConversationId ?? ''}
                   onChange={(e) => setTargetConversationId(e.target.value || null)}
                   className="ev-input"
                 >
-                  <option value="">— Direct message with assignee —</option>
+                  <option value="">{t('calendar.directMessage')}</option>
                   {targetConvos.map((c) => (
                     <option key={c.id} value={c.id}>{c.title}</option>
                   ))}
                 </select>
               </Field>
 
-              <Field label="Prompt" hint="What the agent should do each time. Plain text — agents see it as a system message.">
+              <Field label={t('calendar.prompt')} hint="What the agent should do each time. Plain text — agents see it as a system message.">
                 <TextArea
                   value={agentPrompt}
                   onChange={(e) => setAgentPrompt(e.target.value)}
@@ -507,18 +509,18 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             </>
           )}
 
-          <Field label="Privacy" hint="Private events only show up for the creator and the assignee. The workspace owner can still see private events that involve an agent, for supervision. Default: shared with everyone in the workspace.">
+          <Field label={t('calendar.privacy')} hint="Private events only show up for the creator and the assignee. The workspace owner can still see private events that involve an agent, for supervision. Default: shared with everyone in the workspace.">
             <label className="flex items-center gap-2 text-[13px] text-ink-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={isPrivate}
                 onChange={(e) => setIsPrivate(e.target.checked)}
               />
-              <span>🔒 Private — hide from the shared calendar</span>
+              <span>{t('calendar.private')}</span>
             </label>
           </Field>
 
-          <Field label="Notes" hint="Optional context — shown alongside the prompt on dispatch.">
+          <Field label={t('calendar.notes')} hint="Optional context — shown alongside the prompt on dispatch.">
             <TextArea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -540,7 +542,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
               disabled={busy}
               className="px-3 py-2 rounded-[9px] text-[12.5px] font-semibold text-coral-deep bg-cloud hover:bg-coral-soft transition"
               style={{ border: '1px solid var(--ink-100)' }}
-            >Delete</button>
+            >{t('calendar.delete')}</button>
           )}
           {isEdit && event!.kind === 'agent_task' && event!.status === 'active' && (
             <button
@@ -549,7 +551,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
               className="px-3 py-2 rounded-[9px] text-[12.5px] font-semibold text-skype-deep bg-cloud hover:bg-sky2-100 transition"
               style={{ border: '1px solid var(--ink-100)' }}
               title="Fire this event right now, without waiting for its next scheduled time"
-            >Run now</button>
+            >{t('calendar.runNowAction')}</button>
           )}
           <div className="flex-1" />
           <button
@@ -557,7 +559,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             disabled={busy}
             className="px-4 py-2 rounded-[9px] text-[12.5px] font-semibold text-ink-700 bg-cloud hover:bg-sky2-50 transition"
             style={{ border: '1px solid var(--ink-100)' }}
-          >Cancel</button>
+          >{t('common.cancel')}</button>
           <button
             onClick={submit}
             disabled={busy}
@@ -566,7 +568,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
               background: 'var(--skype)',
               boxShadow: '0 4px 12px -3px rgba(0, 168, 240, 0.5)',
             }}
-          >{busy ? 'Saving…' : isEdit ? 'Save' : 'Schedule'}</button>
+          >{busy ? t('calendar.saving') : isEdit ? t('calendar.save') : t('calendar.scheduleAction')}</button>
         </div>
       </div>
 
