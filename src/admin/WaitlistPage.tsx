@@ -6,12 +6,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { adminApi, type AdminWaitlistEntry } from './api'
 import { Pager } from './Pager'
+import { useI18n } from '@/i18n'
 
 type Tab = 'pending' | 'approved' | 'rejected'
 
 const PAGE = 50
 
 export function WaitlistPage({ onChanged }: { onChanged: () => void }) {
+  const { t } = useI18n()
   const [tab, setTab] = useState<Tab>('pending')
   const [q, setQ] = useState('')
   const [items, setItems] = useState<AdminWaitlistEntry[]>([])
@@ -67,15 +69,15 @@ export function WaitlistPage({ onChanged }: { onChanged: () => void }) {
     <div className="admin-page">
       <header className="admin-page-head">
         <div>
-          <h1 className="admin-h1">Waitlist</h1>
+          <h1 className="admin-h1">{t('admin.waitlist')}</h1>
           <div className="admin-sub">
-            Decide who gets in. Approve provisions the account end-to-end.
+            {t('admin.decideWaitlist')}
           </div>
         </div>
         <div className="admin-filters">
           <input
             type="search"
-            placeholder="email, name, provider, note"
+            placeholder={t('admin.emailNameProviderNote')}
             className="admin-input"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -84,12 +86,12 @@ export function WaitlistPage({ onChanged }: { onChanged: () => void }) {
       </header>
 
       <div className="admin-tabs">
-        {(['pending', 'approved', 'rejected'] as Tab[]).map((t) => (
-          <button key={t}
-            className={`admin-tab${tab === t ? ' is-active' : ''}`}
-            onClick={() => setTab(t)}
+        {(['pending', 'approved', 'rejected'] as Tab[]).map((status) => (
+          <button key={status}
+            className={`admin-tab${tab === status ? ' is-active' : ''}`}
+            onClick={() => setTab(status)}
           >
-            {t}
+            {status === 'pending' ? t('admin.pending') : status === 'approved' ? t('admin.approved') : t('admin.rejected')}
           </button>
         ))}
       </div>
@@ -98,18 +100,18 @@ export function WaitlistPage({ onChanged }: { onChanged: () => void }) {
 
       <div className="admin-table">
         <div className="admin-thead admin-thead-waitlist">
-          <div>User</div>
-          <div>Provider</div>
-          <div>Requested</div>
-          <div>Decided</div>
-          <div>Actions</div>
+          <div>{t('admin.users')}</div>
+          <div>{t('admin.provider')}</div>
+          <div>{t('admin.requested')}</div>
+          <div>{t('admin.decided')}</div>
+          <div>{t('admin.actions')}</div>
         </div>
         {loading && items.length === 0 && <div className="admin-row admin-empty">Loading…</div>}
         {!loading && items.length === 0 && (
           <div className="admin-row admin-empty">
             {q
               ? `No ${tab} entries match.`
-              : tab === 'pending' ? 'No pending requests.' : `No ${tab} entries.`}
+              : tab === 'pending' ? t('admin.noPending') : t('admin.noEntries')}
           </div>
         )}
         {items.map((entry) => (
@@ -136,13 +138,13 @@ export function WaitlistPage({ onChanged }: { onChanged: () => void }) {
                     disabled={busyId === entry.id}
                     onClick={() => approve(entry)}
                   >
-                    {busyId === entry.id ? '…' : 'Approve'}
+                    {busyId === entry.id ? '…' : t('admin.approve')}
                   </button>
                   <button className="btn-ghost"
                     disabled={busyId === entry.id}
                     onClick={() => reject(entry)}
                   >
-                    Reject
+                    {t('admin.reject')}
                   </button>
                 </>
               ) : (

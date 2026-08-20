@@ -6,10 +6,12 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { adminApi, type AdminUser, type AdminUserDetail, type AdminStats, type Tier } from './api'
 import { Pager } from './Pager'
 import { useAuth } from '@/stores/auth'
+import { useI18n } from '@/i18n'
 
 const PAGE = 50
 
 export function UsersPage({ stats }: { stats: AdminStats | null }) {
+  const { t } = useI18n()
   const meId = useAuth((s) => s.user?.id ?? null)
   const [q, setQ] = useState('')
   const [tier, setTier] = useState<Tier | ''>('')
@@ -96,21 +98,21 @@ export function UsersPage({ stats }: { stats: AdminStats | null }) {
           <h1 className="admin-h1">Users</h1>
           <div className="admin-sub">
             {stats
-              ? <>{stats.users.total} total · {stats.users.admins} admin · {stats.users.tiers.free} free · {stats.users.tiers.pro} pro · {stats.users.tiers.max} max</>
+              ? <>{stats.users.total} {t('admin.total')} · {stats.users.admins} {t('admin.admin')} · {stats.users.tiers.free} {t('admin.free')} · {stats.users.tiers.pro} {t('admin.pro')} · {stats.users.tiers.max} {t('admin.max')}</>
               : <>&nbsp;</>}
           </div>
         </div>
         <div className="admin-filters">
-          <button className="btn-primary" onClick={() => setCreateOpen(true)}>Add user</button>
+          <button className="btn-primary" onClick={() => setCreateOpen(true)}>{t('admin.addUser')}</button>
           <input
-            type="search" placeholder="email or name" className="admin-input"
+            type="search" placeholder={t('admin.emailOrName')} className="admin-input"
             value={q} onChange={(e) => setQ(e.target.value)}
           />
           <select className="admin-select" value={tier} onChange={(e) => setTier(e.target.value as Tier | '')}>
-            <option value="">All tiers</option>
-            <option value="free">Free</option>
-            <option value="pro">Pro</option>
-            <option value="max">Max</option>
+            <option value="">{t('admin.allTiers')}</option>
+            <option value="free">{t('admin.free')}</option>
+            <option value="pro">{t('admin.pro')}</option>
+            <option value="max">{t('admin.max')}</option>
           </select>
         </div>
       </header>
@@ -119,15 +121,15 @@ export function UsersPage({ stats }: { stats: AdminStats | null }) {
 
       <div className="admin-table">
         <div className="admin-thead">
-          <div>User</div>
-          <div>Tier</div>
-          <div>Admin</div>
-          <div>Companies</div>
-          <div>Joined</div>
-          <div>Last login</div>
+          <div>{t('admin.users')}</div>
+          <div>{t('admin.tier')}</div>
+          <div>{t('admin.admin')}</div>
+          <div>{t('admin.companies')}</div>
+          <div>{t('admin.joined')}</div>
+          <div>{t('admin.lastLogin')}</div>
         </div>
-        {loading && items.length === 0 && <div className="admin-row admin-empty">Loading…</div>}
-        {!loading && items.length === 0 && <div className="admin-row admin-empty">No users match.</div>}
+        {loading && items.length === 0 && <div className="admin-row admin-empty">{t('admin.loading')}</div>}
+        {!loading && items.length === 0 && <div className="admin-row admin-empty">{t('admin.noUsers')}</div>}
         {items.map((u) => (
           <UserRow
             key={u.id} u={u} expanded={expandedId === u.id}
@@ -159,6 +161,7 @@ function CreateUserModal({ onClose, onCreated }: {
   onClose: () => void
   onCreated: (user: AdminUser) => void
 }) {
+  const { t } = useI18n()
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
@@ -191,24 +194,24 @@ function CreateUserModal({ onClose, onCreated }: {
       <div className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
         <div className="admin-modal-head">
           <div>
-            <h2 id="create-user-title">Add user</h2>
-            <div className="admin-sub">Create a local username/password account.</div>
+            <h2 id="create-user-title">{t('admin.addUser')}</h2>
+            <div className="admin-sub">{t('admin.createLocalAccount')}</div>
           </div>
-          <button className="admin-modal-close" onClick={onClose} disabled={busy} aria-label="Close">×</button>
+          <button className="admin-modal-close" onClick={onClose} disabled={busy} aria-label={t('admin.close')}>×</button>
         </div>
         <form onSubmit={submit} className="admin-form">
-          <label>Username<input className="admin-input" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. alice" autoFocus /></label>
-          <label>Display name<input className="admin-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Alice" /></label>
-          <label>Email <span className="admin-form-hint">optional; defaults to username@local.cumora</span><input className="admin-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="alice@example.com" /></label>
-          <label>Initial password <span className="admin-form-hint">at least 16 characters</span><input className="admin-input" type="password" required minLength={16} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></label>
+          <label>{t('auth.username')}<input className="admin-input" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. alice" autoFocus /></label>
+          <label>{t('admin.displayName')}<input className="admin-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Alice" /></label>
+          <label>{t('admin.email')} <span className="admin-form-hint">{t('admin.optionalLocal')}</span><input className="admin-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="alice@example.com" /></label>
+          <label>{t('admin.initialPassword')} <span className="admin-form-hint">{t('admin.atLeast16')}</span><input className="admin-input" type="password" required minLength={16} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></label>
           <div className="admin-form-row">
-            <label>Tier<select className="admin-select" value={tier} onChange={(e) => setTier(e.target.value as Tier)}><option value="free">Free</option><option value="pro">Pro</option><option value="max">Max</option></select></label>
-            <label className="admin-checkbox"><input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} /> Admin access</label>
+            <label>{t('admin.tier')}<select className="admin-select" value={tier} onChange={(e) => setTier(e.target.value as Tier)}><option value="free">{t('admin.free')}</option><option value="pro">{t('admin.pro')}</option><option value="max">{t('admin.max')}</option></select></label>
+            <label className="admin-checkbox"><input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} /> {t('admin.adminAccess')}</label>
           </div>
           {err && <div className="admin-banner-err">{err}</div>}
           <div className="admin-modal-actions">
-            <button type="button" className="btn-ghost" onClick={onClose} disabled={busy}>Cancel</button>
-            <button type="submit" className="btn-primary" disabled={busy}>{busy ? 'Creating…' : 'Create user'}</button>
+            <button type="button" className="btn-ghost" onClick={onClose} disabled={busy}>{t('admin.cancel')}</button>
+            <button type="submit" className="btn-primary" disabled={busy}>{busy ? t('admin.creating') : t('admin.createUser')}</button>
           </div>
         </form>
       </div>

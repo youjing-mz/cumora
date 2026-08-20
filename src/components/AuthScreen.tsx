@@ -17,7 +17,9 @@ import { api, getServerOrigin, setServerOrigin } from '@/api/client'
 import { isCapacitorIOS, isElectron } from '@/lib/runtime'
 import { isNativePlatform, nativePlatform, runAppleSignIn, runOAuth } from '@/lib/native'
 import { useAuth } from '@/stores/auth'
+import { useI18n } from '@/i18n'
 import { CloudLogo } from './Avatar'
+import { LanguageSwitcher } from './LanguageSwitcher'
 import { WindowDragStrip } from './WindowDragStrip'
 
 interface ServerPreset { label: string; origin: string }
@@ -27,6 +29,7 @@ const PRESETS: ServerPreset[] = [
 ]
 
 export function AuthScreen() {
+  const { t } = useI18n()
   const [busy, setBusy] = useState<'password' | 'google' | 'github' | 'apple' | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [picker, setPicker] = useState(false)
@@ -102,7 +105,7 @@ export function AuthScreen() {
   async function goPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!username.trim() || !password) {
-      setErr('Enter your username and password.')
+      setErr(t('auth.enterCredentials'))
       return
     }
     setBusy('password'); setErr(null)
@@ -110,7 +113,7 @@ export function AuthScreen() {
       const r = await api.authLogin(username.trim(), password)
       useAuth.getState().setSession(r.token, { id: r.user.id, email: r.user.email, name: r.user.displayName }, r.companyId)
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'sign-in failed')
+      setErr(e instanceof Error ? e.message : t('auth.signInFailed'))
       setBusy(null)
     }
   }
@@ -167,7 +170,7 @@ export function AuthScreen() {
           const u = new URL(callbackUrl)
           const hash = u.hash || (u.search ? `#${u.search.replace(/^\?/, '')}` : '')
           if (!hash) {
-            setErr('Sign-in completed but no token was returned.')
+            setErr(t('auth.completedNoToken'))
             setBusy(null)
             return
           }
@@ -201,7 +204,7 @@ export function AuthScreen() {
         <div className="text-center">
           <div className="font-display text-[22px] text-ink-900">Welcome to cumora</div>
           <div className="font-display italic text-[13px] text-ink-400 mt-1">
-            Sign in to continue
+            {t('auth.signInContinue')}
           </div>
         </div>
         <div className="w-full flex flex-col gap-3">
@@ -211,11 +214,11 @@ export function AuthScreen() {
             disabled={busy !== null}
             className="h-11 rounded-[10px] border border-ink-200 bg-white hover:bg-cloud transition-colors text-[14px] text-ink-800 disabled:opacity-60"
           >
-            Sign in with username and password
+            {t('auth.passwordLogin')}
           </button>
           <div className="flex items-center gap-3 py-1 text-[11px] text-ink-300">
             <span className="h-px flex-1 bg-ink-100" />
-            <span>or</span>
+            <span>{t('auth.or')}</span>
             <span className="h-px flex-1 bg-ink-100" />
           </div>
           {/* Sign in with Apple — iOS-only for now. Apple Review
@@ -232,7 +235,7 @@ export function AuthScreen() {
               className="h-11 rounded-[10px] bg-black hover:bg-[#111] text-white transition-colors flex items-center justify-center gap-3 text-[14px] disabled:opacity-60"
             >
               <AppleMark />
-              {busy === 'apple' ? 'Signing in…' : 'Continue with Apple'}
+              {busy === 'apple' ? t('auth.signingIn') : t('auth.continueApple')}
             </button>
           )}
           <button
@@ -242,7 +245,7 @@ export function AuthScreen() {
             className="h-11 rounded-[10px] border border-ink-200 bg-white hover:bg-cloud transition-colors flex items-center justify-center gap-3 text-[14px] text-ink-800 disabled:opacity-60"
           >
             <GoogleMark />
-            {busy === 'google' ? 'Redirecting…' : 'Continue with Google'}
+            {busy === 'google' ? t('auth.redirecting') : t('auth.continueGoogle')}
           </button>
           <button
             type="button"
@@ -251,7 +254,7 @@ export function AuthScreen() {
             className="h-11 rounded-[10px] bg-[#1f2328] hover:bg-[#2a3037] text-white transition-colors flex items-center justify-center gap-3 text-[14px] disabled:opacity-60"
           >
             <GitHubMark />
-            {busy === 'github' ? 'Redirecting…' : 'Continue with GitHub'}
+            {busy === 'github' ? t('auth.redirecting') : t('auth.continueGithub')}
           </button>
         </div>
         {err && (
@@ -260,9 +263,12 @@ export function AuthScreen() {
           </div>
         )}
         <div className="text-[11px] text-ink-300 text-center font-display italic">
-          We use your provider only to verify it's you — no posting, no scope creep.
+          {t('auth.providerNote')}
         </div>
-        <ServerSwitch open={picker} onToggle={() => setPicker((v) => !v)} />
+        <div className="flex flex-col items-center gap-3">
+          <LanguageSwitcher />
+          <ServerSwitch open={picker} onToggle={() => setPicker((v) => !v)} />
+        </div>
       </div>
       {passwordOpen && (
         <div
@@ -279,21 +285,21 @@ export function AuthScreen() {
           >
             <div className="flex items-start justify-between gap-4 mb-5">
               <div>
-                <div id="password-login-title" className="font-display text-[20px] text-ink-900">Sign in</div>
-                <div className="font-display italic text-[12px] text-ink-400 mt-1">Use your Cumora username and password.</div>
+                <div id="password-login-title" className="font-display text-[20px] text-ink-900">{t('auth.modalTitle')}</div>
+                <div className="font-display italic text-[12px] text-ink-400 mt-1">{t('auth.modalSubtitle')}</div>
               </div>
               <button
                 type="button"
                 onClick={() => setPasswordOpen(false)}
                 disabled={busy !== null}
-                aria-label="Close password login"
+                aria-label={t('auth.closePasswordLogin')}
                 className="text-[20px] leading-none text-ink-300 hover:text-ink-700 disabled:opacity-50"
               >
                 ×
               </button>
             </div>
             <form onSubmit={goPassword} className="flex flex-col gap-2">
-              <label className="text-[11px] text-ink-500" htmlFor="auth-username">Username</label>
+              <label className="text-[11px] text-ink-500" htmlFor="auth-username">{t('auth.username')}</label>
               <input
                 id="auth-username"
                 type="text"
@@ -305,7 +311,7 @@ export function AuthScreen() {
                 disabled={busy !== null}
                 className="h-11 px-3 rounded-[10px] border border-ink-200 bg-white text-[14px] text-ink-900 focus:outline-none focus:border-ink-400 disabled:opacity-60"
               />
-              <label className="text-[11px] text-ink-500 mt-2" htmlFor="auth-password">Password</label>
+              <label className="text-[11px] text-ink-500 mt-2" htmlFor="auth-password">{t('auth.password')}</label>
               <input
                 id="auth-password"
                 type="password"
@@ -321,7 +327,7 @@ export function AuthScreen() {
                 className="h-11 mt-3 rounded-[10px] text-white transition-colors text-[14px] disabled:opacity-60"
                 style={{ background: 'var(--ink-900)' }}
               >
-                {busy === 'password' ? 'Signing in…' : 'Sign in'}
+                {busy === 'password' ? t('auth.signingIn') : t('auth.signIn')}
               </button>
             </form>
             {err && (
@@ -338,14 +344,15 @@ export function AuthScreen() {
 
 /** Currently-active server origin in human-readable form. Mirrors what
  *  api.client computed at module init. */
-function currentOriginLabel(): string {
+function currentOriginLabel(t: (key: string) => string): string {
   const origin = getServerOrigin()
   if (!origin) return 'same-origin (Vite proxy / static)'
   const match = PRESETS.find((p) => p.origin === origin)
-  return match ? `${match.label} · ${origin}` : origin
+  return match ? `${match.label === 'Production' ? t('auth.production') : t('auth.localDev')} · ${origin}` : origin
 }
 
 function ServerSwitch({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  const { t } = useI18n()
   const [custom, setCustom] = useState('')
   const current = getServerOrigin()
 
@@ -363,15 +370,15 @@ function ServerSwitch({ open, onToggle }: { open: boolean; onToggle: () => void 
         onClick={onToggle}
         className="text-[11px] text-ink-300 hover:text-ink-500 transition-colors font-display"
       >
-        API server: <span className="underline decoration-dotted">{currentOriginLabel()}</span>
+        {t('auth.apiServer')}: <span className="underline decoration-dotted">{currentOriginLabel(t)}</span>
       </button>
     )
   }
   return (
     <div className="w-full border border-ink-200 rounded-[10px] p-3 bg-white/60 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <div className="text-[12px] font-display text-ink-700">API server</div>
-        <button type="button" onClick={onToggle} className="text-[11px] text-ink-300 hover:text-ink-500">close</button>
+        <div className="text-[12px] font-display text-ink-700">{t('auth.apiServer')}</div>
+        <button type="button" onClick={onToggle} className="text-[11px] text-ink-300 hover:text-ink-500">{t('auth.close')}</button>
       </div>
       {PRESETS.map((p) => (
         <button
@@ -380,7 +387,7 @@ function ServerSwitch({ open, onToggle }: { open: boolean; onToggle: () => void 
           onClick={() => apply(p.origin)}
           className={`text-left h-9 px-2 rounded-[6px] text-[12px] flex items-center justify-between hover:bg-cloud transition-colors ${current === p.origin ? 'bg-cloud' : ''}`}
         >
-          <span className="font-display text-ink-800">{p.label}</span>
+          <span className="font-display text-ink-800">{p.label === 'Production' ? t('auth.production') : t('auth.localDev')}</span>
           <span className="text-[10px] text-ink-400">{p.origin}</span>
         </button>
       ))}
@@ -398,7 +405,7 @@ function ServerSwitch({ open, onToggle }: { open: boolean; onToggle: () => void 
           onClick={() => apply(custom.trim())}
           className="h-9 px-3 rounded-[6px] bg-ink-800 text-white text-[12px] disabled:opacity-40"
         >
-          Use
+          {t('auth.use')}
         </button>
       </div>
       {current && (
@@ -407,7 +414,7 @@ function ServerSwitch({ open, onToggle }: { open: boolean; onToggle: () => void 
           onClick={() => apply(null)}
           className="text-[11px] text-ink-400 hover:text-ink-600 self-start"
         >
-          Clear override (use build default)
+          {t('auth.clearOverride')}
         </button>
       )}
     </div>

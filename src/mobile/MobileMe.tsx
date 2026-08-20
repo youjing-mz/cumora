@@ -8,6 +8,8 @@ import { useConversations } from '@/stores/conversations'
 import { useWhispers } from '@/stores/whispers'
 import { usePrefs } from '@/stores/preferences'
 import { CompanySwitcher } from '@/components/CompanySwitcher'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { useI18n } from '@/i18n'
 import { getPushStatus, initPushNotifications, teardownPushNotifications, type PushStatus } from '@/lib/push'
 import { api } from '@/api/client'
 import type { Participant } from '@/types'
@@ -24,6 +26,7 @@ const TOGGLE_PREFS: ToggleablePref[] = [
 ]
 
 export function MobileMe() {
+  const { t } = useI18n()
   const authUser = useAuth((s) => s.user)
   const meId = useMe()
   const companies = useAuth((s) => s.companies)
@@ -98,6 +101,12 @@ export function MobileMe() {
             {activeCompany.name}
           </div>
         )}
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <LanguageSwitcher />
+          {authUser?.isAdmin && (
+            <a href="/admin/" className="text-[11px] text-ink-600 underline decoration-dotted">{t('admin.console')}</a>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto pb-20">

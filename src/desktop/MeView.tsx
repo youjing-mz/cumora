@@ -10,6 +10,8 @@ import { Checkbox } from '@/components/Checkbox'
 import { cn } from '@/lib/utils'
 import { isWindows } from '@/lib/runtime'
 import { api, getPairingServerOrigin, getServerOrigin, type ApiProject, type ApiQuotaSnapshot, type ApiQuotaWindow } from '@/api/client'
+import { useI18n } from '@/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 const tabs = ['Profile', 'Usage', 'Computers', 'Projects', 'Trust & autonomy', 'Preferences'] as const
 type Tab = (typeof tabs)[number]
@@ -43,6 +45,7 @@ const PREF_GROUPS: Array<{ title: string; items: Array<{ key: string; lbl: strin
 ]
 
 function ProfileTab() {
+  const { t } = useI18n()
   // Pull both the auth user (real account: id, email, providers) and the
   // matching participant (for avatar). They're usually the same person but
   // participant rows can lag in the local cache, so we don't gate on it.
@@ -62,7 +65,18 @@ function ProfileTab() {
   const providers = authUser.providers ?? []
   return (
     <div className="space-y-6">
-      <Section title="↳ Identity">
+      <div className="flex items-center justify-between gap-3">
+        <LanguageSwitcher />
+        {authUser.isAdmin && (
+          <a
+            href="/admin/"
+            className="text-[12px] text-ink-600 hover:text-ink-900 underline decoration-dotted"
+          >
+            {t('admin.console')}
+          </a>
+        )}
+      </div>
+      <Section title={t('profile.identity')}>
         <div className="bg-cloud rounded-[14px] p-5 flex items-start gap-5"
           style={{ border: '1px solid var(--ink-100)' }}>
           {meParticipant
@@ -72,6 +86,11 @@ function ProfileTab() {
             <h2 className="font-display font-medium text-[26px] tracking-tight truncate" style={{ letterSpacing: '-0.02em' }}>{authUser.name}</h2>
             <div className="font-display italic text-[14px] text-ink-500 truncate">{authUser.email}</div>
             <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {authUser.isAdmin && (
+                <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white text-ink-600" style={{ border: '1px solid var(--ink-100)' }}>
+                  {t('profile.adminBadge')}
+                </span>
+              )}
               {providers.map((p) => (
                 <span key={p} className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white text-ink-600" style={{ border: '1px solid var(--ink-100)' }}>
                   {p}
@@ -82,13 +101,13 @@ function ProfileTab() {
         </div>
       </Section>
 
-      <Section title="↳ Session">
+      <Section title={t('profile.session')}>
         <div className="bg-cloud rounded-[14px] p-5 flex items-center justify-between gap-4"
           style={{ border: '1px solid var(--ink-100)' }}>
           <div className="min-w-0">
-            <div className="font-display text-[14px] text-ink-800">Signed in to <span className="font-mono text-[12px]">{serverOrigin}</span></div>
+            <div className="font-display text-[14px] text-ink-800">{t('profile.signedInTo')} <span className="font-mono text-[12px]">{serverOrigin}</span></div>
             <div className="font-display italic text-[12px] text-ink-400 mt-0.5">
-              Signing out clears the local token and revokes this session on the server.
+              {t('profile.signOutDescription')}
             </div>
           </div>
           <button
@@ -96,7 +115,7 @@ function ProfileTab() {
             onClick={signOut}
             className="shrink-0 h-9 px-4 rounded-[8px] bg-ink-800 hover:bg-ink-900 text-white text-[13px] font-display transition-colors"
           >
-            Sign out
+            {t('admin.signOut')}
           </button>
         </div>
       </Section>
@@ -111,6 +130,7 @@ function ProfileTab() {
 }
 
 function PasswordSection() {
+  const { t } = useI18n()
   const authUser = useAuth((s) => s.user)
   const activeCompanyId = useAuth((s) => s.activeCompanyId)
   const [currentPassword, setCurrentPassword] = useState('')
@@ -124,11 +144,11 @@ function PasswordSection() {
     event.preventDefault()
     setMessage(null); setError(null)
     if (newPassword.length < 16) {
-      setError('New password must be at least 16 characters.')
+      setError(t('profile.passwordMinLength'))
       return
     }
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match.')
+      setError(t('profile.passwordMismatch'))
       return
     }
     setBusy(true)
@@ -143,35 +163,35 @@ function PasswordSection() {
         )
       }
       setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
-      setMessage('Password updated. Other active sessions were signed out.')
+      setMessage(t('profile.passwordUpdated'))
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally { setBusy(false) }
   }
 
   return (
-    <Section title="↳ Password">
+    <Section title={t('profile.password')}>
       <form onSubmit={submit} className="bg-cloud rounded-[14px] p-5 space-y-3" style={{ border: '1px solid var(--ink-100)' }}>
-        <div className="font-display italic text-[12px] text-ink-400 mb-2">Use at least 16 characters. Changing it signs out other active sessions.</div>
+        <div className="font-display italic text-[12px] text-ink-400 mb-2">{t('profile.passwordHint')}</div>
         <input
           type="password" autoComplete="current-password" value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password"
+          onChange={(e) => setCurrentPassword(e.target.value)} placeholder={t('profile.currentPassword')}
           className="w-full h-10 px-3 rounded-[8px] border border-ink-200 bg-white text-[13px] focus:outline-none focus:border-ink-400"
         />
         <input
           type="password" autoComplete="new-password" value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)} placeholder="New password (16+ characters)"
+          onChange={(e) => setNewPassword(e.target.value)} placeholder={t('profile.newPassword')}
           className="w-full h-10 px-3 rounded-[8px] border border-ink-200 bg-white text-[13px] focus:outline-none focus:border-ink-400"
         />
         <input
           type="password" autoComplete="new-password" value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm new password"
+          onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t('profile.confirmPassword')}
           className="w-full h-10 px-3 rounded-[8px] border border-ink-200 bg-white text-[13px] focus:outline-none focus:border-ink-400"
         />
         <div className="flex items-center justify-between gap-3 pt-1">
           <div className="text-[12px] text-red-600">{error}</div>
           <button type="submit" disabled={busy} className="shrink-0 h-9 px-4 rounded-[8px] text-[13px] text-white disabled:opacity-60" style={{ background: 'var(--ink-900)' }}>
-            {busy ? 'Updating…' : 'Change password'}
+            {busy ? t('profile.updating') : t('profile.changePassword')}
           </button>
         </div>
         {message && <div className="text-[12px] text-green-700">{message}</div>}
@@ -183,14 +203,15 @@ function PasswordSection() {
 /** Discord invite. Renders on every platform (web + desktop) so feedback
  *  has a single, advertised entry point that doesn't go through email. */
 function CommunitySection() {
+  const { t } = useI18n()
   return (
-    <Section title="↳ Community & feedback">
+    <Section title={t('profile.community')}>
       <div className="bg-cloud rounded-[14px] p-5 flex items-center justify-between gap-4"
         style={{ border: '1px solid var(--ink-100)' }}>
         <div className="min-w-0">
-          <div className="font-display text-[14px] text-ink-800">Join the Cumora Discord</div>
+          <div className="font-display text-[14px] text-ink-800">{t('profile.joinDiscord')}</div>
           <div className="font-display italic text-[12px] text-ink-400 mt-0.5">
-            Share feedback, report bugs, and meet other people running agent teams.
+            {t('profile.discordDescription')}
           </div>
         </div>
         <a
@@ -203,7 +224,7 @@ function CommunitySection() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" />
           </svg>
-          Join Discord
+          {t('profile.join')}
         </a>
       </div>
     </Section>
@@ -216,6 +237,7 @@ function CommunitySection() {
  *  AuthedApp level via a custom window event (avoids prop-drilling
  *  through three layers of view components). */
 function AboutSection() {
+  const { t } = useI18n()
   const [version, setVersion] = useState<string | null>(null)
   const [supported, setSupported] = useState<boolean>(false)
 
@@ -231,7 +253,7 @@ function AboutSection() {
   if (!version) return null
 
   return (
-    <Section title="↳ About">
+    <Section title={t('profile.about')}>
       <div className="bg-cloud rounded-[14px] p-5 flex items-center justify-between gap-4"
         style={{ border: '1px solid var(--ink-100)' }}>
         <div className="min-w-0">
@@ -248,7 +270,7 @@ function AboutSection() {
           className="shrink-0 h-9 px-4 rounded-[8px] text-[13px] font-display transition-colors text-white"
           style={{ background: 'var(--skype)' }}
         >
-          Check for updates
+          {t('profile.checkUpdates')}
         </button>
       </div>
     </Section>

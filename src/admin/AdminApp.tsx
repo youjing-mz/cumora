@@ -17,6 +17,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/stores/auth'
 import { CloudLogo } from '@/components/Avatar'
+import { useI18n } from '@/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { adminApi, type AdminStats } from './api'
 import { UsersPage } from './UsersPage'
 import { WaitlistPage } from './WaitlistPage'
@@ -51,6 +53,7 @@ function hrefFor(target: Route): string {
 }
 
 export function AdminApp() {
+  const { t } = useI18n()
   const user = useAuth((s) => s.user)
   const clear = useAuth((s) => s.clear)
   const [route, setRoute] = useState<Route>(parseRoute)
@@ -86,17 +89,17 @@ export function AdminApp() {
   }, [verified, route])
 
   if (verified === 'checking') {
-    return <FullScreenNote tone="muted">Checking admin access…</FullScreenNote>
+    return <FullScreenNote tone="muted">{t('admin.checkingAccess')}</FullScreenNote>
   }
   if (verified === 'denied') {
     return (
       <FullScreenNote tone="warn">
-        <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Not authorized</div>
+        <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>{t('admin.notAuthorized')}</div>
         <div style={{ fontSize: 14, opacity: 0.7, marginBottom: 16 }}>
-          Signed in as <code>{user?.email ?? '(unknown)'}</code>.
+          {t('admin.signedInAs')} <code>{user?.email ?? '(unknown)'}</code>.
         </div>
         <button className="btn" onClick={() => { clear() }}>
-          Sign out and switch account
+          {t('admin.signOutSwitch')}
         </button>
       </FullScreenNote>
     )
@@ -110,27 +113,28 @@ export function AdminApp() {
         </button>
         <div className="admin-topbar-brand">
           <CloudLogo size={24} />
-          <span>cumora admin</span>
+          <span>{t('admin.title')}</span>
         </div>
         <div className="admin-topbar-spacer" />
+        <LanguageSwitcher className="admin-language-switcher" />
       </header>
       {navOpen && <div className="admin-nav-scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
       <aside className="admin-sidebar">
         <div className="admin-brand">
           <CloudLogo size={32} />
           <div>
-            <div className="admin-brand-title">cumora admin</div>
+            <div className="admin-brand-title">{t('admin.title')}</div>
             <div className="admin-brand-sub">{user?.email}</div>
           </div>
         </div>
         <nav className="admin-nav">
-          <NavLink current={route} target="users"         label="Users"         badge={stats?.users.total} />
-          <NavLink current={route} target="waitlist"      label="Waitlist"      badge={stats?.waitlist.pending || undefined} highlight={!!stats?.waitlist.pending} />
-          <NavLink current={route} target="observability" label="Observability" />
-          <NavLink current={route} target="settings"      label="Settings" />
+          <NavLink current={route} target="users"         label={t('admin.users')}         badge={stats?.users.total} />
+          <NavLink current={route} target="waitlist"      label={t('admin.waitlist')}      badge={stats?.waitlist.pending || undefined} highlight={!!stats?.waitlist.pending} />
+          <NavLink current={route} target="observability" label={t('admin.observability')} />
+          <NavLink current={route} target="settings"      label={t('admin.settings')} />
         </nav>
         <div className="admin-sidebar-foot">
-          <button className="btn-ghost" onClick={() => { clear() }}>Sign out</button>
+          <button className="btn-ghost" onClick={() => { clear() }}>{t('admin.signOut')}</button>
         </div>
       </aside>
       <main className="admin-main">
