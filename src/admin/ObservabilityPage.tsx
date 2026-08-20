@@ -83,7 +83,7 @@ const PURPOSE_META: Record<LlmCallPurpose, PurposeMeta> = {
 const FALLBACK_SWATCH = '#94A8BC'
 function metaFor(p: LlmCallPurpose | string): PurposeMeta {
   const m = (PURPOSE_META as Record<string, PurposeMeta | undefined>)[p]
-  return m ?? { label: p, blurb: '', swatch: FALLBACK_SWATCH }
+  return m ? { ...m, label: translate(m.label) } : { label: translate(p), blurb: '', swatch: FALLBACK_SWATCH }
 }
 
 // ─── Formatters ──────────────────────────────────────────────────────────
@@ -298,7 +298,7 @@ export function ObservabilityPage() {
                 aria-selected={sinceDays === r.days}
                 className={`obs-pill${sinceDays === r.days ? ' is-active' : ''}`}
                 onClick={() => setSinceDays(r.days)}
-              >{r.label}</button>
+              >{translate(r.label)}</button>
             ))}
           </div>
           <div className="obs-pills" role="tablist" aria-label={translate("Source")}>
@@ -309,7 +309,7 @@ export function ObservabilityPage() {
                 aria-selected={sourceFilter === s.key}
                 className={`obs-pill${sourceFilter === s.key ? ' is-active' : ''}`}
                 onClick={() => setSourceFilter(s.key)}
-              >{s.label}</button>
+              >{translate(s.label)}</button>
             ))}
           </div>
           {/* Unit toggle — $ are seeded estimates; tokens are the platform-
@@ -323,7 +323,7 @@ export function ObservabilityPage() {
                 className={`obs-pill${unit === u.key ? ' is-active' : ''}`}
                 onClick={() => setUnit(u.key)}
                 title={u.key === 'usd' ? 'Cost in USD — seeded per-model estimates, not your real platform rate' : 'Raw token counts — exact, platform-independent'}
-              >{u.label}</button>
+              >{translate(u.label)}</button>
             ))}
           </div>
           <input
@@ -354,7 +354,7 @@ export function ObservabilityPage() {
             <Select
               value={String(autoRefreshMs)}
               onValueChange={(v) => setAutoRefreshMs(Number(v))}
-              options={REFRESH_INTERVALS.map((r) => ({ value: String(r.ms), label: r.label }))}
+              options={REFRESH_INTERVALS.map((r) => ({ value: String(r.ms), label: translate(r.label) }))}
               ariaLabel={translate("Auto-refresh interval")}
               className="min-w-[150px]"
             />
@@ -363,7 +363,7 @@ export function ObservabilityPage() {
         {lastUpdated && (
           <div className="obs-updated" aria-live="polite">
             {translate("Updated")}{' '}{new Date(lastUpdated).toLocaleTimeString()}
-            {autoRefreshMs > 0 && <> {translate("· auto every")}{' '}{REFRESH_INTERVALS.find((r) => r.ms === autoRefreshMs)?.label.replace('Every ', '')}</>}
+            {autoRefreshMs > 0 && <> {translate("· auto every")}{' '}{translate(REFRESH_INTERVALS.find((r) => r.ms === autoRefreshMs)?.label ?? '').replace('Every ', '')}</>}
             {refreshing && <> {translate("· refreshing…")}</>}
           </div>
         )}
@@ -377,7 +377,7 @@ export function ObservabilityPage() {
       <section className="obs-hero">
         <HeroSpendCard summary={data?.summary} unit={unit} loading={loading} />
         <HeroStatCard
-          label="Total calls"
+          label={translate("Total calls")}
           value={data?.summary ? fmtInt(data.summary.totalCalls) : '—'}
           sub={data?.summary
             ? `${fmtInt(data.summary.rateLimitedCalls)} rate-limited`
@@ -385,7 +385,7 @@ export function ObservabilityPage() {
           loading={loading}
         />
         <HeroStatCard
-          label="Top burner"
+          label={translate("Top burner")}
           value={topBurner ? metaFor(topBurner.purpose).label : '—'}
           sub={topBurner
             ? `${fmtAmount(unit, topBurner.usd, topBurner.tokens)} of the window`
@@ -394,7 +394,7 @@ export function ObservabilityPage() {
           loading={loading}
         />
         <HeroStatCard
-          label="Failure rate"
+          label={translate("Failure rate")}
           value={data?.summary ? fmtPct(data.summary.failureRate) : '—'}
           sub={data?.summary
             ? `${fmtTokens(data.summary.totalOutputTokens)} out · ${fmtTokens(data.summary.totalCachedInputTokens)} cached in`
@@ -427,9 +427,9 @@ export function ObservabilityPage() {
       <section className="obs-card">
         <div className="obs-card-head">
           <div>
-            <div className="obs-card-title">{unit === 'usd' ? 'Spend' : 'Tokens'} {translate("by purpose × model × source")}</div>
+            <div className="obs-card-title">{translate(unit === 'usd' ? 'Spend' : 'Tokens')} {translate("by purpose × model × source")}</div>
             <div className="obs-card-sub">
-              {translate("Sorted by")}{' '}{unit === 'usd' ? 'cost' : 'tokens'} {translate("desc · click a column to re-sort")}{' '}{sourceFilter !== 'all' && <> {translate("· filtered to")}{' '}<strong>{SOURCE_FILTERS.find((s) => s.key === sourceFilter)?.label}</strong></>}
+              {translate("Sorted by")}{' '}{translate(unit === 'usd' ? 'cost' : 'tokens')} {translate("desc · click a column to re-sort")}{' '}{sourceFilter !== 'all' && <> {translate("· filtered to")}{' '}<strong>{translate(SOURCE_FILTERS.find((s) => s.key === sourceFilter)?.label ?? '')}</strong></>}
             </div>
           </div>
         </div>
@@ -510,7 +510,7 @@ function HeroSpendCard({ summary, unit, loading }: { summary: LlmObservabilityPa
   return (
     <div className="obs-hero-card obs-hero-spend">
       <div className="obs-hero-spend-shine" aria-hidden />
-      <div className="obs-hero-label">{unit === 'usd' ? 'Spend' : 'Tokens'} {translate("· last")}{' '}{summary?.sinceDays ?? 30}{translate("d")}</div>
+      <div className="obs-hero-label">{translate(unit === 'usd' ? 'Spend' : 'Tokens')} {translate("· last")}{' '}{summary?.sinceDays ?? 30}{translate("d")}</div>
       <div className="obs-hero-value">{loading ? '—' : unit === 'usd' ? fmtUsd(totalUsd, totalUsd < 100 ? 4 : 2) : fmtTokens(totalTok)}</div>
       <div className="obs-hero-sub">
         {summary
@@ -1339,19 +1339,19 @@ function DrillCallCard({ call, unit, onJumpToRun, onJumpToAgent }: {
           (hop index → tool calls → output mix → compaction diagnostic), so
           the eye scans the bottleneck first. */}
       <div className="obs-drill-chips">
-        {hopIndex != null  && <Chip label="hop"      value={`#${hopIndex}`} />}
-        {toolUses != null  && <Chip label="tools"    value={fmtInt(toolUses)} />}
-        {textChars != null && <Chip label="text"     value={`${fmtInt(textChars)}c`} />}
-        {compressionRatio  && <Chip label="compress" value={`${compressionRatio}×`} title={translate("inputTokensBefore / outputTokens")} />}
-        {itemsDropped != null && <Chip label="dropped" value={fmtInt(itemsDropped)} />}
-        {call.latencyMs && call.latencyMs > 0 && <Chip label="latency" value={`${(call.latencyMs / 1000).toFixed(1)}s`} />}
+        {hopIndex != null  && <Chip label={translate("hop")}      value={`#${hopIndex}`} />}
+        {toolUses != null  && <Chip label={translate("tools")}    value={fmtInt(toolUses)} />}
+        {textChars != null && <Chip label={translate("text")}     value={`${fmtInt(textChars)}c`} />}
+        {compressionRatio  && <Chip label={translate("compress")} value={`${compressionRatio}×`} title={translate("inputTokensBefore / outputTokens")} />}
+        {itemsDropped != null && <Chip label={translate("dropped")} value={fmtInt(itemsDropped)} />}
+        {call.latencyMs && call.latencyMs > 0 && <Chip label={translate("latency")} value={`${(call.latencyMs / 1000).toFixed(1)}s`} />}
       </div>
 
       <div className="obs-drill-numgrid">
-        <NumCell label="input" value={fmtTokens(call.inputTokens)} />
-        <NumCell label="cached" value={fmtTokens(call.cachedInputTokens)} hint={cacheHit != null ? fmtPct(cacheHit, 0) : undefined} />
-        <NumCell label="output" value={fmtTokens(call.outputTokens)} />
-        <NumCell label="reasoning" value={call.reasoningTokens > 0 ? fmtTokens(call.reasoningTokens) : '—'} />
+        <NumCell label={translate("input")} value={fmtTokens(call.inputTokens)} />
+        <NumCell label={translate("cached")} value={fmtTokens(call.cachedInputTokens)} hint={cacheHit != null ? fmtPct(cacheHit, 0) : undefined} />
+        <NumCell label={translate("output")} value={fmtTokens(call.outputTokens)} />
+        <NumCell label={translate("reasoning")} value={call.reasoningTokens > 0 ? fmtTokens(call.reasoningTokens) : '—'} />
       </div>
 
       {call.error && (

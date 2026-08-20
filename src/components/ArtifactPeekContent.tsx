@@ -210,7 +210,7 @@ export function BoardPeekContent({
   const isBoardPending = !snap && (loadingBoardId === boardId || loadingList || requestedBoardId.current !== boardId)
 
   if (isBoardPending) {
-    return <PeekLoading icon={<IBoard className="w-5 h-5" />} label="Opening board..." />
+    return <PeekLoading icon={<IBoard className="w-5 h-5" />} label={translate("Opening board...")} />
   }
 
   if (!snap) {
@@ -228,7 +228,7 @@ export function BoardPeekContent({
     <div className="h-full min-h-0 flex flex-col bg-cloud">
       <PeekHeader
         icon={<IBoard className="w-5 h-5" />}
-        label="Kanban board"
+        label={translate("Kanban board")}
         title={snap.title}
         meta={`${snap.columns.length} columns - ${snap.cards.length} cards - updated ${formatShortDate(snap.updatedAt)}`}
         onClose={onClose}
@@ -346,7 +346,7 @@ export function CalendarEventPeekContent({
   }, [event, eventId, loadEvent, loadingEventId])
 
   if (!event && !failed) {
-    return <PeekLoading icon={<ICalendar className="w-5 h-5" />} label="Opening event..." />
+    return <PeekLoading icon={<ICalendar className="w-5 h-5" />} label={translate("Opening event...")} />
   }
 
   if (!event) {
@@ -364,7 +364,7 @@ export function CalendarEventPeekContent({
     <div className="h-full min-h-0 flex flex-col bg-cloud">
       <PeekHeader
         icon={<ICalendar className="w-5 h-5" />}
-        label="Calendar event"
+        label={translate("Calendar event")}
         title={event.title || 'Untitled event'}
         meta={`${event.kind === 'agent_task' ? 'Agent task' : 'Personal'} - ${event.status}`}
         onClose={onClose}

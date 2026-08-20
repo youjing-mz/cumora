@@ -28,6 +28,14 @@ const visibleAttributes = new Set([
   'placeholder',
   'alt',
   'ariaLabel',
+  // Common visible props on the app's own presentational components.
+  // These are not native DOM attributes, but their values are rendered copy.
+  'label',
+  'hint',
+  'description',
+  'eyebrow',
+  'empty',
+  'data-label',
 ])
 
 const ignoredTags = new Set(['code', 'pre', 'script', 'style'])

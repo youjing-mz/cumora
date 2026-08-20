@@ -1293,7 +1293,7 @@ function AddMembersPicker({ group, candidates, onClose }: {
         )}
         <div className="flex-1 overflow-y-auto py-2">
           {filtered.length === 0 && query.trim() && (
-            <div className="px-6 py-4 text-[12px] italic text-ink-300 font-display">{translate("no match for \"")}{query}"</div>
+            <div className="px-6 py-4 text-[12px] italic text-ink-300 font-display">{translate("No match for")}{' “'}{query}{'”'}</div>
           )}
           {filtered.map((p) => {
             const busy = busyId === p.id

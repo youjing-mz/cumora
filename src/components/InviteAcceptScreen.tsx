@@ -493,7 +493,7 @@ function SignInToAccept({ token }: { token: string }) {
         {translate("We use your provider only to verify it's you — no posting, no scope creep.")}{' '}</div>
       <div className="text-[11.5px] text-ink-400 text-center font-display italic pt-1">
         {translate("Don't have the desktop app yet?")}{' '}
-        <GetDesktopAppLink variant="text" label="Get Cumora" />
+        <GetDesktopAppLink variant="text" label={translate("Get Cumora")} />
       </div>
     </div>
   )

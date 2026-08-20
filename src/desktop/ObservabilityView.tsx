@@ -110,7 +110,7 @@ function MetaGrid({ items }: { items: Array<{ label: string; value: unknown }> }
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
       {items.filter((item) => item.value !== undefined && item.value !== null && item.value !== '').map((item) => (
         <div key={item.label} className="rounded-[9px] border border-ink-100 bg-paper px-3 py-2">
-          <div className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-ink-300">{item.label}</div>
+          <div className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-ink-300">{translate(item.label)}</div>
           <div className="mt-1 truncate font-mono text-[11.5px] text-ink-800">{String(item.value)}</div>
         </div>
       ))}
@@ -139,7 +139,7 @@ function PayloadBlock({ label, value, empty = '(empty)' }: { label: string; valu
 }
 
 function TraceInputView({ value }: { value: unknown }) {
-  if (!Array.isArray(value)) return <PayloadBlock label="Input" value={value} />
+  if (!Array.isArray(value)) return <PayloadBlock label={translate("Input")} value={value} />
   return (
     <div className="space-y-2">
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">{translate("Input messages")}</div>
@@ -155,7 +155,7 @@ function TraceInputView({ value }: { value: unknown }) {
               {rec.callId !== undefined && <span>{translate("call=")}{String(rec.callId)}</span>}
             </div>
             <div className="space-y-2">
-              {rec.output !== undefined && <PayloadBlock label="Function output" value={rec.output} />}
+              {rec.output !== undefined && <PayloadBlock label={translate("Function output")} value={rec.output} />}
               {content.map((part, partIdx) => {
                 const p = isRecord(part) ? part : {}
                 const type = String(p.type ?? `part ${partIdx + 1}`)
@@ -169,7 +169,7 @@ function TraceInputView({ value }: { value: unknown }) {
                 }
                 return <PayloadBlock key={partIdx} label={type} value={p} />
               })}
-              {content.length === 0 && rec.content !== undefined && <PayloadBlock label="Content" value={rec.content} />}
+              {content.length === 0 && rec.content !== undefined && <PayloadBlock label={translate("Content")} value={rec.content} />}
             </div>
           </div>
         )
@@ -188,7 +188,7 @@ function ModelRequestDetails({ data }: { data: Record<string, unknown> }) {
         { label: 'previous', value: data.previousResponseId },
         { label: 'max tokens', value: request.maxOutputTokens },
       ]} />
-      <PayloadBlock label="Instructions" value={data.instructions} />
+      <PayloadBlock label={translate("Instructions")} value={data.instructions} />
       <TraceInputView value={data.input} />
     </div>
   )
@@ -207,7 +207,7 @@ function ModelResponseDetails({ data }: { data: Record<string, unknown> }) {
         { label: 'input tokens', value: usage.input_tokens },
         { label: 'output tokens', value: usage.output_tokens },
       ]} />
-      <PayloadBlock label="Output text" value={data.outputText} empty="(no assistant text; tool-only response)" />
+      <PayloadBlock label={translate("Output text")} value={data.outputText} empty={translate("(no assistant text; tool-only response)")} />
       {toolCalls.length > 0 && (
         <div className="space-y-2">
           <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">{translate("Tool calls requested")}</div>
@@ -219,13 +219,13 @@ function ModelResponseDetails({ data }: { data: Record<string, unknown> }) {
                   <span>{String(rec.name ?? 'tool')}</span>
                   {rec.callId !== undefined && <span>{String(rec.callId)}</span>}
                 </div>
-                <PayloadBlock label="Arguments" value={rec.arguments ?? rec.rawArguments} />
+                <PayloadBlock label={translate("Arguments")} value={rec.arguments ?? rec.rawArguments} />
               </div>
             )
           })}
         </div>
       )}
-      <PayloadBlock label="Response output items" value={data.output} />
+      <PayloadBlock label={translate("Response output items")} value={data.output} />
     </div>
   )
 }
@@ -239,9 +239,9 @@ function ToolDetails({ data }: { data: Record<string, unknown> }) {
         { label: 'duration', value: typeof data.durationMs === 'number' ? elapsed(data.durationMs) : undefined },
         { label: 'ok', value: data.ok },
       ]} />
-      {data.args !== undefined && <PayloadBlock label="Arguments" value={data.args} />}
-      {data.output !== undefined && <PayloadBlock label="Output" value={data.output} />}
-      {data.error !== undefined && data.error !== null && <PayloadBlock label="Error" value={data.error} />}
+      {data.args !== undefined && <PayloadBlock label={translate("Arguments")} value={data.args} />}
+      {data.output !== undefined && <PayloadBlock label={translate("Output")} value={data.output} />}
+      {data.error !== undefined && data.error !== null && <PayloadBlock label={translate("Error")} value={data.error} />}
     </div>
   )
 }
@@ -708,7 +708,7 @@ function TriageEconomicsPanel(props: {
                   props.panel === item ? 'bg-sky2-50 text-skype-deep shadow-soft' : 'text-ink-500 hover:text-ink-700',
                 )}
               >
-                {PANEL_LABEL[item]}
+                {translate(PANEL_LABEL[item])}
               </button>
             ))}
           </div>
@@ -716,7 +716,7 @@ function TriageEconomicsPanel(props: {
             {translate("Agent")}{' '}<Select
               value={props.agentId}
               onValueChange={props.setAgentId}
-              options={[{ value: 'all', label: 'All agents' }, ...props.agents.map((a) => ({ value: a.id, label: a.name }))]}
+              options={[{ value: 'all', label: translate('All agents') }, ...props.agents.map((a) => ({ value: a.id, label: a.name }))]}
               className="mt-1 w-44 normal-case tracking-normal"
             />
           </label>
@@ -755,21 +755,21 @@ function TriageEconomicsPanel(props: {
             {/* The headline: estimated net savings = avoided big-brain spend − triage spend. */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               <StatCard
-                label="Est. net savings"
+                label={translate("Est. net savings")}
                 value={`${net >= 0 ? '+' : ''}${fmtUsd(net)}`}
                 tone={net >= 0 ? 'pos' : 'neg'}
-                sub={net >= 0 ? 'gate is paying off (estimate)' : 'gate COSTS more than it saves (estimate)'}
+                sub={translate(net >= 0 ? 'gate is paying off (estimate)' : 'gate COSTS more than it saves (estimate)')}
               />
               <StatCard
-                label="Avoided big-brain $"
+                label={translate("Avoided big-brain $")}
                 value={fmtUsd(data.estimatedAvoidedUsd)}
                 tone="pos"
                 sub={`${data.triageSkipCount} skips × avg turn ${fmtUsd(data.avgTurnCostUsd)} (est.)`}
               />
-              <StatCard label="Triage spend" value={fmtUsd(data.triageCostUsd)} sub={`${data.triageCount} triages · ${data.triageMeasuredCount} measured`} />
-              <StatCard label="Overhead (woke brain)" value={fmtUsd(data.triageOverheadUsd)} tone={data.triageOverheadUsd > 0 ? 'warn' : undefined} sub={`${data.triageWakeCount} paid the gate AND ran the turn`} />
-              <StatCard label="Big-brain cache-hit" value={fmtPct(data.turnCacheHitRate)} sub={`${data.turnCount} turns · avg ${fmtUsd(data.avgTurnCostUsd)}`} />
-              <StatCard label="Skip rate" value={data.triageCount > 0 ? fmtPct(data.triageSkipCount / data.triageCount) : '—'} sub={`triage tokens: ${fmtTok(data.triageInputTokens ?? 0)} uncached in`} />
+              <StatCard label={translate("Triage spend")} value={fmtUsd(data.triageCostUsd)} sub={`${data.triageCount} triages · ${data.triageMeasuredCount} measured`} />
+              <StatCard label={translate("Overhead (woke brain)")} value={fmtUsd(data.triageOverheadUsd)} tone={data.triageOverheadUsd > 0 ? 'warn' : undefined} sub={`${data.triageWakeCount} paid the gate AND ran the turn`} />
+              <StatCard label={translate("Big-brain cache-hit")} value={fmtPct(data.turnCacheHitRate)} sub={`${data.turnCount} turns · avg ${fmtUsd(data.avgTurnCostUsd)}`} />
+              <StatCard label={translate("Skip rate")} value={data.triageCount > 0 ? fmtPct(data.triageSkipCount / data.triageCount) : '—'} sub={`triage tokens: ${fmtTok(data.triageInputTokens ?? 0)} uncached in`} />
             </div>
 
             {/* The actual per-token unit prices the estimates rest on (table). */}
@@ -1094,7 +1094,7 @@ export function ObservabilityView() {
                   panel === item ? 'bg-sky2-50 text-skype-deep shadow-soft' : 'text-ink-500 hover:text-ink-700',
                 )}
               >
-                {PANEL_LABEL[item]}
+                {translate(PANEL_LABEL[item])}
               </button>
             ))}
           </div>
@@ -1107,7 +1107,7 @@ export function ObservabilityView() {
                     value={agentId}
                     onValueChange={setAgentId}
                     options={[
-                      { value: 'all', label: 'All agents' },
+                      { value: 'all', label: translate('All agents') },
                       ...agents.map((agent) => ({ value: agent.id, label: agent.name })),
                     ]}
                     className="mt-1 normal-case tracking-normal"
@@ -1119,7 +1119,7 @@ export function ObservabilityView() {
                     onValueChange={setStatus}
                     options={STATUS_OPTIONS.map((s) => ({
                       value: s,
-                      label: s === 'all' ? 'All statuses' : STATUS_STYLE[s].label,
+                      label: s === 'all' ? translate('All statuses') : translate(STATUS_STYLE[s].label),
                     }))}
                     className="mt-1 normal-case tracking-normal"
                   />
@@ -1129,8 +1129,8 @@ export function ObservabilityView() {
               <Checkbox
                 checked={autoRefresh}
                 onCheckedChange={setAutoRefresh}
-                label="Auto refresh"
-                description="Keep the trace list live while this panel is open"
+                label={translate("Auto refresh")}
+                description={translate("Keep the trace list live while this panel is open")}
                 className="mt-3"
               />
             </>
@@ -1145,7 +1145,7 @@ export function ObservabilityView() {
                 }}
                 options={agents.length > 0
                   ? agents.map((agent) => ({ value: agent.id, label: agent.name }))
-                  : [{ value: '', label: 'No agents yet', disabled: true }]}
+                  : [{ value: '', label: translate('No agents yet'), disabled: true }]}
                 disabled={agents.length === 0}
                 className="mt-1 normal-case tracking-normal"
               />

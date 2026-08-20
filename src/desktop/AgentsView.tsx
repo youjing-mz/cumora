@@ -288,7 +288,7 @@ export function AgentsView() {
         <div className="mb-6 flex items-end gap-4">
           <div className="flex-1">
             <h1 className="font-display font-medium text-[36px] tracking-tight text-ink-900 mb-1" style={{ letterSpacing: '-0.025em' }}>
-              {t('agents.yourTeam')} <em className="italic text-skype-deep" style={{ fontWeight: 400 }}>{t('common.of')} {list.length}</em>
+              {t('agents.teamCount', { count: list.length })}
             </h1>
             <div className="font-display italic font-normal text-[15px] text-ink-500">
               {t('agents.teamDescription')}

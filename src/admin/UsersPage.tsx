@@ -265,7 +265,7 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
             <div className="admin-cell-user-email">@{u.username ?? '—'} · {u.email}</div>
           </div>
         </div>
-        <div onClick={(e) => e.stopPropagation()} data-label="Tier">
+        <div onClick={(e) => e.stopPropagation()} data-label={translate("Tier")}>
           <select className="admin-select admin-select-sm"
             value={u.tier} onChange={(e) => onTierChange(e.target.value as Tier)}>
             <option value="free">{translate("Free")}</option>
@@ -273,7 +273,7 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
             <option value="max">{translate("Max")}</option>
           </select>
         </div>
-        <div onClick={(e) => e.stopPropagation()} data-label="Admin">
+        <div onClick={(e) => e.stopPropagation()} data-label={translate("Admin")}>
           <button
             className={`admin-toggle ${u.isAdmin ? 'is-on' : ''}`}
             onClick={onAdminToggle}
@@ -283,19 +283,19 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
             {u.isAdmin ? 'admin' : '—'}
           </button>
         </div>
-        <div data-label="Companies">{u.companyCount}</div>
-        <div className="admin-cell-mono" data-label="Joined">{fmtDate(u.createdAt)}</div>
-        <div className="admin-cell-mono" data-label="Last login">{u.lastLoginAt ? fmtDate(u.lastLoginAt) : '—'}</div>
+        <div data-label={translate("Companies")}>{u.companyCount}</div>
+        <div className="admin-cell-mono" data-label={translate("Joined")}>{fmtDate(u.createdAt)}</div>
+        <div className="admin-cell-mono" data-label={translate("Last login")}>{u.lastLoginAt ? fmtDate(u.lastLoginAt) : '—'}</div>
       </div>
       {expanded && (
         <div className="admin-row-detail">
           {loadingDetail && <div className="admin-empty">{translate("Loading details…")}</div>}
           {detail && (
             <div className="admin-detail-grid">
-              <DetailField label="User ID" value={detail.id} mono />
-              <DetailField label="sub2api ID" value={detail.sub2apiUserId ? String(detail.sub2apiUserId) : '—'} mono />
-              <DetailField label="Created"   value={fmtDateTime(detail.createdAt)} mono />
-              <DetailField label="Last login" value={detail.lastLoginAt ? fmtDateTime(detail.lastLoginAt) : '—'} mono />
+              <DetailField label={translate("User ID")} value={detail.id} mono />
+              <DetailField label={translate("sub2api ID")} value={detail.sub2apiUserId ? String(detail.sub2apiUserId) : '—'} mono />
+              <DetailField label={translate("Created")}   value={fmtDateTime(detail.createdAt)} mono />
+              <DetailField label={translate("Last login")} value={detail.lastLoginAt ? fmtDateTime(detail.lastLoginAt) : '—'} mono />
               {/* Suspension card — only shown when the row IS suspended. We
                   surface the reason, who suspended them, and when, so the
                   operator has all the context before deciding to unsuspend. */}

@@ -66,12 +66,12 @@ export function MobileMe() {
   // there but they read as personal context, not KPIs.
   const stewardLine = useMemo(() => {
     const parts: string[] = []
-    if (agents.length) parts.push(`${agents.length} agent${agents.length === 1 ? '' : 's'}`)
-    if (convoList.length) parts.push(`${convoList.length} room${convoList.length === 1 ? '' : 's'}`)
-    if (whisperList.length) parts.push(`${whisperList.length} peek${whisperList.length === 1 ? '' : 's'}`)
-    if (parts.length === 0) return 'A quiet workspace — invite some agents to get started.'
-    return `Steward of ${parts.join(' · ')}.`
-  }, [agents.length, convoList.length, whisperList.length])
+    if (agents.length) parts.push(t(agents.length === 1 ? 'mobile.agentCountOne' : 'mobile.agentCountMany', { count: agents.length }))
+    if (convoList.length) parts.push(t(convoList.length === 1 ? 'mobile.roomCountOne' : 'mobile.roomCountMany', { count: convoList.length }))
+    if (whisperList.length) parts.push(t(whisperList.length === 1 ? 'mobile.peekCountOne' : 'mobile.peekCountMany', { count: whisperList.length }))
+    if (parts.length === 0) return t('mobile.quietWorkspace')
+    return t('mobile.stewardOf', { items: parts.join(' · ') })
+  }, [agents.length, convoList.length, whisperList.length, t])
 
   return (
     <section className="flex flex-col h-full overflow-hidden bg-paper">
@@ -146,7 +146,7 @@ export function MobileMe() {
                       <div className="min-w-0 flex-1">
                         <div className="text-[13px] font-semibold text-ink-900 leading-tight truncate">{a.name}</div>
                         <div className="font-display italic text-[10.5px] text-ink-500 leading-tight truncate">
-                          {a.role ?? 'agent'}
+                          {a.role ?? translate('agent')}
                         </div>
                       </div>
                     </div>
@@ -189,8 +189,8 @@ export function MobileMe() {
                   className="w-full text-left flex items-center gap-3 p-3.5 active:bg-paper transition"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-[13px] text-ink-900 leading-tight">{it.lbl}</div>
-                    <div className="font-display italic text-[11px] text-ink-500 mt-0.5">{it.sub}</div>
+                    <div className="font-semibold text-[13px] text-ink-900 leading-tight">{translate(it.lbl)}</div>
+                    <div className="font-display italic text-[11px] text-ink-500 mt-0.5">{translate(it.sub)}</div>
                   </div>
                   <span className={cn('w-9 h-5 rounded-full relative shrink-0 transition-colors', on ? 'bg-skype' : 'bg-ink-200')}>
                     <span className={cn('absolute w-4 h-4 bg-white rounded-full top-0.5 transition-all', on ? 'left-[18px]' : 'left-0.5')}
@@ -264,16 +264,16 @@ function PushStatusTile() {
     : perm === 'denied' ? 'var(--coral)'
     : perm === 'prompt' || perm === 'prompt-with-rationale' ? 'var(--gold)'
     : 'var(--ink-300)'
-  const permLabel = perm === 'granted' ? 'Allowed'
-    : perm === 'denied' ? 'Blocked'
-    : perm === 'prompt' || perm === 'prompt-with-rationale' ? 'Not asked yet'
-    : 'Unknown'
+  const permLabel = perm === 'granted' ? translate('Allowed')
+    : perm === 'denied' ? translate('Blocked')
+    : perm === 'prompt' || perm === 'prompt-with-rationale' ? translate('Not asked yet')
+    : translate('Unknown')
   const stepLabel: Record<typeof status.lastStep, string> = {
-    idle:                 'init never ran (check the prefs toggle above)',
-    'load-plugin':        'stuck loading the @capacitor/push-notifications plugin',
-    'request-permission': 'stuck asking iOS for permission (system dialog blocked?)',
-    register:             'stuck on APNs token request (entitlement / network)',
-    done:                 'init completed — waiting for APNs to hand back a token',
+    idle:                 translate('init never ran (check the prefs toggle above)'),
+    'load-plugin':        translate('stuck loading the @capacitor/push-notifications plugin'),
+    'request-permission': translate('stuck asking iOS for permission (system dialog blocked?)'),
+    register:             translate('stuck on APNs token request (entitlement / network)'),
+    done:                 translate('init completed — waiting for APNs to hand back a token'),
   }
 
   const reregister = async (force: boolean) => {
@@ -304,7 +304,7 @@ function PushStatusTile() {
         </div>
         <span className="text-[10.5px] font-bold tracking-wider uppercase px-2 py-1 rounded-full"
           style={{ background: 'var(--ink-100)', color: 'var(--ink-700)' }}>
-          {status.prefEnabled ? 'On' : 'Off'}
+          {status.prefEnabled ? translate('On') : translate('Off')}
         </span>
       </div>
       <div className="p-3.5 flex items-center gap-3">
@@ -332,7 +332,7 @@ function PushStatusTile() {
           <div className="font-semibold text-[13px] text-ink-900 leading-tight">{translate("Device token")}</div>
           <div className="font-display italic text-[11px] text-ink-500 mt-0.5">
             {status.tokenSuffix
-              ? `Registered with server (…${status.tokenSuffix}).`
+              ? `${translate('Registered with server')} (…${status.tokenSuffix}).`
               : translate("No APNs token yet — see the last-step row below.")}
           </div>
         </div>

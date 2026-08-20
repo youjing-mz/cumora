@@ -257,7 +257,7 @@ export function AgentEditor({ agent, onClose }: Props) {
 
           {isByoa && (
             <Field
-              label="Small-brain model (小脑)"
+              label={translate("Small-brain model (小脑)")}
               hint={engine === 'codex'
                 ? 'Cheaper model for light auxiliary tasks (e.g. gpt-5.4-mini). Blank = same as big-brain.'
                 : engine === 'grok'
@@ -277,7 +277,7 @@ export function AgentEditor({ agent, onClose }: Props) {
 
           <Field
             label={t('agents.runsOn')}
-            hint="Which computer executes this agent. Cumora Cloud is managed; a computer you've paired runs it on your local Claude Code, Codex, or Grok Build."
+              hint={translate("Which computer executes this agent. Cumora Cloud is managed; a computer you've paired runs it on your local Claude Code, Codex, or Grok Build.")}
           >
             <Select
               ariaLabel={t('agents.runsOn')}
@@ -344,7 +344,7 @@ export function AgentEditor({ agent, onClose }: Props) {
             )}
           </Field>
 
-          <Field label={t('agents.avatarColor')} hint="Used as a fallback when no AI portrait is generated.">
+          <Field label={t('agents.avatarColor')} hint={translate("Used as a fallback when no AI portrait is generated.")}>
             <div className="flex flex-wrap gap-2">
               {PALETTE.map((c) => (
                 <button

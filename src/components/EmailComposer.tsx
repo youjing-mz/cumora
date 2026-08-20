@@ -433,7 +433,7 @@ export function EmailComposer() {
 
         {!isReply && (
           <PillField
-            label="To"
+            label={translate("To")}
             entries={to}
             onChange={setTo}
             placeholder={translate("address or @id, comma to add")}
@@ -442,7 +442,7 @@ export function EmailComposer() {
         )}
         {!isReply && (showCc || cc.length > 0 ? (
           <PillField
-            label="Cc"
+            label={translate("Cc")}
             entries={cc}
             onChange={setCc}
             placeholder={translate("optional")}
@@ -482,7 +482,7 @@ export function EmailComposer() {
         )}
         {isReply && (
           <PillField
-            label="Cc"
+            label={translate("Cc")}
             entries={cc}
             onChange={setCc}
             placeholder={translate("add anyone to cc (optional)")}

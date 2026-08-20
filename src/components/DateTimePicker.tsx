@@ -298,13 +298,13 @@ export function DateTimePicker({
             {mode === 'datetime' && (
               <div className="flex gap-1 border-l border-ink-100 pl-3">
                 <Column
-                  label="hr"
+                  label={translate("hr")}
                   values={Array.from({ length: 24 }, (_, h) => h)}
                   selected={hour}
                   onPick={pickHour}
                 />
                 <Column
-                  label="min"
+                  label={translate("min")}
                   values={MINUTE_STEPS}
                   // Highlight the closest 5-min step so picker stays useful
                   // even when the value was set to, say, :17 via the API.

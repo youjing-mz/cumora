@@ -237,7 +237,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             />
           </Field>
 
-          <Field label={t('calendar.kind')} hint="Agent task fires a prompt; personal is just a time marker.">
+          <Field label={t('calendar.kind')} hint={translate("Agent task fires a prompt; personal is just a time marker.")}>
             <div className="flex gap-2">
               {(['agent_task', 'personal'] as const).map((k) => (
                 <button
@@ -294,7 +294,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             </div>
           </Field>
 
-          <Field label={t('calendar.repeat')} hint="Leave off for a one-shot event.">
+          <Field label={t('calendar.repeat')} hint={translate("Leave off for a one-shot event.")}>
             <label className="flex items-center gap-2 text-[13px] text-ink-700 mb-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -384,7 +384,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             )}
           </Field>
 
-          <Field label={t('calendar.reminder')} hint="Heads-up to you (and any human assignee) before each occurrence.">
+          <Field label={t('calendar.reminder')} hint={translate("Heads-up to you (and any human assignee) before each occurrence.")}>
             <label className="flex items-center gap-2 text-[13px] text-ink-700 mb-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -449,7 +449,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
 
           {kind === 'agent_task' && (
             <>
-              <Field label={t('calendar.assignTo')} hint="The agent (or human) who'll receive the dispatch.">
+          <Field label={t('calendar.assignTo')} hint={translate("The agent (or human) who'll receive the dispatch.")}>
                 <div className="grid grid-cols-1 gap-1 max-h-[200px] overflow-auto pr-1">
                   {candidates.map((p) => {
                     const on = assigneeId === p.id
@@ -485,7 +485,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                 </div>
               </Field>
 
-              <Field label={t('calendar.postIn')} hint="Where the dispatch message lands when it fires. Leave blank to use your DM with the assignee.">
+          <Field label={t('calendar.postIn')} hint={translate("Where the dispatch message lands when it fires. Leave blank to use your DM with the assignee.")}>
                 <select
                   value={targetConversationId ?? ''}
                   onChange={(e) => setTargetConversationId(e.target.value || null)}
@@ -498,7 +498,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                 </select>
               </Field>
 
-              <Field label={t('calendar.prompt')} hint="What the agent should do each time. Plain text — agents see it as a system message.">
+          <Field label={t('calendar.prompt')} hint={translate("What the agent should do each time. Plain text — agents see it as a system message.")}>
                 <TextArea
                   value={agentPrompt}
                   onChange={(e) => setAgentPrompt(e.target.value)}
@@ -510,7 +510,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             </>
           )}
 
-          <Field label={t('calendar.privacy')} hint="Private events only show up for the creator and the assignee. The workspace owner can still see private events that involve an agent, for supervision. Default: shared with everyone in the workspace.">
+          <Field label={t('calendar.privacy')} hint={translate("Private events only show up for the creator and the assignee. The workspace owner can still see private events that involve an agent, for supervision. Default: shared with everyone in the workspace.")}>
             <label className="flex items-center gap-2 text-[13px] text-ink-700 cursor-pointer">
               <input
                 type="checkbox"
@@ -521,7 +521,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             </label>
           </Field>
 
-          <Field label={t('calendar.notes')} hint="Optional context — shown alongside the prompt on dispatch.">
+          <Field label={t('calendar.notes')} hint={translate("Optional context — shown alongside the prompt on dispatch.")}>
             <TextArea
               value={description}
               onChange={(e) => setDescription(e.target.value)}

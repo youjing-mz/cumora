@@ -61,7 +61,7 @@ export function MobileAgents() {
         style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)', background: 'rgba(250, 252, 254, 0.95)' }}>
         <div className="px-4 pt-2 pb-3">
           <h1 className="font-display font-medium text-[26px] tracking-tight text-ink-900 leading-none">
-            {t('agents.yourTeam')} <em className="not-italic text-skype-deep" style={{ fontStyle: 'italic', fontWeight: 400 }}>{t('common.of')} {agents.length}</em>
+        {t('agents.teamCount', { count: agents.length })}
           </h1>
           <div className="text-[12.5px] text-ink-500 mt-0.5 font-display italic">
             {t('agents.teamDescription')}

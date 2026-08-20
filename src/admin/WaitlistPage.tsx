@@ -125,11 +125,11 @@ export function WaitlistPage({ onChanged }: { onChanged: () => void }) {
                 {entry.note && <div className="admin-note">{translate("note:")}{' '}{entry.note}</div>}
               </div>
             </div>
-            <div data-label="Provider">
+            <div data-label={translate("Provider")}>
               <span className={`admin-pill admin-pill-${entry.provider}`}>{entry.provider}</span>
             </div>
-            <div className="admin-cell-mono" data-label="Requested">{fmtDateTime(entry.requestedAt)}</div>
-            <div className="admin-cell-mono" data-label="Decided">
+            <div className="admin-cell-mono" data-label={translate("Requested")}>{fmtDateTime(entry.requestedAt)}</div>
+            <div className="admin-cell-mono" data-label={translate("Decided")}>
               {entry.decidedAt ? fmtDateTime(entry.decidedAt) : '—'}
             </div>
             <div className="admin-row-actions">

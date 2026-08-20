@@ -744,10 +744,10 @@ function PreferencesTab() {
             checked={devtoolsEnabled}
             disabled={devtoolsLocal}
             onCheckedChange={(next) => { void setDevMode(next) }}
-            label="Developer mode"
+            label={translate("Developer mode")}
             description={devtoolsLocal
-              ? 'Always on while running the local development build'
-              : 'Show Observe and unlock backend-gated developer tools on this device'}
+              ? translate('Always on while running the local development build')
+              : translate('Show Observe and unlock backend-gated developer tools on this device')}
           />
         </Section>
       )}
