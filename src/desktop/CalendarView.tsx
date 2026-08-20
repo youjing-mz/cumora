@@ -25,6 +25,7 @@ import { Avatar } from '@/components/Avatar'
 import { IPlus, ICalendar, IClock, IRepeat, ITrash } from '@/components/icons'
 import { EventEditor, type EventEditorPrefill } from '@/components/EventEditor'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/i18n'
 import type { CalendarEvent, RecurrenceRule } from '@/types'
 
 interface AgendaItem {
@@ -616,6 +617,7 @@ function TimeGrid({ cursor, events, onEdit, onNew, dayCount }: GridProps & { day
 /* ─────────────────────────── CalendarView ─────────────────────────── */
 
 export function CalendarView() {
+  const { t } = useI18n()
   const [mode, setMode] = useState<ViewMode>('week')
   const [cursor, setCursor] = useState<Date>(() => new Date())
   const [editing, setEditing] = useState<EditingState>(null)
@@ -690,7 +692,7 @@ export function CalendarView() {
             <button onClick={goPrev}
               className="w-7 h-7 rounded-md grid place-items-center text-ink-500 hover:bg-ink-100">‹</button>
             <button onClick={goToday}
-              className="px-2 h-7 rounded-md text-xs font-medium text-ink-700 hover:bg-ink-100">Today</button>
+              className="px-2 h-7 rounded-md text-xs font-medium text-ink-700 hover:bg-ink-100">{t('common.today')}</button>
             <button onClick={goNext}
               className="w-7 h-7 rounded-md grid place-items-center text-ink-500 hover:bg-ink-100">›</button>
             <span className="ml-2 text-sm text-ink-700 font-medium">{headerLabel}</span>
@@ -738,7 +740,7 @@ export function CalendarView() {
       <aside className="border-l border-ink-100 flex flex-col min-h-0">
         <div className="px-4 py-4 border-b border-ink-100 flex items-center gap-2 shrink-0">
           <IClock className="w-4 h-4 text-ink-500" />
-          <h2 className="text-sm font-semibold text-ink-700">Upcoming</h2>
+          <h2 className="text-sm font-semibold text-ink-700">{t('calendar.upcoming')}</h2>
           <div className="flex-1" />
           <span className="text-xs text-ink-400">{agenda.length} item{agenda.length === 1 ? '' : 's'}</span>
         </div>
@@ -748,11 +750,11 @@ export function CalendarView() {
           )}
           {loaded && agenda.length === 0 && (
             <div className="px-1 py-6 text-center">
-              <div className="text-sm text-ink-500 mb-2">Nothing scheduled for the next 30 days.</div>
+              <div className="text-sm text-ink-500 mb-2">{t('calendar.nothingScheduled')}</div>
               <button
                 onClick={() => openNew()}
                 className="text-xs text-skype font-medium hover:underline"
-              >Schedule something →</button>
+              >{t('calendar.schedule')}</button>
             </div>
           )}
           {agenda.map((it, idx) => {
@@ -811,7 +813,7 @@ export function CalendarView() {
                           try { await runNow(it.event.id) } catch (err) { console.warn('[calendar] run-now failed', err) }
                         }}
                         className="text-[10px] text-skype-deep px-1.5 py-0.5 rounded hover:bg-sky2-100"
-                      >Run now</button>
+                      >{t('calendar.runNow')}</button>
                     )}
                     {(it.event.createdBy === meId) && (
                       <button

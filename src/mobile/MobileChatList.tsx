@@ -20,9 +20,14 @@ import { SwipeableRow, type SwipeAction } from './SwipeableRow'
 import { PullToRefresh } from './PullToRefresh'
 import { Virtuoso } from 'react-virtuoso'
 import type { Conversation, Participant } from '@/types'
+import { useI18n } from '@/i18n'
 
 const filters = ['All', 'Agents', 'Whispers', 'Humans'] as const
 type Filter = (typeof filters)[number]
+
+function mobileFilterLabel(t: (key: string) => string, filter: Filter): string {
+  return t(filter === 'All' ? 'conversations.all' : filter === 'Agents' ? 'conversations.agents' : filter === 'Whispers' ? 'conversations.whispers' : 'conversations.humans')
+}
 
 function TeamFallback() {
   return (
@@ -99,8 +104,9 @@ function ConvoAvatar({ c, size = 48 }: { c: Conversation; size?: number }) {
 /** Small bell-off glyph for muted conversation rows. Same shape as
  *  the desktop pane's indicator — Slack / iOS Messages convention. */
 function MutedGlyph() {
+  const { t } = useI18n()
   return (
-    <span className="inline-flex items-center justify-center w-3.5 h-3.5 shrink-0 text-ink-300" aria-label="Muted">
+    <span className="inline-flex items-center justify-center w-3.5 h-3.5 shrink-0 text-ink-300" aria-label={t('conversations.muted')}>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         <path d="M18.63 13A17.9 17.9 0 0 1 18 8" />
@@ -392,6 +398,7 @@ function convoMenuItems(
 }
 
 export function MobileChatList() {
+  const { t } = useI18n()
   const select = useApp((s) => s.selectConversation)
   const list = useConversations((s) => s.list)
   const byId = useParticipants((s) => s.byId)
@@ -502,7 +509,7 @@ export function MobileChatList() {
               'ml-auto w-9 h-9 rounded-full grid place-items-center text-ink-700 border',
               searchOpen ? 'bg-sky2-50 border-sky2-200 text-skype-deep' : 'bg-cloud border-ink-100',
             )}
-            aria-label={searchOpen ? 'Close search' : 'Open search'}
+            aria-label={searchOpen ? t('common.close') : t('mobile.openSearch')}
           >
             <ISearch className="w-[18px] h-[18px]" />
           </Pressable>
@@ -518,7 +525,7 @@ export function MobileChatList() {
                 type="search"
                 value={searchQ}
                 onChange={(e) => setSearchQ(e.target.value)}
-                placeholder="Search conversations, agents…"
+                placeholder={t('mobile.searchConversations')}
                 className="flex-1 bg-transparent outline-none text-[14px] text-ink-900 placeholder:text-ink-300"
                 autoCapitalize="none"
                 autoCorrect="off"
@@ -528,7 +535,7 @@ export function MobileChatList() {
                 <Pressable
                   onClick={() => setSearchQ('')}
                   className="text-ink-500 px-1.5 text-[18px] leading-none"
-                  aria-label="Clear"
+                  aria-label={t('common.clear')}
                 >×</Pressable>
               )}
             </div>
@@ -553,7 +560,7 @@ export function MobileChatList() {
                   borderColor: 'var(--sky-200)',
                   boxShadow: '0 1px 2px -1px rgba(0, 120, 200, 0.12)',
                 } : undefined}
-              >{f}</Pressable>
+              >{mobileFilterLabel(t, f)}</Pressable>
             )
           })}
         </div>
@@ -578,7 +585,7 @@ export function MobileChatList() {
                 and the gesture-bound `y` transform keep working. */}
             <div className="px-0 pt-1.5 pb-1">
               {byRecency.length === 0 ? (
-                <div className="px-3 py-6 text-center text-[13px] text-ink-300 font-display italic">no conversations yet</div>
+                <div className="px-3 py-6 text-center text-[13px] text-ink-300 font-display italic">{t('common.noConversations')}</div>
               ) : scroller ? (
                 <Virtuoso
                   customScrollParent={scroller}

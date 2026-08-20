@@ -16,6 +16,7 @@ import { IDoc, IBoard, ICalendar, IPlus } from '@/components/icons'
 import { MobileCalendar } from './MobileCalendar'
 import { EventEditor } from '@/components/EventEditor'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/i18n'
 
 type LibTab = 'documents' | 'boards' | 'calendar'
 
@@ -26,6 +27,7 @@ const TABS: Array<{ key: LibTab; label: string; Icon: typeof IDoc }> = [
 ]
 
 export function MobileLibrary() {
+  const { t } = useI18n()
   const [tab, setTab] = useState<LibTab>('documents')
   const create = useDocuments((s) => s.create)
   const createBoard = useBoards((s) => s.createBoard)
@@ -62,10 +64,10 @@ export function MobileLibrary() {
         style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
         <div className="px-4 pt-2 pb-2">
           <h1 className="font-display font-medium text-[26px] tracking-tight text-ink-900 leading-none">
-            Library
+            {t('mobile.library')}
           </h1>
           <div className="text-[12.5px] text-ink-500 mt-0.5 font-display italic">
-            documents, boards & schedule
+            {t('mobile.libraryDescription')}
           </div>
         </div>
         <div className="px-3 pb-3 flex gap-1.5">
@@ -103,7 +105,7 @@ export function MobileLibrary() {
       <button
         onClick={onPlus}
         disabled={creating}
-        aria-label={tab === 'documents' ? 'New document' : tab === 'boards' ? 'New board' : 'New event'}
+        aria-label={tab === 'documents' ? t('mobile.newDocument') : tab === 'boards' ? t('mobile.newBoard') : t('mobile.newEvent')}
         className="absolute right-4 bottom-4 z-20 w-14 h-14 rounded-full grid place-items-center text-white active:scale-95 transition disabled:opacity-50"
         style={{
           background: tab === 'documents'
@@ -137,6 +139,7 @@ function timeAgo(iso: string): string {
 }
 
 function DocumentsList() {
+  const { t } = useI18n()
   const list = useDocuments((s) => s.list)
   const loaded = useDocuments((s) => s.loaded)
   const load = useDocuments((s) => s.load)
@@ -149,11 +152,11 @@ function DocumentsList() {
   return (
     <div className="pb-24">
       {!loaded && (
-        <div className="px-6 py-10 text-center text-[13px] text-ink-300 font-display italic">Loading…</div>
+        <div className="px-6 py-10 text-center text-[13px] text-ink-300 font-display italic">{t('common.loading')}</div>
       )}
       {loaded && list.length === 0 && (
         <div className="px-6 py-12 text-center text-[13px] text-ink-500 font-display italic leading-relaxed">
-          No documents yet. Tap the + to create one — humans and agents both edit live.
+          {t('mobile.noDocuments')}
         </div>
       )}
       <div className="divide-y divide-ink-100">
@@ -185,6 +188,7 @@ function DocumentsList() {
 }
 
 function BoardsList() {
+  const { t } = useI18n()
   const list = useBoards((s) => s.list)
   const loadingList = useBoards((s) => s.loadingList)
   const loadList = useBoards((s) => s.loadList)
@@ -197,11 +201,11 @@ function BoardsList() {
   return (
     <div className="pb-24">
       {loadingList && list.length === 0 && (
-        <div className="px-6 py-10 text-center text-[13px] text-ink-300 font-display italic">Loading…</div>
+        <div className="px-6 py-10 text-center text-[13px] text-ink-300 font-display italic">{t('common.loading')}</div>
       )}
       {!loadingList && list.length === 0 && (
         <div className="px-6 py-12 text-center text-[13px] text-ink-500 font-display italic leading-relaxed">
-          No boards yet. Tap the + to start one — agents can move cards through it on their own.
+          {t('mobile.noBoards')}
         </div>
       )}
       <div className="divide-y divide-ink-100">
@@ -232,4 +236,3 @@ function BoardsList() {
     </div>
   )
 }
-

@@ -29,6 +29,7 @@ import { IBack, IMore } from '@/components/icons'
 import { parseBody, parseBlocks } from '@/lib/utils'
 import type { ApiWhisper, ApiWhisperMessage } from '@/api/client'
 import type { Participant } from '@/types'
+import { useI18n } from '@/i18n'
 
 function shortTime(iso: string): string {
   const d = new Date(iso)
@@ -188,6 +189,7 @@ function WhisperListRow({ w, onSelect }: { w: ApiWhisper; onSelect: (id: string)
 }
 
 export function MobileWhispersList({ onSelect }: { onSelect: (id: string) => void }) {
+  const { t } = useI18n()
   const list = useWhispers((s) => s.list)
   const loaded = useWhispers((s) => s.loaded)
 
@@ -290,6 +292,7 @@ function Bubble({ msg }: { msg: ApiWhisperMessage }) {
 }
 
 export function MobileWhisperRoom({ pairId, onBack }: { pairId: string; onBack: () => void }) {
+  const { t } = useI18n()
   const list = useWhispers((s) => s.list)
   const byIdList = useWhispers((s) => s.byId)
   const streaming = useWhispers((s) => s.streaming)
@@ -371,15 +374,15 @@ export function MobileWhisperRoom({ pairId, onBack }: { pairId: string; onBack: 
             <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
           </div>
           <div className="text-[11px] text-whisper-deep flex-1">
-            <b className="font-bold tracking-wider uppercase text-[10px]">Observer mode</b>
-            <span className="font-display italic font-normal text-ink-500 ml-1.5">silent peek — they can't see you</span>
+            <b className="font-bold tracking-wider uppercase text-[10px]">{t('mobile.observerMode')}</b>
+            <span className="font-display italic font-normal text-ink-500 ml-1.5">{t('mobile.silentPeek')}</span>
           </div>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-3 relative">
         {messages.length === 0 && (
-          <div className="text-center text-ink-300 text-[12px] font-display italic py-6">no messages yet</div>
+          <div className="text-center text-ink-300 text-[12px] font-display italic py-6">{t('common.noMessages')}</div>
         )}
         {messages.map((msg) => <Bubble key={msg.id} msg={msg} />)}
       </div>
@@ -387,7 +390,7 @@ export function MobileWhisperRoom({ pairId, onBack }: { pairId: string; onBack: 
       <div className="border-t border-whisper-100 bg-cloud px-3 pt-2.5 flex items-center gap-2 kb-aware">
         <div className="flex-1 bg-paper rounded-[20px] py-2.5 px-3.5 min-h-[40px] flex items-center"
           style={{ border: '1px solid var(--whisper-100)' }}>
-          <span className="text-[13px] text-ink-300 italic flex-1">Inject a thought…</span>
+          <span className="text-[13px] text-ink-300 italic flex-1">{t('mobile.injectThought')}</span>
         </div>
       </div>
     </section>

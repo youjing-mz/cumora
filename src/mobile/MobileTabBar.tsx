@@ -4,14 +4,15 @@ import { useConversations, isMuted } from '@/stores/conversations'
 import { IChat, IWhisper, IDoc, IAgent, IAgents, IShip } from '@/components/icons'
 import { Pressable } from './Pressable'
 import type { ViewKey } from '@/types'
+import { useI18n } from '@/i18n'
 
 const tabs: Array<{ key: ViewKey['view']; Icon: typeof IChat; label: string }> = [
-  { key: 'conversations', Icon: IChat, label: 'Chats' },
-  { key: 'whispers', Icon: IWhisper, label: 'Whispers' },
-  { key: 'shipping', Icon: IShip, label: 'Ship' },
-  { key: 'library', Icon: IDoc, label: 'Library' },
-  { key: 'agents', Icon: IAgent, label: 'Agents' },
-  { key: 'me', Icon: IAgents, label: 'Me' },
+  { key: 'conversations', Icon: IChat, label: 'nav.conversations' },
+  { key: 'whispers', Icon: IWhisper, label: 'nav.whispers' },
+  { key: 'shipping', Icon: IShip, label: 'nav.ship' },
+  { key: 'library', Icon: IDoc, label: 'mobile.library' },
+  { key: 'agents', Icon: IAgent, label: 'nav.agents' },
+  { key: 'me', Icon: IAgents, label: 'nav.me' },
 ]
 
 /**
@@ -25,6 +26,7 @@ const tabs: Array<{ key: ViewKey['view']; Icon: typeof IChat; label: string }> =
  * is the structural piece that matches native chrome.
  */
 export function MobileTabBar() {
+  const { t } = useI18n()
   const view = useApp((s) => s.view)
   const setView = useApp((s) => s.setView)
   const select = useApp((s) => s.selectConversation)
@@ -74,7 +76,7 @@ export function MobileTabBar() {
                 >{badge}</span>
               )}
             </span>
-            <span className="text-[10px] font-semibold tracking-wide">{label}</span>
+            <span className="text-[10px] font-semibold tracking-wide">{t(label)}</span>
           </Pressable>
         )
       })}

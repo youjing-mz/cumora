@@ -706,6 +706,7 @@ function ProjectsTab() {
 }
 
 function PreferencesTab() {
+  const { t } = useI18n()
   const prefs = usePrefs((s) => s.prefs)
   const setPref = usePrefs((s) => s.setPref)
   const devtoolsEnabled = useDevtools((s) => s.enabled)
@@ -722,7 +723,7 @@ function PreferencesTab() {
   return (
     <div className="space-y-6">
       {PREF_GROUPS.map((g) => (
-        <Section key={g.title} title={`↳ ${g.title}`}>
+        <Section key={g.title} title={`↳ ${t(g.title === 'Notifications' ? 'me.notifications' : g.title === 'Look & feel' ? 'me.lookAndFeel' : 'me.privacy')}`}>
           <div className="bg-cloud rounded-[14px] divide-y divide-ink-100"
             style={{ border: '1px solid var(--ink-100)' }}>
             {g.items.map((it, i) => {
@@ -730,8 +731,8 @@ function PreferencesTab() {
               return (
                 <div key={i} className="flex items-center gap-4 p-4 cursor-pointer" onClick={() => setPref(it.key, !on)}>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-[13px] text-ink-900">{it.lbl}</div>
-                    <div className="font-display italic font-normal text-[11.5px] text-ink-500 mt-0.5">{it.sub}</div>
+                    <div className="font-semibold text-[13px] text-ink-900">{prefText(t, it.lbl)}</div>
+                    <div className="font-display italic font-normal text-[11.5px] text-ink-500 mt-0.5">{prefText(t, it.sub)}</div>
                   </div>
                   <span className={cn('w-9 h-5 rounded-full relative shrink-0 transition-colors', on ? 'bg-skype' : 'bg-ink-200')}>
                     <span className={cn('absolute w-4 h-4 bg-white rounded-full top-0.5 transition-all', on ? 'left-[18px]' : 'left-0.5')}
@@ -745,7 +746,7 @@ function PreferencesTab() {
       ))}
       <SkypeSoundSection />
       {devtoolsCanEnable && (
-        <Section title="↳ Developer">
+        <Section title={`↳ ${t('me.developer').replace(/^↳ /, '')}`}>
           <Checkbox
             checked={devtoolsEnabled}
             disabled={devtoolsLocal}
@@ -762,6 +763,7 @@ function PreferencesTab() {
 }
 
 function SkypeSoundSection() {
+  const { t } = useI18n()
   // Local-only toggle — see stores/sound.ts for why this isn't synced
   // through the server preferences store. Default is muted; users opt
   // in if they want the classic (clap) / (drum) chimes.
@@ -769,12 +771,12 @@ function SkypeSoundSection() {
   const setMuted = useSoundStore((s) => s.setMuted)
   const on = !muted
   return (
-    <Section title="↳ Skype emoticons">
+    <Section title={t('me.emoticons')}>
       <div className="bg-cloud rounded-[14px]"
         style={{ border: '1px solid var(--ink-100)' }}>
         <div className="flex items-center gap-4 p-4 cursor-pointer" onClick={() => setMuted(on)}>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-[13px] text-ink-900">Play classic Skype sounds</div>
+            <div className="font-semibold text-[13px] text-ink-900">{t('me.playSounds')}</div>
             <div className="font-display italic font-normal text-[11.5px] text-ink-500 mt-0.5">
               this device only · plays once when a Skype emoticon enters view; click an emoticon to replay
             </div>
@@ -1103,6 +1105,7 @@ function DaemonUpgradeBanner({ onJump }: { onJump: () => void }) {
 }
 
 export function MeView() {
+  const { t } = useI18n()
   const [tab, setTab] = useState<Tab>('Profile')
   const hasOutdated = useComputers((s) => Object.values(s.byId).some((c) => c.daemonOutdated))
   useEffect(() => { void useComputers.getState().refresh() }, [])
@@ -1113,28 +1116,28 @@ export function MeView() {
       <div className="max-w-[1100px] mx-auto">
         <div className="mb-6">
           <h1 className="font-display font-medium text-[36px] tracking-tight text-ink-900 mb-1" style={{ letterSpacing: '-0.025em' }}>
-            You <em className="italic text-coral-deep" style={{ fontStyle: 'italic', fontWeight: 400 }}>at the center</em>
+            {t('me.title')} <em className="italic text-coral-deep" style={{ fontStyle: 'italic', fontWeight: 400 }}>{t('me.titleAccent')}</em>
           </h1>
           <div className="font-display italic font-normal text-[15px] text-ink-500">
-            How your agents see you, what they remember, and how much rope they get.
+            {t('me.subtitle')}
           </div>
         </div>
 
         <DaemonUpgradeBanner onJump={() => setTab('Computers')} />
 
         <div className="flex gap-1 mb-7 border-b border-ink-100">
-          {tabs.map((t, i) => (
+          {tabs.map((tabName, i) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabName}
+              onClick={() => setTab(tabName)}
               className={cn(
                 'py-2.5 text-[13px] font-semibold border-b-2 transition -mb-px inline-flex items-center gap-1.5',
                 i === 0 ? 'pl-0 pr-5' : 'px-5',
-                tab === t ? 'border-skype text-skype-deep' : 'border-transparent text-ink-500 hover:text-ink-700',
+                tab === tabName ? 'border-skype text-skype-deep' : 'border-transparent text-ink-500 hover:text-ink-700',
               )}>
-              {t}
-              {t === 'Computers' && hasOutdated && (
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--gold-deep)' }} title="A daemon needs updating" />
+              {t(tabName === 'Profile' ? 'me.profile' : tabName === 'Usage' ? 'me.usage' : tabName === 'Computers' ? 'me.computers' : tabName === 'Projects' ? 'me.projects' : tabName === 'Trust & autonomy' ? 'me.trust' : 'me.preferences')}
+              {tabName === 'Computers' && hasOutdated && (
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--gold-deep)' }} title={t('me.computersUpdate')} />
               )}
             </button>
           ))}
@@ -1149,4 +1152,30 @@ export function MeView() {
       </div>
     </main>
   )
+}
+
+function prefText(t: (key: string, vars?: Record<string, string | number>) => string, value: string): string {
+  const map: Record<string, string> = {
+    'When an agent pulls a group with you in it': 'me.notifyGroupPulled',
+    'When a whisper mentions you': 'me.notifyWhisperMention',
+    'When a Convene session is called': 'me.notifyConveneCalled',
+    'Daily summary of overnight agent activity': 'me.notifyDailySummary',
+    'always · never · only urgent': 'me.alwaysNeverUrgent',
+    'always · digest · never': 'me.alwaysDigestNever',
+    'always · never': 'me.alwaysNever',
+    '8:00am local time': 'me.dailyTime',
+    'Reduce motion': 'me.reduceMotion',
+    'fewer animations': 'me.fewerAnimations',
+    'Show typing indicators': 'me.typingIndicators',
+    'see when agents are drafting': 'me.seeDrafting',
+    'Show "thinking aloud" snippets in main chat': 'me.thinkingAloud',
+    'usually private to whispers': 'me.privateWhispers',
+    'Let agents whisper without your peek': 'me.silentWhispers',
+    'they still log to your transcript': 'me.logTranscript',
+    'Let agents call new tools autonomously': 'me.newTools',
+    "with the permissions you've granted": 'me.grantedPermissions',
+    'Let agents add humans to groups': 'me.humanInvites',
+    'with your consent each time': 'me.consentEachTime',
+  }
+  return t(map[value] ?? value)
 }

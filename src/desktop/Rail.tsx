@@ -10,19 +10,21 @@ import { IChat, IWhisper, IAgent, IAgents, IBoard, IDoc, ICalendar, IObserve, IE
 import { api } from '@/api/client'
 import { cn } from '@/lib/utils'
 import type { Participant, ViewKey } from '@/types'
+import { useI18n } from '@/i18n'
 
 const baseItems: Array<{ key: ViewKey['view']; Icon: typeof IChat; label: string }> = [
-  { key: 'conversations', Icon: IChat, label: 'Conversations' },
-  { key: 'whispers', Icon: IWhisper, label: 'Whispers' },
-  { key: 'shipping', Icon: IShip, label: 'Ship' },
-  { key: 'boards', Icon: IBoard, label: 'Boards' },
-  { key: 'calendar', Icon: ICalendar, label: 'Calendar' },
-  { key: 'documents', Icon: IDoc, label: 'Docs' },
-  { key: 'agents', Icon: IAgent, label: 'Agents' },
-  { key: 'me', Icon: IAgents, label: 'Me' },
+  { key: 'conversations', Icon: IChat, label: 'nav.conversations' },
+  { key: 'whispers', Icon: IWhisper, label: 'nav.whispers' },
+  { key: 'shipping', Icon: IShip, label: 'nav.ship' },
+  { key: 'boards', Icon: IBoard, label: 'nav.boards' },
+  { key: 'calendar', Icon: ICalendar, label: 'nav.calendar' },
+  { key: 'documents', Icon: IDoc, label: 'nav.docs' },
+  { key: 'agents', Icon: IAgent, label: 'nav.agents' },
+  { key: 'me', Icon: IAgents, label: 'nav.me' },
 ]
 
 export function Rail() {
+  const { t } = useI18n()
   const view = useApp((s) => s.view)
   const setView = useApp((s) => s.setView)
   const devtoolsEnabled = useDevtools((s) => s.enabled)
@@ -45,7 +47,7 @@ export function Rail() {
   const assembled = devtoolsEnabled
     ? [
         ...baseItems.slice(0, 3),
-        { key: 'observability' as const, Icon: IObserve, label: 'Observe' },
+        { key: 'observability' as const, Icon: IObserve, label: 'nav.observe' },
         ...baseItems.slice(3),
       ]
     : baseItems
@@ -77,7 +79,7 @@ export function Rail() {
       <button
         className="mb-3.5 relative"
         onClick={() => setView('me')}
-        title={daemonOutdated ? 'A computer daemon needs updating — open You' : (authUser?.name ?? 'You')}
+        title={daemonOutdated ? t('nav.daemonOutdated') : (authUser?.name ?? t('nav.me'))}
       >
         <Avatar p={meAvatar} size={44} ringColor="var(--cloud)" />
         {daemonOutdated && (
@@ -95,8 +97,8 @@ export function Rail() {
           <button
             key={key}
             onClick={() => setView(key)}
-            title={label}
-            aria-label={label}
+            title={t(label)}
+            aria-label={t(label)}
             className={cn(
               'w-11 h-11 rounded-xl grid place-items-center transition relative',
               active ? 'bg-cloud text-skype-deep shadow-soft' : 'text-ink-500 hover:bg-cloud hover:text-skype-deep',
@@ -127,8 +129,8 @@ export function Rail() {
           location.reload()
         }}
         className="w-11 h-11 rounded-xl grid place-items-center text-ink-400 hover:bg-cloud hover:text-coral-deep transition-colors"
-        title="Sign out"
-        aria-label="Sign out"
+        title={t('nav.signOut')}
+        aria-label={t('nav.signOut')}
       >
         <IExit className="w-[22px] h-[22px]" />
       </button>

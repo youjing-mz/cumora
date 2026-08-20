@@ -23,11 +23,13 @@ import { PollComposer } from '@/components/PollComposer'
 import { ScrollToLatestButton } from '@/components/ScrollToLatestButton'
 import { ISearch, IPin, IClip, IAt, ISmile, ISend, IConvene } from '@/components/icons'
 import type { Participant } from '@/types'
+import { useI18n } from '@/i18n'
 
 /** Soft "Coming soon" popover anchored beneath the trigger. Auto-dismisses
  *  after a beat; also closes on outside-click or Escape. The sparkle
  *  drifts gently so the bubble feels alive rather than static. */
 function ComingSoonPop({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n()
   useEffect(() => {
     // Defer outside-click + key listeners by one tick so the click that
     // opened the bubble doesn't immediately close it again.
@@ -69,9 +71,9 @@ function ComingSoonPop({ onClose }: { onClose: () => void }) {
             style={{ animation: 'cumora-sparkle-drift 2.4s ease-in-out infinite' }}
           >✨</span>
           <div className="min-w-0">
-            <div className="text-[12.5px] font-semibold text-ink-900 leading-tight">Coming soon</div>
+            <div className="text-[12.5px] font-semibold text-ink-900 leading-tight">{t('chat.comingSoon')}</div>
             <div className="text-[11.5px] text-ink-500 font-display italic leading-snug mt-0.5">
-              Live working sessions are still on the way.
+              {t('chat.liveSessionsComing')}
             </div>
           </div>
         </div>
@@ -97,6 +99,7 @@ function ChatHeader({
   onToggleSearch: () => void
   searchOpen: boolean
 }) {
+  const { t } = useI18n()
   void onConvene
   const c = useConversations((s) => s.list.find((x) => x.id === convoId))
   const byId = useParticipants((s) => s.byId)
@@ -234,7 +237,7 @@ function ChatHeader({
               <button
                 onClick={startEditTopic}
                 className="text-ink-300 italic font-display hover:text-skype-deep transition shrink-0"
-                title="Set a topic"
+                title={t('chat.setTopic')}
               >+ topic</button>
             </>
           )}
@@ -253,7 +256,7 @@ function ChatHeader({
               if (e.key === 'Enter') { e.preventDefault(); void saveTopic() }
               if (e.key === 'Escape') setEditingTopic(false)
             }}
-            placeholder="What's this group for?"
+              placeholder={t('chat.topicPlaceholder')}
             className="mt-0.5 w-full bg-transparent text-[12px] text-ink-700 italic placeholder:text-ink-300 outline-none border-b border-sky2-200 focus:border-skype-deep transition pb-0.5"
             maxLength={200}
           />
@@ -301,8 +304,8 @@ function ChatHeader({
       <div className="flex gap-1 text-ink-500 shrink-0">
         <button
           onClick={onToggleSearch}
-          title="Search in this conversation"
-          aria-label="Search in this conversation"
+          title={t('chat.search')}
+          aria-label={t('chat.search')}
           className={cn(
             'w-9 h-9 rounded-[9px] hidden md:grid place-items-center transition',
             searchOpen ? 'bg-sky2-100 text-skype-deep' : 'hover:bg-sky2-50 hover:text-skype-deep',
@@ -338,12 +341,12 @@ function ChatHeader({
         <div className="relative">
           <button
             onClick={() => setShowConveneSoon((v) => !v)}
-            title="Convene"
+            title={t('chat.convene')}
             className="px-3.5 inline-flex items-center gap-1.5 font-semibold text-[12.5px] rounded-full text-white"
             style={{ height: 36, background: 'var(--skype)', boxShadow: '0 4px 12px -3px rgba(0, 168, 240, 0.5)' }}
           >
             <IConvene className="w-4 h-4" />
-            <span>Convene</span>
+            <span>{t('chat.convene')}</span>
           </button>
           {showConveneSoon && (
             <ComingSoonPop onClose={() => setShowConveneSoon(false)} />
@@ -556,6 +559,7 @@ export function Composer({
   threadRootId?: string | null
   placeholder?: string
 }) {
+  const { t } = useI18n()
   const isThread = threadRootId !== null
   // Draft scope key — distinct namespace for thread mode so swapping between
   // the main composer and a thread drawer doesn't share text.
@@ -1072,8 +1076,8 @@ export function Composer({
             <button
               onClick={() => setReplyingTo(convoId, null)}
               className="w-6 h-6 rounded-md grid place-items-center text-ink-500 hover:bg-cloud hover:text-ink-900 transition shrink-0 self-center"
-              aria-label="Cancel reply"
-              title="Cancel reply (Esc)"
+              aria-label={t('chat.cancelReply')}
+              title={t('chat.cancelReplyEsc')}
             >×</button>
           </div>
         )}
@@ -1081,8 +1085,8 @@ export function Composer({
           <RichInput
             ref={editorRef}
             defaultValue={draft}
-            placeholder={placeholder ?? 'Message the team. Type @ to summon, drop a file to attach.'}
-            ariaLabel="Message composer"
+            placeholder={placeholder ?? t('chat.messagePlaceholder')}
+            ariaLabel={t('chat.messageComposer')}
             className="rich-input whitespace-pre-wrap w-full bg-transparent text-[14px] text-ink-900 leading-[1.5]"
             style={{ minHeight: '1.5em' }}
             maxHeight={200}
@@ -1155,7 +1159,7 @@ export function Composer({
               onMouseDown={(e) => e.preventDefault()}
             >
               <div className="px-3 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">
-                Mention {mention.query ? `· "${mention.query}"` : ''}
+                {t('chat.mention')} {mention.query ? `· "${mention.query}"` : ''}
               </div>
               {filteredMentions.map((entry, i) => {
                 const active = i === mentionIndex
@@ -1177,8 +1181,8 @@ export function Composer({
                         className="w-[26px] h-[26px] rounded-full object-cover"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="text-[12.5px] font-semibold text-ink-900 truncate">Everyone</div>
-                        <div className="text-[10.5px] text-ink-500 truncate">Notify all members of this room</div>
+                        <div className="text-[12.5px] font-semibold text-ink-900 truncate">{t('chat.everyone')}</div>
+                        <div className="text-[10.5px] text-ink-500 truncate">{t('chat.notifyEveryone')}</div>
                       </div>
                     </button>
                   )
@@ -1220,13 +1224,13 @@ export function Composer({
           <button
             onClick={() => fileRef.current?.click()}
             className="w-7 h-7 rounded-[7px] grid place-items-center hover:bg-sky2-50 hover:text-skype-deep transition"
-            title="Attach file"
+            title={t('chat.attachFile')}
           ><IClip className="w-[17px] h-[17px]" /></button>
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => insertAtCursor('@')}
             className="w-7 h-7 rounded-[7px] grid place-items-center hover:bg-sky2-50 hover:text-skype-deep transition"
-            title="Mention"
+            title={t('chat.mention')}
           ><IAt className="w-[17px] h-[17px]" /></button>
           <div className="relative">
             <button
@@ -1235,7 +1239,7 @@ export function Composer({
                 'w-7 h-7 rounded-[7px] grid place-items-center hover:bg-sky2-50 hover:text-skype-deep transition',
                 emojiOpen && 'bg-sky2-50 text-skype-deep',
               )}
-              title="Emoji"
+              title={t('chat.emoji')}
             ><ISmile className="w-[17px] h-[17px]" /></button>
             {emojiOpen && (
               <EmojiPopover
@@ -1253,7 +1257,7 @@ export function Composer({
               boxShadow: canSend ? '0 4px 12px -3px rgba(0, 168, 240, 0.5)' : 'none',
             }}
           >
-            Send <ISend className="w-3.5 h-3.5" strokeWidth={2} />
+            {t('chat.send')} <ISend className="w-3.5 h-3.5" strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -1671,6 +1675,7 @@ function EmptyConversationState() {
 }
 
 export function ChatPane() {
+  const { t } = useI18n()
   const convoId = useApp((s) => s.selectedConversationId)
   const setView = useApp((s) => s.setView)
   // Atomic selectors — primitive / stable refs
@@ -1949,12 +1954,12 @@ export function ChatPane() {
                 if ((e.key === 'Enter' && e.shiftKey) || e.key === 'ArrowUp') { e.preventDefault(); setMatchIdx((i) => (i - 1 + n) % n); return }
                 if (e.key === 'ArrowDown') { e.preventDefault(); setMatchIdx((i) => (i + 1) % n) }
               }}
-              placeholder="Search in this conversation…"
+              placeholder={t('chat.searchPlaceholder')}
               className="flex-1 min-w-0 bg-transparent outline-none text-ink-900 placeholder:text-ink-300"
             />
             <span className="shrink-0 font-mono text-[11px] tabular-nums text-ink-300">
               {matchedIds.length === 0
-                ? (searchQuery.trim() ? 'no matches' : '')
+                ? (searchQuery.trim() ? t('chat.noMatches') : '')
                 : `${matchIdx + 1} / ${matchedIds.length}`}
             </span>
           </div>
@@ -1962,7 +1967,7 @@ export function ChatPane() {
             type="button"
             onClick={() => setMatchIdx((i) => (i - 1 + matchedIds.length) % Math.max(1, matchedIds.length))}
             disabled={matchedIds.length === 0}
-            title="Previous match (Shift+Enter / ↑)"
+            title={t('chat.previousMatch')}
             className="w-8 h-8 rounded-[8px] grid place-items-center text-ink-500 hover:bg-sky2-50 hover:text-skype-deep transition disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink-500"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -1973,7 +1978,7 @@ export function ChatPane() {
             type="button"
             onClick={() => setMatchIdx((i) => (i + 1) % Math.max(1, matchedIds.length))}
             disabled={matchedIds.length === 0}
-            title="Next match (Enter / ↓)"
+            title={t('chat.nextMatch')}
             className="w-8 h-8 rounded-[8px] grid place-items-center text-ink-500 hover:bg-sky2-50 hover:text-skype-deep transition disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink-500"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -1983,7 +1988,7 @@ export function ChatPane() {
           <button
             type="button"
             onClick={() => { setSearchOpen(false); setSearchQuery('') }}
-            title="Close (Esc)"
+            title={t('chat.close')}
             className="w-8 h-8 rounded-[8px] grid place-items-center text-ink-500 hover:bg-sky2-50 transition"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="w-4 h-4">

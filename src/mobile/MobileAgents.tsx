@@ -8,13 +8,10 @@ import { IPlus } from '@/components/icons'
 import { AgentEditor } from '@/components/AgentEditor'
 import { HumanBadge } from '@/components/HumanBadge'
 import type { Participant } from '@/types'
+import { useI18n } from '@/i18n'
 
-const statusLabels: Record<string, string> = {
-  avail: 'Available',
-  working: 'Working',
-  thinking: 'Thinking',
-  waiting: 'Waiting on you',
-  resting: 'Resting',
+const statusKeys: Record<string, string> = {
+  avail: 'agents.available', working: 'agents.working', thinking: 'agents.thinking', waiting: 'agents.waiting', resting: 'agents.resting',
 }
 
 const statusColors: Record<string, string> = {
@@ -26,6 +23,7 @@ const statusColors: Record<string, string> = {
 }
 
 export function MobileAgents() {
+  const { t } = useI18n()
   const byId = useParticipants((s) => s.byId)
   const convoList = useConversations((s) => s.list)
   const setView = useApp((s) => s.setView)
@@ -63,10 +61,10 @@ export function MobileAgents() {
         style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)', background: 'rgba(250, 252, 254, 0.95)' }}>
         <div className="px-4 pt-2 pb-3">
           <h1 className="font-display font-medium text-[26px] tracking-tight text-ink-900 leading-none">
-            Your team <em className="not-italic text-skype-deep" style={{ fontStyle: 'italic', fontWeight: 400 }}>of {agents.length}</em>
+            {t('agents.yourTeam')} <em className="not-italic text-skype-deep" style={{ fontStyle: 'italic', fontWeight: 400 }}>{t('common.of')} {agents.length}</em>
           </h1>
           <div className="text-[12.5px] text-ink-500 mt-0.5 font-display italic">
-            agents work on their own, loop you in when needed
+            {t('agents.teamDescription')}
           </div>
         </div>
       </div>
@@ -81,7 +79,7 @@ export function MobileAgents() {
           ].map(([lbl, n]) => (
             <div key={lbl as string} className="py-1 px-2.5 bg-cloud rounded-full text-ink-700 whitespace-nowrap"
               style={{ border: '1px solid var(--ink-100)' }}>
-              <b className="font-semibold text-skype-deep mr-1">{n as number}</b>{lbl as string}
+              <b className="font-semibold text-skype-deep mr-1">{n as number}</b>{t(`agents.${lbl === 'available' ? 'available' : lbl}`)}
             </div>
           ))}
         </div>
@@ -89,7 +87,7 @@ export function MobileAgents() {
         <div className="space-y-2.5">
           {agents.length === 0 && (
             <div className="text-center text-ink-300 italic font-display py-12 text-[13px]">
-              No agents in this workspace yet. Hire one below.
+              {t('mobile.noAgents')}
             </div>
           )}
           {agents.map((p) => (
@@ -110,7 +108,7 @@ export function MobileAgents() {
                   <div className="inline-flex items-center gap-1.5 text-[10.5px] font-semibold py-0.5 px-2 rounded-full"
                     style={{ background: `${statusColors[p.status]}1F`, color: statusColors[p.status] }}>
                     <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusColors[p.status] }} />
-                    {statusLabels[p.status]}
+                    {t(statusKeys[p.status] ?? 'common.idle')}
                   </div>
                 </div>
               </div>
@@ -137,8 +135,8 @@ export function MobileAgents() {
               <IPlus className="w-5 h-5" strokeWidth={2} />
             </div>
             <div className="text-left">
-              <div className="font-display font-medium text-[15px] text-ink-900" style={{ letterSpacing: '-0.01em' }}>Hire an agent</div>
-              <div className="font-display italic text-[11.5px] text-ink-500">design a new teammate</div>
+              <div className="font-display font-medium text-[15px] text-ink-900" style={{ letterSpacing: '-0.01em' }}>{t('mobile.hireAgent')}</div>
+              <div className="font-display italic text-[11.5px] text-ink-500">{t('mobile.designTeammate')}</div>
             </div>
           </button>
         </div>
@@ -149,7 +147,7 @@ export function MobileAgents() {
 
         {humans.length > 0 && (
           <>
-            <div className="px-2 pt-6 pb-2 text-[10px] font-bold text-ink-300 tracking-[0.12em] uppercase">Human teammates</div>
+            <div className="px-2 pt-6 pb-2 text-[10px] font-bold text-ink-300 tracking-[0.12em] uppercase">{t('agents.humanTeammates')}</div>
             <div className="space-y-2">
               {humans.map((p) => (
                 <div key={p.id} className="bg-cloud rounded-[12px] p-3.5 flex items-center gap-3"
@@ -157,7 +155,7 @@ export function MobileAgents() {
                   <Avatar p={p} size={36} />
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-[14px] text-ink-900 leading-tight">{p.name}</div>
-                    <div className="text-[11px] text-ink-500 mt-0.5">{statusLabels[p.status]}</div>
+                    <div className="text-[11px] text-ink-500 mt-0.5">{t(statusKeys[p.status] ?? 'common.idle')}</div>
                   </div>
                   <HumanBadge />
                 </div>

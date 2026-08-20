@@ -25,13 +25,14 @@ import { IBack, IMail, IConvene, IWhisper } from '@/components/icons'
 import { api } from '@/api/client'
 import { tapHaptic } from '@/lib/native'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/i18n'
 
-const STATUS_LABEL: Record<string, string> = {
-  avail: 'Available',
-  working: 'Working',
-  thinking: 'Thinking',
-  waiting: 'Waiting on you',
-  resting: 'Resting',
+const STATUS_KEY: Record<string, string> = {
+  avail: 'agents.available',
+  working: 'agents.working',
+  thinking: 'agents.thinking',
+  waiting: 'agents.waiting',
+  resting: 'agents.resting',
 }
 const STATUS_COLOR: Record<string, string> = {
   avail: 'var(--avail)',
@@ -42,6 +43,7 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export function MobileParticipantInfo() {
+  const { t } = useI18n()
   const participantId = useApp((s) => s.infoAgentId)
   const close = useApp((s) => s.closeAgentInfo)
   const select = useApp((s) => s.selectConversation)
@@ -60,10 +62,10 @@ export function MobileParticipantInfo() {
   if (p.id === meId) {
     return (
       <section className="flex flex-col h-full overflow-hidden bg-paper">
-        <DeepHeader title="Profile" onBack={close} />
+        <DeepHeader title={t('me.profile')} onBack={close} />
         <div className="flex-1 grid place-items-center px-8 text-center">
           <div className="font-display italic text-[13px] text-ink-500">
-            That's you — head over to <span className="text-skype-deep font-semibold not-italic">Me</span> for your own profile.
+            {t('mobile.thatIsYou')}
           </div>
         </div>
       </section>
@@ -137,11 +139,11 @@ export function MobileParticipantInfo() {
           </div>
           <div className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full bg-cloud border border-ink-100 text-[11.5px] text-ink-700">
             <span className="w-[7px] h-[7px] rounded-full" style={{ background: statusColor }} />
-            {STATUS_LABEL[p.status] ?? 'idle'}
+            {t(STATUS_KEY[p.status] ?? 'common.idle')}
           </div>
         </div>
 
-        <Section title="Actions">
+        <Section title={t('mobile.actions')}>
           <div className={cn('grid gap-2', isAgent ? 'grid-cols-3' : 'grid-cols-1')}>
             <button
               type="button"
@@ -156,7 +158,7 @@ export function MobileParticipantInfo() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              {opening ? 'Opening…' : 'DM'}
+              {opening ? t('common.opening') : t('mobile.dm')}
             </button>
             {/* Whisper / Convene mirror the desktop pane — agent-team
                 rituals only. Placeholder buttons today; kept on screen
@@ -169,7 +171,7 @@ export function MobileParticipantInfo() {
                   style={{ background: 'var(--skype-ink)' }}
                 >
                   <IWhisper className="w-[14px] h-[14px]" />
-                  Whisper
+                  {t('agents.whisper')}
                 </button>
                 <button
                   type="button"
@@ -177,7 +179,7 @@ export function MobileParticipantInfo() {
                   style={{ border: '1px solid var(--ink-100)' }}
                 >
                   <IConvene className="w-[14px] h-[14px]" />
-                  Convene
+                  {t('chat.convene')}
                 </button>
               </>
             )}
@@ -185,13 +187,13 @@ export function MobileParticipantInfo() {
         </Section>
 
         {p.email && (
-          <Section title="Email">
+          <Section title={t('admin.email')}>
             <button
               type="button"
               onClick={copyEmail}
               className="w-full py-2.5 px-3 bg-cloud rounded-[12px] flex items-center gap-2 text-[12px] text-ink-700 font-mono active:opacity-80 transition text-left"
               style={{ border: '1px solid var(--ink-100)' }}
-              title={copied ? 'Copied!' : 'Tap to copy'}
+              title={copied ? t('mobile.copied') : t('mobile.tapToCopy')}
             >
               <IMail className="w-3.5 h-3.5 shrink-0 text-skype-deep" strokeWidth={2} />
               <span className="truncate flex-1">{p.email}</span>
@@ -201,14 +203,14 @@ export function MobileParticipantInfo() {
                   copied ? 'text-avail' : 'text-ink-300',
                 )}
               >
-                {copied ? 'copied' : 'copy'}
+                {copied ? t('mobile.copied') : t('mobile.copy')}
               </span>
             </button>
           </Section>
         )}
 
         {isAgent && (p.tools?.length ?? 0) > 0 && (
-          <Section title="Tools enabled">
+          <Section title={t('mobile.toolsEnabled')}>
             <div className="grid grid-cols-2 gap-1.5">
               {(p.tools ?? []).map((t) => (
                 <div
@@ -225,7 +227,7 @@ export function MobileParticipantInfo() {
         )}
 
         {isAgent && p.bio && (
-          <Section title={`About ${p.name}`}>
+          <Section title={t('mobile.about', { name: p.name })}>
             <div
               className="py-3 px-3.5 rounded-r-[10px] font-display italic font-normal text-[13.5px] leading-[1.55] text-ink-700"
               style={{
@@ -245,6 +247,7 @@ export function MobileParticipantInfo() {
 /** Sticky deep-page header — back arrow + screen title. Matches the
  *  pattern used by MobileChatInfo so deep navigation feels uniform. */
 function DeepHeader({ title, onBack }: { title: string; onBack: () => void }) {
+  const { t } = useI18n()
   return (
     <header
       className="border-b border-ink-100 bg-cloud/95 backdrop-blur-md sticky top-0 z-10"
@@ -255,7 +258,7 @@ function DeepHeader({ title, onBack }: { title: string; onBack: () => void }) {
           type="button"
           onClick={onBack}
           className="w-9 h-9 grid place-items-center rounded-full active:bg-sky2-50 transition text-ink-700"
-          aria-label="Back"
+          aria-label={t('common.back')}
         >
           <IBack className="w-[18px] h-[18px]" />
         </button>

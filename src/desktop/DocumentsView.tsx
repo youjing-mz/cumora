@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useDocuments } from '@/stores/documents'
+import { useI18n } from '@/i18n'
 import { DocumentEditor } from '@/components/DocumentEditor'
 import { useAuth } from '@/stores/auth'
 import { useParticipants } from '@/stores/participants'
@@ -7,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { IPlus } from '@/components/icons'
 
 export function DocumentsView() {
+  const { t } = useI18n()
   const list = useDocuments((s) => s.list)
   const loaded = useDocuments((s) => s.loaded)
   const selectedId = useDocuments((s) => s.selectedId)
@@ -38,20 +40,20 @@ export function DocumentsView() {
     <div className="grid h-full overflow-hidden" style={{ gridTemplateColumns: '280px 1fr' }}>
       <aside className="border-r border-ink-100 bg-white flex flex-col min-h-0">
         <header className="px-4 py-3 flex items-center justify-between border-b border-ink-100">
-          <h2 className="font-display text-sm font-medium text-stone-800">Documents</h2>
+          <h2 className="font-display text-sm font-medium text-stone-800">{t('documents.title')}</h2>
           <button
             type="button"
             onClick={handleCreate}
             className="w-7 h-7 rounded-lg grid place-items-center text-skype-deep hover:bg-skype/10 transition-colors"
-            title="New document"
-            aria-label="New document"
+            title={t('documents.newDocument')}
+            aria-label={t('documents.newDocument')}
           >
             <IPlus className="w-4 h-4" />
           </button>
         </header>
         <div className="flex-1 overflow-y-auto py-2">
           {!loaded && (
-            <div className="px-4 py-6 text-xs text-stone-400">Loading…</div>
+            <div className="px-4 py-6 text-xs text-stone-400">{t('documents.loading')}</div>
           )}
           {loaded && list.length === 0 && (
             <div className="px-4 py-6 text-xs text-stone-400">

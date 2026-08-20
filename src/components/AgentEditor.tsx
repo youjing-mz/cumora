@@ -9,6 +9,7 @@ import { Input } from '@/components/Input'
 import { TextArea } from '@/components/TextArea'
 import { Select } from '@/components/Select'
 import type { Participant, EngineId } from '@/types'
+import { useI18n } from '@/i18n'
 
 const PALETTE = [
   '#FFB088', '#FFD9D2', '#FFB7AF', '#F4B740',
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function AgentEditor({ agent, onClose }: Props) {
+  const { t } = useI18n()
   const editing = agent !== null
   const [name, setName] = useState(agent?.name ?? '')
   const [role, setRole] = useState(agent?.role ?? '')
@@ -184,21 +186,21 @@ export function AgentEditor({ agent, onClose }: Props) {
           </div>
           <div className="flex-1">
             <h2 className="font-display font-medium text-[20px] tracking-tight">
-              {editing ? `Edit ${agent!.name}` : 'New agent'}
+              {editing ? `${t('agents.editAgent')}: ${agent!.name}` : t('agents.newAgent')}
             </h2>
             <div className="text-[12.5px] text-ink-500 italic font-display">
-              {editing ? 'Tweak how this teammate behaves.' : 'Define a new teammate from scratch.'}
+              {editing ? t('agents.editDescription') : t('agents.newAgentDescription')}
             </div>
           </div>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full grid place-items-center text-ink-500 hover:bg-sky2-50 hover:text-ink-900 transition"
-            aria-label="Close"
+            aria-label={t('common.close')}
           >×</button>
         </div>
 
         <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1 min-h-0">
-          <Field label="Name" hint="What teammates call them. The handle (@-mention id) is derived from this automatically.">
+          <Field label={t('agents.name')} hint={t('agents.nameHint')}>
             <Input
               type="text"
               value={name}
@@ -207,7 +209,7 @@ export function AgentEditor({ agent, onClose }: Props) {
             />
           </Field>
 
-          <Field label="Role" hint="One- or two-word title shown next to the name.">
+          <Field label={t('agents.role')} hint={t('agents.roleHint')}>
             <Input
               type="text"
               value={role}
@@ -216,7 +218,7 @@ export function AgentEditor({ agent, onClose }: Props) {
             />
           </Field>
 
-          <Field label="Style (system prompt)" hint="The agent's voice, instincts, and quirks. Written in second person — the LLM reads this as 'you'.">
+          <Field label={t('agents.style')} hint={t('agents.styleHint')}>
             <TextArea
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
@@ -227,7 +229,7 @@ export function AgentEditor({ agent, onClose }: Props) {
             />
           </Field>
 
-          <Field label="Bio" hint="Optional, shown on the agent card.">
+          <Field label={t('agents.bio')} hint={t('agents.bioHint')}>
             <TextArea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
@@ -237,7 +239,7 @@ export function AgentEditor({ agent, onClose }: Props) {
           </Field>
 
           <Field
-            label={isByoa ? 'Big-brain model (大脑)' : 'Model'}
+            label={isByoa ? 'Big-brain model (大脑)' : t('agents.model')}
             hint={isByoa
               ? `Main reasoning model passed to the engine as --model. ${engine === 'codex' ? 'A model name (e.g. gpt-5.5, o3).' : engine === 'grok' ? 'A Grok model (e.g. grok-4.6).' : "A Claude alias or full name (e.g. opus, sonnet, claude-sonnet-4-6)."} Blank = engine default.`
               : 'Optional — leave blank to use the system default. Any OpenAI model name works (e.g. gpt-5.5, gpt-5.5-pro, gpt-5.5-mini).'}
@@ -273,11 +275,11 @@ export function AgentEditor({ agent, onClose }: Props) {
           )}
 
           <Field
-            label="Runs on"
+            label={t('agents.runsOn')}
             hint="Which computer executes this agent. Cumora Cloud is managed; a computer you've paired runs it on your local Claude Code, Codex, or Grok Build."
           >
             <Select
-              ariaLabel="Runs on"
+              ariaLabel={t('agents.runsOn')}
               value={computerId}
               onValueChange={changeComputer}
               options={[
@@ -301,7 +303,7 @@ export function AgentEditor({ agent, onClose }: Props) {
             {selectedComputer && selectedComputer.kind !== 'cloud' && (
               <div className="mt-2">
                 <Select
-                  ariaLabel="Engine"
+                  ariaLabel={t('agents.engine')}
                   value={engine}
                   onValueChange={(v) => setEngine(v as EngineId)}
                   options={(selectedComputer.availableEngines.length
@@ -342,7 +344,7 @@ export function AgentEditor({ agent, onClose }: Props) {
             )}
           </Field>
 
-          <Field label="Avatar color" hint="Used as a fallback when no AI portrait is generated.">
+          <Field label={t('agents.avatarColor')} hint="Used as a fallback when no AI portrait is generated.">
             <div className="flex flex-wrap gap-2">
               {PALETTE.map((c) => (
                 <button
@@ -363,7 +365,7 @@ export function AgentEditor({ agent, onClose }: Props) {
           </Field>
 
           <Field
-            label="AI-generated portrait"
+            label={t('agents.aiPortrait')}
             hint={editing
               ? 'Generates an editorial portrait fitting this agent\'s name, role, and style. Save your edits first if you tweaked the style.'
               : 'Available after the agent is created. Save first, then re-open to generate.'}
@@ -449,8 +451,8 @@ export function AgentEditor({ agent, onClose }: Props) {
                     <path d="M12 2l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M19 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/>
                   </svg>
                   {generatingAvatar
-                    ? <span>Painting<span className="ae-dots" /></span>
-                    : (avatarUrl ? 'Regenerate' : 'Generate with AI')}
+                    ? <span>{t('agents.painting')}<span className="ae-dots" /></span>
+                    : (avatarUrl ? t('agents.regenerate') : t('agents.generateWithAi'))}
                 </button>
 
                 {generatingAvatar && (
@@ -464,7 +466,7 @@ export function AgentEditor({ agent, onClose }: Props) {
                     type="button"
                     onClick={() => setAvatarUrl(null)}
                     className="self-start text-[11.5px] text-ink-500 hover:text-coral-deep transition"
-                  >clear portrait (use color block instead)</button>
+                  >{t('agents.clearPortrait')}</button>
                 )}
 
                 {avatarErr && (
@@ -488,7 +490,7 @@ export function AgentEditor({ agent, onClose }: Props) {
             onClick={onClose}
             className="px-4 py-2 rounded-[9px] text-[12.5px] font-semibold text-ink-700 bg-cloud hover:bg-sky2-50 transition"
             style={{ border: '1px solid var(--ink-100)' }}
-          >Cancel</button>
+          >{t('common.cancel')}</button>
           <div className="flex-1" />
           <button
             onClick={submit}
@@ -499,7 +501,7 @@ export function AgentEditor({ agent, onClose }: Props) {
               boxShadow: '0 4px 12px -3px rgba(0, 168, 240, 0.5)',
             }}
           >
-            {busy ? 'Saving…' : (editing ? 'Save changes' : 'Create agent')}
+            {busy ? t('agents.saving') : (editing ? t('agents.saveChanges') : t('agents.create'))}
           </button>
         </div>
       </div>

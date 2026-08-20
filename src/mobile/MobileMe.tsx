@@ -111,14 +111,14 @@ export function MobileMe() {
 
       <div className="flex-1 overflow-y-auto pb-20">
         {companies.length > 1 && (
-          <Section title="Workspace">
+          <Section title={t('mobile.workspace')}>
             <div className="bg-cloud rounded-[12px] p-2" style={{ border: '1px solid var(--ink-100)' }}>
               <CompanySwitcher />
             </div>
           </Section>
         )}
 
-        <Section title="Your team">
+        <Section title={t('mobile.yourTeam')}>
           {agents.length === 0 ? (
             <div
               className="text-center bg-cloud rounded-[12px] py-5 px-4"
@@ -171,11 +171,11 @@ export function MobileMe() {
           )}
         </Section>
 
-        <Section title="Push notifications">
+        <Section title={t('mobile.pushNotifications')}>
           <PushStatusTile />
         </Section>
 
-        <Section title="Preferences">
+        <Section title={t('mobile.preferences')}>
           <div className="bg-cloud rounded-[12px] divide-y divide-ink-100"
             style={{ border: '1px solid var(--ink-100)' }}>
             {TOGGLE_PREFS.map((it) => {
@@ -218,8 +218,8 @@ export function MobileMe() {
             className="w-full py-3 px-4 rounded-[12px] text-[13px] font-semibold text-coral-deep transition text-left active:opacity-70"
             style={{ border: '1px solid rgba(255, 122, 107, 0.3)' }}
           >
-            Sign out
-            <span className="block font-display italic text-[11px] text-ink-500 mt-0.5">end this session on this device</span>
+            {t('admin.signOut')}
+            <span className="block font-display italic text-[11px] text-ink-500 mt-0.5">{t('mobile.endSession')}</span>
           </button>
           <DeleteAccountButton />
         </div>
@@ -383,6 +383,7 @@ function PushStatusTile() {
  *  (no native confirm() dialog which iOS WKWebView styles poorly)
  *  so the destructive-action UX matches the rest of the app. */
 function DeleteAccountButton() {
+  const { t } = useI18n()
   const [stage, setStage] = useState<'idle' | 'confirm' | 'busy'>('idle')
   const [err, setErr] = useState<string | null>(null)
 
@@ -425,7 +426,7 @@ function DeleteAccountButton() {
           onClick={() => { setStage('idle'); setErr(null) }}
           className="flex-1 h-9 rounded-[9px] text-[12.5px] font-semibold text-ink-700 bg-paper transition active:opacity-70 disabled:opacity-50"
           style={{ border: '1px solid var(--ink-100)' }}
-        >Cancel</button>
+        >{t('common.cancel')}</button>
         <button
           type="button"
           disabled={stage === 'busy'}

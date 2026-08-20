@@ -11,6 +11,7 @@ import { useApp } from '@/stores/app'
 import { Avatar } from '@/components/Avatar'
 import { Input } from '@/components/Input'
 import type { Participant } from '@/types'
+import { useI18n } from '@/i18n'
 
 interface Props {
   onClose: () => void
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function GroupCreator({ onClose, initialPicked }: Props) {
+  const { t } = useI18n()
   const byId = useParticipants((s) => s.byId)
   const select = useApp((s) => s.selectConversation)
   const setView = useApp((s) => s.setView)
@@ -107,27 +109,27 @@ export function GroupCreator({ onClose, initialPicked }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-5 border-b border-ink-100 shrink-0">
-          <h2 className="font-display font-medium text-[20px] tracking-tight">New group</h2>
+          <h2 className="font-display font-medium text-[20px] tracking-tight">{t('groups.new')}</h2>
           <div className="text-[12.5px] text-ink-500 italic font-display mt-0.5">
-            Pull a few teammates into a shared conversation. You'll always be in it.
+            {t('groups.description')}
           </div>
         </div>
 
         <div className="px-6 py-5 overflow-y-auto flex-1 min-h-0">
           <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-500 mb-1">
-            Title
-            <span className="ml-1.5 text-ink-300 normal-case font-medium tracking-normal">— optional</span>
+            {t('groups.title')}
+            <span className="ml-1.5 text-ink-300 normal-case font-medium tracking-normal">{t('groups.optional')}</span>
           </label>
           <div className="text-[11.5px] text-ink-300 mb-1.5 font-display italic">
             {autoTitle
-              ? <>Leave blank to use <b className="not-italic text-ink-500">"{autoTitle}"</b>.</>
-              : <>What is this group about? Leave blank and we'll name it from the members you pick.</>}
+              ? <>{t('groups.leaveBlank', { title: autoTitle })}</>
+              : <>{t('groups.titleHint')}</>}
           </div>
           <Input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={autoTitle || 'e.g. Aurora launch — week 1'}
+            placeholder={autoTitle || t('groups.exampleTitle')}
             autoFocus
             className="mb-5"
             maxLength={80}
@@ -136,11 +138,11 @@ export function GroupCreator({ onClose, initialPicked }: Props) {
           {projects.length > 0 && (
             <>
               <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-500 mb-1">
-                Project
-                <span className="ml-1.5 text-ink-300 normal-case font-medium tracking-normal">— optional</span>
+                {t('groups.project')}
+                <span className="ml-1.5 text-ink-300 normal-case font-medium tracking-normal">{t('groups.optional')}</span>
               </label>
               <div className="text-[11.5px] text-ink-300 mb-1.5 font-display italic">
-                Attach this group to a project so agents see what it belongs to.
+                {t('groups.projectHint')}
               </div>
               <div className="flex flex-wrap gap-1.5 mb-5">
                 <button
@@ -152,7 +154,7 @@ export function GroupCreator({ onClose, initialPicked }: Props) {
                     color: projectId === null ? 'white' : 'var(--ink-500)',
                     border: '1px solid var(--ink-100)',
                   }}
-                >No project</button>
+                >{t('groups.noProject')}</button>
                 {projects.map((p) => {
                   const on = projectId === p.id
                   return (
@@ -173,9 +175,9 @@ export function GroupCreator({ onClose, initialPicked }: Props) {
             </>
           )}
 
-          <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-500 mb-1">Members</label>
+          <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-500 mb-1">{t('groups.members')}</label>
           <div className="text-[11.5px] text-ink-300 mb-2 font-display italic">
-            {picked.size === 0 ? 'Click to add' : `${picked.size} selected — you are auto-included`}
+            {picked.size === 0 ? t('groups.clickToAdd') : t('groups.selected', { count: picked.size })}
           </div>
           <div className="grid grid-cols-1 gap-1.5">
             {candidates.map((p) => {
@@ -211,7 +213,7 @@ export function GroupCreator({ onClose, initialPicked }: Props) {
             })}
             {candidates.length === 0 && (
               <div className="text-[12.5px] text-ink-500 italic font-display py-4 text-center">
-                No teammates available — add an agent or human first.
+                {t('groups.noTeammates')}
               </div>
             )}
           </div>
@@ -229,7 +231,7 @@ export function GroupCreator({ onClose, initialPicked }: Props) {
             disabled={busy}
             className="px-4 py-2 rounded-[9px] text-[12.5px] font-semibold text-ink-700 bg-cloud hover:bg-sky2-50 transition"
             style={{ border: '1px solid var(--ink-100)' }}
-          >Cancel</button>
+          >{t('groups.cancel')}</button>
           <div className="flex-1" />
           <button
             onClick={submit}
@@ -239,7 +241,7 @@ export function GroupCreator({ onClose, initialPicked }: Props) {
               background: 'var(--skype)',
               boxShadow: '0 4px 12px -3px rgba(0, 168, 240, 0.5)',
             }}
-          >{busy ? 'Creating…' : `Create group${picked.size > 0 ? ` (${picked.size + 1})` : ''}`}</button>
+          >{busy ? t('groups.creating') : `${t('groups.create')}${picked.size > 0 ? ` (${picked.size + 1})` : ''}`}</button>
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ import { Select } from '@/components/Select'
 import { useResizableWidth } from '@/lib/useResizableWidth'
 import { IBoard, IPlus, IAt, ITrash, IMore } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/i18n'
 import type { BoardCard, BoardCardComment, BoardColumn, Participant } from '@/types'
 
 /**
@@ -23,6 +24,7 @@ import type { BoardCard, BoardCardComment, BoardColumn, Participant } from '@/ty
  * recipient (human or agent) is reachable from anywhere.
  */
 export function BoardsView() {
+  const { t } = useI18n()
   const list = useBoards((s) => s.list)
   const loadingList = useBoards((s) => s.loadingList)
   const selectedId = useBoards((s) => s.selectedId)
@@ -59,6 +61,7 @@ export function BoardsView() {
 /* ============== Sidebar ============== */
 
 function BoardsSidebar({ onResizeStart }: { onResizeStart: (e: React.MouseEvent) => void }) {
+  const { t } = useI18n()
   const list = useBoards((s) => s.list)
   const selectedId = useBoards((s) => s.selectedId)
   const selectBoard = useBoards((s) => s.selectBoard)
@@ -82,12 +85,12 @@ function BoardsSidebar({ onResizeStart }: { onResizeStart: (e: React.MouseEvent)
     <aside className="h-full overflow-y-auto border-r border-ink-100 bg-cloud/40 relative">
       <ResizeHandle onMouseDown={onResizeStart} />
       <div className="px-4 py-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-ink-900">Boards</h2>
+        <h2 className="text-lg font-semibold text-ink-900">{t('boards.title')}</h2>
         <button
           onClick={() => setCreating(true)}
           className="w-7 h-7 rounded-md grid place-items-center text-ink-500 hover:bg-ink-50 hover:text-skype-deep"
-          title="New board"
-          aria-label="New board"
+          title={t('boards.newBoard')}
+          aria-label={t('boards.newBoard')}
         >
           <IPlus className="w-4 h-4" />
         </button>
@@ -103,7 +106,7 @@ function BoardsSidebar({ onResizeStart }: { onResizeStart: (e: React.MouseEvent)
               if (e.key === 'Escape') { setCreating(false); setDraft('') }
             }}
             onBlur={() => void submit()}
-            placeholder="Board title..."
+            placeholder={t('boards.boardTitle')}
             className="w-full px-2.5 py-1.5 text-sm rounded-md border border-ink-200 bg-white focus:outline-none focus:border-skype"
           />
         </div>
@@ -152,6 +155,7 @@ function EmptyBoardsState({ empty }: { empty: boolean }) {
 /* ============== Canvas (columns + cards) ============== */
 
 function BoardCanvas({ boardId }: { boardId: string }) {
+  const { t } = useI18n()
   const byId = useParticipants((s) => s.byId)
   const snap = useBoards((s) => s.snapshots[boardId])
   const loadingBoardId = useBoards((s) => s.loadingBoardId)
@@ -272,7 +276,7 @@ function BoardCanvas({ boardId }: { boardId: string }) {
                   if (e.key === 'Escape') { setAddingCol(false); setColDraft('') }
                 }}
                 onBlur={() => void submitNewColumn()}
-                placeholder="Column title..."
+                placeholder={t('boards.columnTitle')}
                 className="w-full px-2.5 py-1.5 text-sm rounded-md border border-ink-200 bg-white focus:outline-none focus:border-skype"
               />
             </div>
@@ -305,6 +309,7 @@ function ColumnView({ boardId, column, cards, onOpenCard }: {
   boardId: string; column: BoardColumn; cards: BoardCard[]
   onOpenCard: (id: string) => void
 }) {
+  const { t } = useI18n()
   const addCard = useBoards((s) => s.addCard)
   const moveCardOptimistic = useBoards((s) => s.moveCardOptimistic)
   const renameColumn = useBoards((s) => s.renameColumn)
@@ -397,7 +402,7 @@ function ColumnView({ boardId, column, cards, onOpenCard }: {
             onSubmit={() => void submit()}
             onEscape={() => { setAdding(false); setDraft('') }}
             onBlur={() => void submit()}
-            placeholder="Card title... (@mention anyone)"
+              placeholder={t('boards.cardTitle')}
             multiline
             submitOnEnter
             rows={2}
