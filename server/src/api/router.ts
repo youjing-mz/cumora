@@ -11,7 +11,7 @@ import { notifyMessage, computeMessageRecipients } from '../push.js'
 import { randomUUID, randomBytes, createHash, timingSafeEqual } from 'node:crypto'
 import {
   deleteSession, createSession, authMiddleware, type AuthedRequest,
-  audit, createWsTicket, gravatarUrlForEmail, verifyPassword,
+  audit, createWsTicket, gravatarUrlForEmail, hashPassword, verifyPassword,
 } from '../auth.js'
 import { joinAllHands, onboardStarterAgents, seedMemberDms } from '../onboardCompany.js'
 import {
@@ -720,6 +720,79 @@ api.post('/auth/login', safe(async (req, res) => {
   })
 }))
 
+/** Change the signed-in user's password. Requiring the current password keeps
+ * a stolen session token from silently becoming a permanent credential. All
+ * old sessions are revoked, then a fresh session is returned for the device
+ * that completed the change. */
+api.post('/auth/password/change', safe(async (req, res) => {
+  const userId = requireAuth(req)
+  const body = (req.body ?? {}) as { currentPassword?: unknown; newPassword?: unknown }
+  const currentPassword = typeof body.currentPassword === 'string' ? body.currentPassword : ''
+  const newPassword = typeof body.newPassword === 'string' ? body.newPassword : ''
+  if (!currentPassword || !newPassword) {
+    res.status(400).json({ error: 'current password and new password are required' })
+    return
+  }
+  if (newPassword.length < 16) {
+    res.status(400).json({ error: 'new password must be at least 16 characters' })
+    return
+  }
+  if (currentPassword === newPassword) {
+    res.status(400).json({ error: 'new password must be different' })
+    return
+  }
+
+  const { rows } = await pool.query<{
+    id: string; email: string; display_name: string; password_hash: string | null
+  }>(
+    `SELECT id, email, display_name, password_hash FROM users WHERE id = $1 AND deleted_at IS NULL`,
+    [userId],
+  )
+  const account = rows[0]
+  if (!account || !(await verifyPassword(currentPassword, account.password_hash))) {
+    await audit({
+      kind: 'password_change_failed', userId,
+      ip: req.socket.remoteAddress ?? null,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      detail: { reason: 'bad_current_password' },
+    })
+    res.status(403).json({ error: 'current password is incorrect' })
+    return
+  }
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(`UPDATE users SET password_hash = $2 WHERE id = $1`, [userId, await hashPassword(newPassword)])
+    await client.query(`DELETE FROM sessions WHERE user_id = $1`, [userId])
+    await client.query('COMMIT')
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {})
+    throw e
+  } finally {
+    client.release()
+  }
+
+  const { token } = await createSession(userId, {
+    ip: req.socket.remoteAddress ?? undefined,
+    ua: req.headers['user-agent'] as string | undefined,
+  })
+  const { rows: companies } = await pool.query<{ company_id: string }>(
+    `SELECT company_id FROM company_members WHERE user_id = $1 ORDER BY joined_at ASC LIMIT 1`,
+    [userId],
+  )
+  await audit({
+    kind: 'password_changed', userId,
+    ip: req.socket.remoteAddress ?? null,
+    userAgent: req.headers['user-agent'] as string | undefined,
+  })
+  res.json({
+    token,
+    user: { id: account.id, email: account.email, displayName: account.display_name },
+    companyId: companies[0]?.company_id ?? null,
+  })
+}))
+
 /** 302 to the provider's consent screen. State is opaque to the client —
  *  we mint it server-side, save to Redis (5min TTL), and verify on the
  *  callback to defend against CSRF + cross-provider mixups.
@@ -944,8 +1017,8 @@ api.post('/auth/ws-ticket', safe(async (req, res) => {
 
 api.get('/auth/me', safe(async (req, res) => {
   const userId = requireAuth(req)
-  const { rows } = await pool.query<{ id: string; email: string; display_name: string; email_verified_at: string | null; is_admin: boolean }>(
-    `SELECT id, email, display_name, email_verified_at, is_admin FROM users WHERE id = $1`, [userId],
+  const { rows } = await pool.query<{ id: string; email: string; username: string | null; display_name: string; email_verified_at: string | null; is_admin: boolean }>(
+    `SELECT id, email, username, display_name, email_verified_at, is_admin FROM users WHERE id = $1`, [userId],
   )
   if (!rows[0]) { res.status(401).json({ error: 'session points to missing user' }); return }
   const { rows: companies } = await pool.query<{ id: string; name: string; slug: string; role: string; tier: string }>(
@@ -967,6 +1040,7 @@ api.get('/auth/me', safe(async (req, res) => {
     user: {
       id: rows[0].id,
       email: rows[0].email,
+      username: rows[0].username,
       name: rows[0].display_name,
       emailVerified: rows[0].email_verified_at !== null,
       isAdmin: rows[0].is_admin,

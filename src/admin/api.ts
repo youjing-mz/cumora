@@ -53,6 +53,7 @@ export type Tier = 'free' | 'pro' | 'max'
 export interface AdminUser {
   id: string
   email: string
+  username: string | null
   name: string
   /** Always non-null: server falls back to a gravatar identicon when
    *  users.avatar_url is NULL (legacy users / dev seed). */
@@ -307,6 +308,17 @@ export const adminApi = {
       s ? `/users?${s}` : '/users',
     )
   },
+  createUser: (input: {
+    username: string
+    email?: string
+    displayName?: string
+    password: string
+    tier?: Tier
+    isAdmin?: boolean
+  }) => http<AdminUser>('/users', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  }),
   getUser: (id: string) => http<AdminUserDetail>(`/users/${id}`),
   patchUser: (
     id: string,

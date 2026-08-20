@@ -531,7 +531,7 @@ export interface ApiAgentWorkspaceFileContent extends ApiAgentWorkspaceFile {
 }
 
 interface MeResponse {
-  user: { id: string; email: string; name: string; emailVerified: boolean; providers: string[] }
+  user: { id: string; email: string; username: string | null; name: string; emailVerified: boolean; isAdmin: boolean; providers: string[] }
   companies: Array<{ id: string; name: string; slug: string; role: string; tier?: string }>
   activeCompanyId: string | null
   serverCapabilities: ServerCapabilities
@@ -775,6 +775,11 @@ export const api = {
     http<{ token: string; user: { id: string; email: string; displayName: string }; companyId: string | null }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
+    }),
+  authChangePassword: (currentPassword: string, newPassword: string) =>
+    http<{ token: string; user: { id: string; email: string; displayName: string }; companyId: string | null }>('/auth/password/change', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
     }),
   /** Permanently delete the signed-in user's account. Soft-deletes
    *  the user row + clears PII + invalidates every session + drops

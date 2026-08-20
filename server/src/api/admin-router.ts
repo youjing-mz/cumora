@@ -15,8 +15,9 @@
  *     parent router's errorHandler catches everything else.
  */
 import { Router, type Request, type Response, type NextFunction } from 'express'
+import { randomUUID } from 'node:crypto'
 import { pool } from '../db/pool.js'
-import { gravatarUrlForEmail, type AuthedRequest } from '../auth.js'
+import { gravatarUrlForEmail, hashPassword, type AuthedRequest } from '../auth.js'
 import {
   requireAdmin, HttpError,
   getSettings, setSetting, type AppSettings,
@@ -99,6 +100,7 @@ adminRouter.put('/settings', safe(async (req, res) => {
 interface UserRowDb {
   id: string
   email: string
+  username: string | null
   display_name: string
   avatar_url: string | null
   tier: string
@@ -116,6 +118,7 @@ function rowToUser(r: UserRowDb): Record<string, unknown> {
   return {
     id: r.id,
     email: r.email,
+    username: r.username,
     name: r.display_name,
     // Gravatar fallback so the admin row always renders something —
     // legacy users (pre-b036935) and the dev seed have NULL here.
@@ -137,6 +140,91 @@ function rowToUser(r: UserRowDb): Record<string, unknown> {
   }
 }
 
+/** Create a local username/password account. The plaintext password is only
+ * accepted in this request and is immediately replaced by a scrypt hash. A
+ * new account joins the existing Personal workspace so it can use the app as
+ * soon as it signs in. */
+adminRouter.post('/users', safe(async (req, res) => {
+  await requireAdmin(req)
+  const body = (req.body ?? {}) as {
+    username?: unknown
+    email?: unknown
+    displayName?: unknown
+    password?: unknown
+    tier?: unknown
+    isAdmin?: unknown
+  }
+  const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : ''
+  const password = typeof body.password === 'string' ? body.password : ''
+  const displayName = typeof body.displayName === 'string' ? body.displayName.trim() : username
+  const emailInput = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+  const email = emailInput || `${username}@local.cumora`
+  const tier = body.tier === 'pro' || body.tier === 'max' ? body.tier : 'free'
+  const isAdmin = body.isAdmin === true
+
+  if (!/^[a-z0-9][a-z0-9._-]{2,63}$/.test(username)) {
+    throw new HttpError(400, 'username must be 3-64 characters using letters, numbers, dot, underscore, or hyphen')
+  }
+  if (password.length < 16) throw new HttpError(400, 'password must be at least 16 characters')
+  if (!displayName || displayName.length > 120) throw new HttpError(400, 'display name is required and must be at most 120 characters')
+  if (!email.includes('@') || email.length > 320) throw new HttpError(400, 'a valid email is required')
+
+  const duplicate = await pool.query<{ username: string | null; email: string }>(
+    `SELECT username, email FROM users
+      WHERE LOWER(username) = $1 OR LOWER(email) = $2
+      LIMIT 1`,
+    [username, email],
+  )
+  if (duplicate.rows[0]) {
+    throw new HttpError(409, duplicate.rows[0].username?.toLowerCase() === username ? 'username already exists' : 'email already exists')
+  }
+
+  const userId = `u-${randomUUID()}`
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(
+      `INSERT INTO users (id, email, username, display_name, password_hash, email_verified_at, is_admin, tier)
+       VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7)`,
+      [userId, email, username, displayName, await hashPassword(password), isAdmin, tier],
+    )
+    await client.query(
+      `INSERT INTO company_members (company_id, user_id, role)
+       VALUES ('personal', $1, $2)
+       ON CONFLICT (company_id, user_id) DO NOTHING`,
+      [userId, isAdmin ? 'admin' : 'member'],
+    )
+    await client.query(
+      `INSERT INTO participants (id, kind, name, role, initial, avatar_bg, avatar_url, status, company_id)
+       VALUES ($1, 'human', $2, NULL, $3, '#6B7BE6', $4, 'avail', 'personal')`,
+      [userId, displayName, displayName.charAt(0).toUpperCase(), gravatarUrlForEmail(email)],
+    )
+    await client.query(
+      `UPDATE conversations
+          SET members = COALESCE(members, '[]'::jsonb) || jsonb_build_array($1::text)
+        WHERE company_id = 'personal' AND NOT (COALESCE(members, '[]'::jsonb) ? $1)`,
+      [userId],
+    )
+    await client.query('COMMIT')
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {})
+    if ((e as { code?: string }).code === '23505') throw new HttpError(409, 'username or email already exists')
+    throw e
+  } finally {
+    client.release()
+  }
+
+  const { rows } = await pool.query<UserRowDb>(
+    `SELECT u.id, u.email, u.username, u.display_name, u.avatar_url, u.tier, u.is_admin, u.sub2api_user_id,
+            u.created_at, u.last_login_at,
+            u.suspended_at, u.suspension_reason, u.suspended_by,
+            (SELECT COUNT(*)::int FROM company_members cm WHERE cm.user_id = u.id) AS company_count
+       FROM users u WHERE u.id = $1`,
+    [userId],
+  )
+  res.status(201).json(rowToUser(rows[0]))
+}))
+
 /** Paginated user list with optional search by email/name and tier filter. */
 adminRouter.get('/users', safe(async (req, res) => {
   await requireAdmin(req)
@@ -149,7 +237,7 @@ adminRouter.get('/users', safe(async (req, res) => {
   const params: unknown[] = []
   if (q) {
     params.push(`%${q.toLowerCase()}%`)
-    where.push(`(LOWER(u.email) LIKE $${params.length} OR LOWER(u.display_name) LIKE $${params.length})`)
+    where.push(`(LOWER(u.email) LIKE $${params.length} OR LOWER(u.username) LIKE $${params.length} OR LOWER(u.display_name) LIKE $${params.length})`)
   }
   if (tier === 'free' || tier === 'pro' || tier === 'max') {
     params.push(tier)
@@ -159,7 +247,7 @@ adminRouter.get('/users', safe(async (req, res) => {
   params.push(limit)
   params.push(offset)
   const { rows } = await pool.query<UserRowDb>(
-    `SELECT u.id, u.email, u.display_name, u.avatar_url, u.tier, u.is_admin, u.sub2api_user_id,
+    `SELECT u.id, u.email, u.username, u.display_name, u.avatar_url, u.tier, u.is_admin, u.sub2api_user_id,
             u.created_at, u.last_login_at,
             u.suspended_at, u.suspension_reason, u.suspended_by,
             (SELECT COUNT(*)::int FROM company_members cm WHERE cm.user_id = u.id) AS company_count
@@ -187,7 +275,7 @@ adminRouter.get('/users/:id', safe(async (req, res) => {
   await requireAdmin(req)
   const id = String(req.params.id)
   const { rows } = await pool.query<UserRowDb>(
-    `SELECT u.id, u.email, u.display_name, u.avatar_url, u.tier, u.is_admin, u.sub2api_user_id,
+    `SELECT u.id, u.email, u.username, u.display_name, u.avatar_url, u.tier, u.is_admin, u.sub2api_user_id,
             u.created_at, u.last_login_at,
             u.suspended_at, u.suspension_reason, u.suspended_by,
             (SELECT COUNT(*)::int FROM company_members cm WHERE cm.user_id = u.id) AS company_count
@@ -263,7 +351,7 @@ adminRouter.patch('/users/:id', safe(async (req, res) => {
   }
 
   const { rows } = await pool.query<UserRowDb>(
-    `SELECT u.id, u.email, u.display_name, u.avatar_url, u.tier, u.is_admin, u.sub2api_user_id,
+    `SELECT u.id, u.email, u.username, u.display_name, u.avatar_url, u.tier, u.is_admin, u.sub2api_user_id,
             u.created_at, u.last_login_at,
             u.suspended_at, u.suspension_reason, u.suspended_by,
             (SELECT COUNT(*)::int FROM company_members cm WHERE cm.user_id = u.id) AS company_count

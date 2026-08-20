@@ -2,7 +2,7 @@
  * Users — paginated, searchable, with inline detail expand + tier /
  * admin toggles per row.
  */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { adminApi, type AdminUser, type AdminUserDetail, type AdminStats, type Tier } from './api'
 import { Pager } from './Pager'
 import { useAuth } from '@/stores/auth'
@@ -19,6 +19,7 @@ export function UsersPage({ stats }: { stats: AdminStats | null }) {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
 
   const load = useCallback(async (nextOffset: number) => {
     setLoading(true); setErr(null)
@@ -100,6 +101,7 @@ export function UsersPage({ stats }: { stats: AdminStats | null }) {
           </div>
         </div>
         <div className="admin-filters">
+          <button className="btn-primary" onClick={() => setCreateOpen(true)}>Add user</button>
           <input
             type="search" placeholder="email or name" className="admin-input"
             value={q} onChange={(e) => setQ(e.target.value)}
@@ -139,6 +141,77 @@ export function UsersPage({ stats }: { stats: AdminStats | null }) {
       </div>
 
       <Pager total={total} pageSize={PAGE} offset={offset} loading={loading} onPage={(o) => void load(o)} />
+      {createOpen && (
+        <CreateUserModal
+          onClose={() => setCreateOpen(false)}
+          onCreated={(created) => {
+            setItems((rows) => [created, ...rows].slice(0, PAGE))
+            setTotal((n) => n + 1)
+            setCreateOpen(false)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function CreateUserModal({ onClose, onCreated }: {
+  onClose: () => void
+  onCreated: (user: AdminUser) => void
+}) {
+  const [username, setUsername] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [tier, setTier] = useState<Tier>('free')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true); setErr(null)
+    try {
+      const created = await adminApi.createUser({
+        username: username.trim(),
+        email: email.trim() || undefined,
+        displayName: displayName.trim() || undefined,
+        password,
+        tier,
+        isAdmin,
+      })
+      onCreated(created)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e))
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="admin-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose() }}>
+      <div className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
+        <div className="admin-modal-head">
+          <div>
+            <h2 id="create-user-title">Add user</h2>
+            <div className="admin-sub">Create a local username/password account.</div>
+          </div>
+          <button className="admin-modal-close" onClick={onClose} disabled={busy} aria-label="Close">×</button>
+        </div>
+        <form onSubmit={submit} className="admin-form">
+          <label>Username<input className="admin-input" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. alice" autoFocus /></label>
+          <label>Display name<input className="admin-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Alice" /></label>
+          <label>Email <span className="admin-form-hint">optional; defaults to username@local.cumora</span><input className="admin-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="alice@example.com" /></label>
+          <label>Initial password <span className="admin-form-hint">at least 16 characters</span><input className="admin-input" type="password" required minLength={16} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></label>
+          <div className="admin-form-row">
+            <label>Tier<select className="admin-select" value={tier} onChange={(e) => setTier(e.target.value as Tier)}><option value="free">Free</option><option value="pro">Pro</option><option value="max">Max</option></select></label>
+            <label className="admin-checkbox"><input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} /> Admin access</label>
+          </div>
+          {err && <div className="admin-banner-err">{err}</div>}
+          <div className="admin-modal-actions">
+            <button type="button" className="btn-ghost" onClick={onClose} disabled={busy}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={busy}>{busy ? 'Creating…' : 'Create user'}</button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
@@ -185,7 +258,7 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
               {isMe && <span className="admin-pill admin-pill-soft" style={{ marginLeft: 8 }}>you</span>}
               {u.suspended && <span className="admin-pill admin-pill-warn" style={{ marginLeft: 8 }}>suspended</span>}
             </div>
-            <div className="admin-cell-user-email">{u.email}</div>
+            <div className="admin-cell-user-email">@{u.username ?? '—'} · {u.email}</div>
           </div>
         </div>
         <div onClick={(e) => e.stopPropagation()} data-label="Tier">

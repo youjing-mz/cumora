@@ -18,8 +18,10 @@ export interface AuthCompany {
 export interface AuthUser {
   id: string
   email: string
+  username?: string | null
   name: string
   emailVerified?: boolean
+  isAdmin?: boolean
   /** OAuth providers linked to this account, e.g. ['google'] or
    *  ['google', 'github']. Populated by /auth/me. */
   providers?: string[]

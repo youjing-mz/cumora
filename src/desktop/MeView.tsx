@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useParticipants } from '@/stores/participants'
 import { useComputers } from '@/stores/computers'
 import { usePrefs } from '@/stores/preferences'
@@ -101,10 +101,82 @@ function ProfileTab() {
         </div>
       </Section>
 
+      <PasswordSection />
+
       <CommunitySection />
 
       <AboutSection />
     </div>
+  )
+}
+
+function PasswordSection() {
+  const authUser = useAuth((s) => s.user)
+  const activeCompanyId = useAuth((s) => s.activeCompanyId)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setMessage(null); setError(null)
+    if (newPassword.length < 16) {
+      setError('New password must be at least 16 characters.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match.')
+      return
+    }
+    setBusy(true)
+    try {
+      const r = await api.authChangePassword(currentPassword, newPassword)
+      const latest = useAuth.getState().user ?? authUser
+      if (latest) {
+        useAuth.getState().setSession(
+          r.token,
+          { ...latest, email: r.user.email, name: r.user.displayName },
+          r.companyId ?? activeCompanyId,
+        )
+      }
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
+      setMessage('Password updated. Other active sessions were signed out.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <Section title="↳ Password">
+      <form onSubmit={submit} className="bg-cloud rounded-[14px] p-5 space-y-3" style={{ border: '1px solid var(--ink-100)' }}>
+        <div className="font-display italic text-[12px] text-ink-400 mb-2">Use at least 16 characters. Changing it signs out other active sessions.</div>
+        <input
+          type="password" autoComplete="current-password" value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password"
+          className="w-full h-10 px-3 rounded-[8px] border border-ink-200 bg-white text-[13px] focus:outline-none focus:border-ink-400"
+        />
+        <input
+          type="password" autoComplete="new-password" value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)} placeholder="New password (16+ characters)"
+          className="w-full h-10 px-3 rounded-[8px] border border-ink-200 bg-white text-[13px] focus:outline-none focus:border-ink-400"
+        />
+        <input
+          type="password" autoComplete="new-password" value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm new password"
+          className="w-full h-10 px-3 rounded-[8px] border border-ink-200 bg-white text-[13px] focus:outline-none focus:border-ink-400"
+        />
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="text-[12px] text-red-600">{error}</div>
+          <button type="submit" disabled={busy} className="shrink-0 h-9 px-4 rounded-[8px] text-[13px] text-white disabled:opacity-60" style={{ background: 'var(--ink-900)' }}>
+            {busy ? 'Updating…' : 'Change password'}
+          </button>
+        </div>
+        {message && <div className="text-[12px] text-green-700">{message}</div>}
+      </form>
+    </Section>
   )
 }
 

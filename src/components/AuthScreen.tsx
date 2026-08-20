@@ -1,6 +1,7 @@
 /**
- * Sign-in screen — password login plus OAuth (Google + GitHub). No signup
- * or forgot-password flow. Provider buttons trigger a full-page redirect to
+ * Sign-in screen — OAuth (Google + GitHub) with an optional password-login
+ * modal. No signup or forgot-password flow. Provider buttons trigger a
+ * full-page redirect to
  * /api/auth/start/<provider> on the configured server origin (relative
  * URL goes through the Vite proxy in dev; baked-in absolute URL in
  * packaged builds). The provider returns to /auth/done with a fragment
@@ -31,6 +32,7 @@ export function AuthScreen() {
   const [picker, setPicker] = useState(false)
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('')
+  const [passwordOpen, setPasswordOpen] = useState(false)
 
   // AuthGate strips a successful fragment after consuming it. A failure
   // fragment looks like `#token=&companyId=&error=...` — surface that
@@ -65,6 +67,15 @@ export function AuthScreen() {
       window.clearTimeout(safety)
     }
   }, [busy])
+
+  useEffect(() => {
+    if (!passwordOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && busy === null) setPasswordOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [passwordOpen, busy])
 
   /** Native Sign in with Apple — iOS-only. Uses the
    *  ASAuthorization flow via our Swift plugin, then POSTs the
@@ -194,36 +205,14 @@ export function AuthScreen() {
           </div>
         </div>
         <div className="w-full flex flex-col gap-3">
-          <form onSubmit={goPassword} className="flex flex-col gap-2">
-            <label className="text-[11px] text-ink-500" htmlFor="auth-username">Username</label>
-            <input
-              id="auth-username"
-              type="text"
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
-              disabled={busy !== null}
-              className="h-11 px-3 rounded-[10px] border border-ink-200 bg-white text-[14px] text-ink-900 focus:outline-none focus:border-ink-400 disabled:opacity-60"
-            />
-            <label className="text-[11px] text-ink-500 mt-1" htmlFor="auth-password">Password</label>
-            <input
-              id="auth-password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={busy !== null}
-              className="h-11 px-3 rounded-[10px] border border-ink-200 bg-white text-[14px] text-ink-900 focus:outline-none focus:border-ink-400 disabled:opacity-60"
-            />
-            <button
-              type="submit"
-              disabled={busy !== null}
-              className="h-11 mt-1 rounded-[10px] bg-ink-800 hover:bg-ink-900 text-white transition-colors text-[14px] disabled:opacity-60"
-            >
-              {busy === 'password' ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={() => { setPasswordOpen(true); setErr(null) }}
+            disabled={busy !== null}
+            className="h-11 rounded-[10px] border border-ink-200 bg-white hover:bg-cloud transition-colors text-[14px] text-ink-800 disabled:opacity-60"
+          >
+            Sign in with username and password
+          </button>
           <div className="flex items-center gap-3 py-1 text-[11px] text-ink-300">
             <span className="h-px flex-1 bg-ink-100" />
             <span>or</span>
@@ -275,6 +264,74 @@ export function AuthScreen() {
         </div>
         <ServerSwitch open={picker} onToggle={() => setPicker((v) => !v)} />
       </div>
+      {passwordOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center px-5"
+          style={{ background: 'rgba(10, 27, 46, 0.28)' }}
+          role="presentation"
+          onMouseDown={(event) => { if (event.target === event.currentTarget && busy === null) setPasswordOpen(false) }}
+        >
+          <div
+            className="w-full max-w-[380px] rounded-[16px] bg-white p-6 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="password-login-title"
+          >
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <div id="password-login-title" className="font-display text-[20px] text-ink-900">Sign in</div>
+                <div className="font-display italic text-[12px] text-ink-400 mt-1">Use your Cumora username and password.</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPasswordOpen(false)}
+                disabled={busy !== null}
+                aria-label="Close password login"
+                className="text-[20px] leading-none text-ink-300 hover:text-ink-700 disabled:opacity-50"
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={goPassword} className="flex flex-col gap-2">
+              <label className="text-[11px] text-ink-500" htmlFor="auth-username">Username</label>
+              <input
+                id="auth-username"
+                type="text"
+                autoFocus
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="admin"
+                disabled={busy !== null}
+                className="h-11 px-3 rounded-[10px] border border-ink-200 bg-white text-[14px] text-ink-900 focus:outline-none focus:border-ink-400 disabled:opacity-60"
+              />
+              <label className="text-[11px] text-ink-500 mt-2" htmlFor="auth-password">Password</label>
+              <input
+                id="auth-password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={busy !== null}
+                className="h-11 px-3 rounded-[10px] border border-ink-200 bg-white text-[14px] text-ink-900 focus:outline-none focus:border-ink-400 disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                disabled={busy !== null}
+                className="h-11 mt-3 rounded-[10px] text-white transition-colors text-[14px] disabled:opacity-60"
+                style={{ background: 'var(--ink-900)' }}
+              >
+                {busy === 'password' ? 'Signing in…' : 'Sign in'}
+              </button>
+            </form>
+            {err && (
+              <div className="text-[12px] text-red-600 text-center max-w-full break-words mt-3">
+                {err}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
