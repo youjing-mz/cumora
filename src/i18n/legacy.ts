@@ -5,6 +5,13 @@
  * key in index.ts instead.
  */
 const exactZh: Record<string, string> = {
+  '— where agent teams gather': '— 智能体团队汇聚之处',
+  'No documents yet. Create one — humans and agents both edit live.': '还没有文档。创建一个吧——人类和智能体都可以实时编辑。',
+  'Create a document to start collaborating.': '创建一个文档，开始协作。',
+  'Select a document from the list.': '从列表中选择一个文档。',
+  'channels you can peek into ·': '可窥视的频道 ·',
+  'No whispers yet. Send a message in a group to nudge an agent to whisper.': '还没有窥语。在群组中发送消息，提醒智能体发送窥语。',
+  'private thread': '私密线程',
   'Toggle navigation': '切换导航',
   'Daily cache hit rate': '每日缓存命中率',
   'Daily cost by purpose': '按用途统计的每日成本',
@@ -293,15 +300,8 @@ const exactEn: Record<string, string> = {
   '取消': 'Cancel',
 }
 
-const wordZh: Array<[string, string]> = [
-  ['workspace', '工作区'], ['workspaces', '工作区'], ['agent', '智能体'], ['agents', '智能体'], ['account', '账号'], ['accounts', '账号'], ['user', '用户'], ['users', '用户'], ['message', '消息'], ['messages', '消息'], ['conversation', '会话'], ['conversations', '会话'], ['group', '群组'], ['groups', '群组'], ['loading', '加载'], ['opening', '打开'], ['saving', '保存'], ['send', '发送'], ['reply', '回复'], ['delete', '删除'], ['close', '关闭'], ['create', '创建'], ['update', '更新'], ['run', '运行'], ['running', '运行中'], ['available', '可用'], ['private', '私密'], ['public', '公开'], ['human', '人类'], ['humans', '人类'], ['teammate', '队友'], ['members', '成员'], ['member', '成员'], ['project', '项目'], ['projects', '项目'], ['event', '活动'], ['events', '活动'], ['document', '文档'], ['documents', '文档'], ['board', '看板'], ['boards', '看板'], ['column', '列'], ['card', '卡片'], ['calendar', '日历'], ['email', '邮件'], ['invite', '邀请'], ['invitation', '邀请'], ['link', '链接'], ['error', '错误'], ['failed', '失败'], ['expired', '已过期'], ['pending', '待处理'], ['approved', '已批准'], ['source', '来源'], ['model', '模型'], ['data', '数据'], ['cache', '缓存'], ['cached', '已缓存'], ['tokens', 'Token'], ['token', 'Token'], ['input', '输入'], ['output', '输出'], ['out', '输出'], ['call', '调用'], ['calls', '调用'], ['cost', '成本'], ['spend', '支出'], ['rate', '费率'], ['daily', '每日'], ['last', '最近'], ['today', '今天'], ['all', '全部'], ['no', '没有'], ['none', '无'], ['yes', '是'], ['or', '或'], ['and', '和'], ['with', '与'], ['from', '来自'], ['to', '到'], ['in', '在'], ['on', '在'], ['by', '按'], ['for', '用于'], ['of', '的'], ['your', '你的'], ['you', '你'], ['this', '此'], ['that', '该'], ['new', '新'], ['old', '旧'], ['next', '下一个'], ['prev', '上一页'], ['previous', '上一个'], ['first', '第一个'], ['more', '更多'], ['less', '更少'], ['optional', '可选'], ['required', '必需'], ['name', '名称'], ['title', '标题'], ['description', '描述'], ['reason', '原因'], ['owner', '负责人'], ['role', '角色'], ['note', '备注'], ['company', '公司'], ['companies', '公司'], ['purpose', '用途'], ['sort', '排序'], ['observability', '可观测性'], ['status', '状态'], ['type', '类型'], ['time', '时间'], ['day', '天'], ['month', '月'], ['year', '年'], ['minute', '分钟'], ['hour', '小时'], ['version', '版本'], ['retry', '重试'], ['search', '搜索'], ['filter', '筛选'], ['select', '选择'], ['clear', '清除'], ['copy', '复制'], ['download', '下载'], ['restart', '重启'], ['install', '安装'], ['settings', '设置'], ['preference', '偏好'], ['notifications', '通知'], ['permission', '权限'], ['computer', '电脑'], ['terminal', '终端'], ['background', '后台'], ['working', '工作中'], ['thinking', '思考中'], ['waiting', '等待中'], ['sleeping', '休眠中'], ['offline', '离线'], ['online', '在线'], ['closed', '已关闭'], ['open', '打开'], ['saved', '已保存'], ['updated', '已更新'], ['true', '真'], ['false', '假'], ['cancel', '取消'], ['done', '完成'], ['dismiss', '忽略'], ['show', '显示'], ['used', '已使用'], ['failed', '失败'], ['success', '成功'], ['free', '免费'], ['admin', '管理员'],
-]
-
 export function legacyText(key: string, locale: 'en' | 'zh'): string {
   if (locale === 'en' && exactEn[key]) return exactEn[key]
   if (locale === 'zh' && exactZh[key]) return exactZh[key]
-  if (locale === 'en') return key
-  let value = key
-  for (const [english, chinese] of wordZh) value = value.replace(new RegExp(`\\b${english}\\b`, 'gi'), chinese)
-  return value
+  return key
 }
