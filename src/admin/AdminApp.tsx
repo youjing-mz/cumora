@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Admin panel root. Mounted by App.tsx when the request hostname is
  * admin.cumora.ai (or the path starts with /admin in localhost dev).
@@ -108,7 +109,7 @@ export function AdminApp() {
   return (
     <div className={`admin-shell${navOpen ? ' nav-open' : ''}`}>
       <header className="admin-topbar">
-        <button className="admin-topbar-burger" onClick={() => setNavOpen((v) => !v)} aria-label="Toggle navigation">
+        <button className="admin-topbar-burger" onClick={() => setNavOpen((v) => !v)} aria-label={translate("Toggle navigation")}>
           <span /><span /><span />
         </button>
         <div className="admin-topbar-brand">

@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   api,
@@ -126,7 +127,7 @@ function PayloadBlock({ label, value, empty = '(empty)' }: { label: string; valu
         <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">{label}</div>
         {traced?.length !== undefined && (
           <div className="font-mono text-[10px] text-ink-300">
-            {traced.length.toLocaleString()} chars{traced.truncated ? ' / truncated' : ''}
+            {traced.length.toLocaleString()} {translate("chars")}{traced.truncated ? translate(" / truncated") : ''}
           </div>
         )}
       </div>
@@ -141,7 +142,7 @@ function TraceInputView({ value }: { value: unknown }) {
   if (!Array.isArray(value)) return <PayloadBlock label="Input" value={value} />
   return (
     <div className="space-y-2">
-      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">Input messages</div>
+      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">{translate("Input messages")}</div>
       {value.map((item, idx) => {
         const rec = isRecord(item) ? item : {}
         const content = Array.isArray(rec.content) ? rec.content : []
@@ -149,9 +150,9 @@ function TraceInputView({ value }: { value: unknown }) {
           <div key={idx} className="rounded-[10px] border border-ink-100 bg-paper p-3">
             <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[10.5px] text-ink-400">
               <span>#{idx + 1}</span>
-              {rec.role !== undefined && <span>role={String(rec.role)}</span>}
-              {rec.type !== undefined && <span>type={String(rec.type)}</span>}
-              {rec.callId !== undefined && <span>call={String(rec.callId)}</span>}
+              {rec.role !== undefined && <span>{translate("role=")}{String(rec.role)}</span>}
+              {rec.type !== undefined && <span>{translate("type=")}{String(rec.type)}</span>}
+              {rec.callId !== undefined && <span>{translate("call=")}{String(rec.callId)}</span>}
             </div>
             <div className="space-y-2">
               {rec.output !== undefined && <PayloadBlock label="Function output" value={rec.output} />}
@@ -162,7 +163,7 @@ function TraceInputView({ value }: { value: unknown }) {
                 if (type === 'input_image') {
                   return (
                     <div key={partIdx} className="rounded-[9px] border border-sky2-100 bg-sky2-50 px-3 py-2 font-mono text-[11px] text-skype-deep">
-                      image / {String(p.detail ?? 'auto')} / {String(p.imageUrl ?? '')}
+                      {translate("image /")}{' '}{String(p.detail ?? 'auto')} / {String(p.imageUrl ?? '')}
                     </div>
                   )
                 }
@@ -209,7 +210,7 @@ function ModelResponseDetails({ data }: { data: Record<string, unknown> }) {
       <PayloadBlock label="Output text" value={data.outputText} empty="(no assistant text; tool-only response)" />
       {toolCalls.length > 0 && (
         <div className="space-y-2">
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">Tool calls requested</div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">{translate("Tool calls requested")}</div>
           {toolCalls.map((call, idx) => {
             const rec = isRecord(call) ? call : {}
             return (
@@ -260,7 +261,7 @@ function EventDetails({ event }: { event: ApiAgentEvent }) {
     <div>
       {specialized}
       <details className="mt-3" open={!specialized && defaultOpen}>
-        <summary className="cursor-pointer select-none text-[11px] font-semibold text-skype-deep">Raw data</summary>
+        <summary className="cursor-pointer select-none text-[11px] font-semibold text-skype-deep">{translate("Raw data")}</summary>
         <pre className="mt-2 max-h-[260px] overflow-auto rounded-[9px] bg-ink-900 p-3 text-[11px] leading-[1.45] text-sky2-50">
           {pretty(data)}
         </pre>
@@ -307,7 +308,7 @@ function RefreshButton({ loading, onClick }: { loading: boolean; onClick: () => 
             : 'border-sky2-200 bg-sky2-50 shadow-[inset_0_0_0_4px_rgba(255,255,255,0.72)]',
         )}
       />
-      <span>Refresh</span>
+      <span>{translate("Refresh")}</span>
     </button>
   )
 }
@@ -360,11 +361,11 @@ function RunRow({ run, active, onClick }: { run: ApiAgentRun; active: boolean; o
             {run.error || run.summary || `${run.inboxCount} unread inputs`}
           </div>
           <div className="mt-2 flex items-center gap-1.5 text-[10.5px] font-semibold text-ink-400">
-            <span>{run.inboxCount} inbox</span>
+            <span>{run.inboxCount} {translate("inbox")}</span>
             <span>/</span>
-            <span>{run.toolCallCount} tools</span>
+            <span>{run.toolCallCount} {translate("tools")}</span>
             <span>/</span>
-            <span>{run.tokenCount} tokens</span>
+            <span>{run.tokenCount} {translate("tokens")}</span>
           </div>
         </div>
       </div>
@@ -581,7 +582,7 @@ function FileTree({ nodes, depth, expanded, onToggle, selectedPath, onSelect }: 
  *   - anything else → wrapped plain text in paper theme */
 function FileViewer({ path, body }: { path: string; body: string }) {
   const ext = path.includes('.') ? path.split('.').pop()!.toLowerCase() : ''
-  if (!body) return <div className="text-[13px] italic text-ink-400">(empty file)</div>
+  if (!body) return <div className="text-[13px] italic text-ink-400">{translate("(empty file)")}</div>
   if (ext === 'md' || ext === 'markdown') {
     return (
       <div className="cumora-prose font-display text-[14px] leading-[1.7] text-ink-900">
@@ -634,15 +635,15 @@ function PriceMenuTable({ rows }: { rows: { model: string; inPer1M: number; cach
   const isSmall = (m: string) => /haiku|mini/i.test(m)
   return (
     <div className="rounded-[10px] border border-ink-100 bg-paper px-3.5 py-3">
-      <div className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-ink-300">Token unit prices · small brain vs big brain (per 1M tokens — all ESTIMATES unless you set CUMORA_MODEL_PRICES_JSON)</div>
+      <div className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-ink-300">{translate("Token unit prices · small brain vs big brain (per 1M tokens — all ESTIMATES unless you set CUMORA_MODEL_PRICES_JSON)")}</div>
       <table className="mt-2 w-full text-[11.5px]">
         <thead className="text-[9px] font-bold uppercase tracking-[0.1em] text-ink-400">
           <tr>
-            <th className="py-1 text-left">Tier</th>
-            <th className="py-1 text-left">Model</th>
-            <th className="py-1 text-right">Input</th>
-            <th className="py-1 text-right">Cache-read</th>
-            <th className="py-1 text-right">Output</th>
+            <th className="py-1 text-left">{translate("Tier")}</th>
+            <th className="py-1 text-left">{translate("Model")}</th>
+            <th className="py-1 text-right">{translate("Input")}</th>
+            <th className="py-1 text-right">{translate("Cache-read")}</th>
+            <th className="py-1 text-right">{translate("Output")}</th>
             <th className="py-1" />
           </tr>
         </thead>
@@ -651,14 +652,14 @@ function PriceMenuTable({ rows }: { rows: { model: string; inPer1M: number; cach
             <tr key={p.model}>
               <td className="py-1">
                 <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase', isSmall(p.model) ? 'bg-ink-100 text-ink-600' : 'bg-sky2-50 text-skype-deep')}>
-                  {isSmall(p.model) ? 'small brain' : 'big brain'}
+                  {isSmall(p.model) ? translate("small brain") : translate("big brain")}
                 </span>
               </td>
               <td className="py-1 font-mono text-ink-700">{p.model}</td>
               <td className="py-1 text-right tabular-nums text-ink-600">${p.inPer1M}</td>
               <td className="py-1 text-right tabular-nums text-ink-600">${p.cachedInPer1M}</td>
               <td className="py-1 text-right tabular-nums text-ink-600">${p.outPer1M}</td>
-              <td className="py-1 text-right">{p.estimated && <span className="rounded bg-coral-soft px-1.5 py-0.5 text-[9px] font-bold uppercase text-coral-deep">est</span>}</td>
+              <td className="py-1 text-right">{p.estimated && <span className="rounded bg-coral-soft px-1.5 py-0.5 text-[9px] font-bold uppercase text-coral-deep">{translate("est")}</span>}</td>
             </tr>
           ))}
         </tbody>
@@ -690,10 +691,9 @@ function TriageEconomicsPanel(props: {
       <div className="border-b border-ink-100 px-6 py-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-[25px] font-medium tracking-tight text-ink-900">Triage Economics</h1>
+            <h1 className="font-display text-[25px] font-medium tracking-tight text-ink-900">{translate("Triage Economics")}</h1>
             <div className="mt-1 text-[12px] text-ink-500">
-              Does the small-brain gate save money? Each triage is a cold session (uncached input); the big-brain turns it shields are cache-warm.
-            </div>
+              {translate("Does the small-brain gate save money? Each triage is a cold session (uncached input); the big-brain turns it shields are cache-warm.")}{' '}</div>
           </div>
           <RefreshButton loading={props.loading} onClick={props.onRefresh} />
         </div>
@@ -713,8 +713,7 @@ function TriageEconomicsPanel(props: {
             ))}
           </div>
           <label className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-ink-400">
-            Agent
-            <Select
+            {translate("Agent")}{' '}<Select
               value={props.agentId}
               onValueChange={props.setAgentId}
               options={[{ value: 'all', label: 'All agents' }, ...props.agents.map((a) => ({ value: a.id, label: a.name }))]}
@@ -722,8 +721,7 @@ function TriageEconomicsPanel(props: {
             />
           </label>
           <label className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-ink-400">
-            Window
-            <Select<string>
+            {translate("Window")}{' '}<Select<string>
               value={String(props.hours)}
               onValueChange={(v) => props.setHours(Number(v))}
               options={TRIAGE_WINDOWS.map((w) => ({ value: String(w.hours), label: w.label }))}
@@ -739,20 +737,18 @@ function TriageEconomicsPanel(props: {
 
       <div className="min-h-0 flex-1 overflow-auto px-6 py-5">
         {!data ? (
-          <div className="grid h-full place-items-center text-[13px] text-ink-400">{props.loading ? 'Loading…' : 'No data.'}</div>
+          <div className="grid h-full place-items-center text-[13px] text-ink-400">{props.loading ? translate("Loading…") : translate("No data.")}</div>
         ) : (
           <div className="mx-auto max-w-[1100px] space-y-5">
             {/* ALWAYS-ON disclaimer: every $ here is an estimate. */}
             <div className="rounded-[10px] border border-coral-soft bg-coral-soft px-3.5 py-2.5 text-[11.5px] leading-[1.6] text-coral-deep">
-              <b>⚠ Every dollar on this page is an ESTIMATE</b> and may differ substantially from your real cost. Reason: we do not authoritatively know the per-token unit prices. The cloud model aliases (gpt-5.*) are <b>guesses</b>; the Claude tiers are list prices from memory that may be stale or wrong for your exact model variant; and on a flat-rate plan the $ is not a bill at all (see below). The token counts are real — the prices applied to them are not. Set <code className="rounded bg-paper/60 px-1">CUMORA_MODEL_PRICES_JSON</code> with your real contracted rates to make these exact.
-            </div>
+              <b>{translate("⚠ Every dollar on this page is an ESTIMATE")}</b> {translate("and may differ substantially from your real cost. Reason: we do not authoritatively know the per-token unit prices. The cloud model aliases (gpt-5.*) are")}{' '}<b>{translate("guesses")}</b>{translate("; the Claude tiers are list prices from memory that may be stale or wrong for your exact model variant; and on a flat-rate plan the $ is not a bill at all (see below). The token counts are real — the prices applied to them are not. Set")}{' '}<code className="rounded bg-paper/60 px-1">CUMORA_MODEL_PRICES_JSON</code> {translate("with your real contracted rates to make these exact.")}{' '}</div>
 
             {data.triageCount === 0 ? (
               <>
                 <PriceMenuTable rows={data.priceTable ?? []} />
                 <div className="rounded-[10px] border border-ink-100 bg-cloud px-3.5 py-3 text-[12px] leading-[1.6] text-ink-500">
-                  No triage recorded in this window yet. Triage cost is captured on the next agent wake (cloud immediately; BYOA after the daemon reports usage). The table above is the reference these estimates will use.
-                </div>
+                  {translate("No triage recorded in this window yet. Triage cost is captured on the next agent wake (cloud immediately; BYOA after the daemon reports usage). The table above is the reference these estimates will use.")}{' '}</div>
               </>
             ) : (
             <>
@@ -779,15 +775,15 @@ function TriageEconomicsPanel(props: {
             {/* The actual per-token unit prices the estimates rest on (table). */}
             {(data.unitPrices?.length ?? 0) > 0 && (
               <div className="rounded-[10px] border border-ink-100 bg-paper px-3.5 py-3">
-                <div className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-ink-300">Unit prices used · per 1M tokens (all ESTIMATES unless you set CUMORA_MODEL_PRICES_JSON)</div>
+                <div className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-ink-300">{translate("Unit prices used · per 1M tokens (all ESTIMATES unless you set CUMORA_MODEL_PRICES_JSON)")}</div>
                 <table className="mt-2 w-full text-[11.5px]">
                   <thead className="text-[9px] font-bold uppercase tracking-[0.1em] text-ink-400">
                     <tr>
-                      <th className="py-1 text-left">Brain</th>
-                      <th className="py-1 text-left">Model</th>
-                      <th className="py-1 text-right">Input</th>
-                      <th className="py-1 text-right">Cache-read</th>
-                      <th className="py-1 text-right">Output</th>
+                      <th className="py-1 text-left">{translate("Brain")}</th>
+                      <th className="py-1 text-left">{translate("Model")}</th>
+                      <th className="py-1 text-right">{translate("Input")}</th>
+                      <th className="py-1 text-right">{translate("Cache-read")}</th>
+                      <th className="py-1 text-right">{translate("Output")}</th>
                       <th className="py-1" />
                     </tr>
                   </thead>
@@ -798,13 +794,13 @@ function TriageEconomicsPanel(props: {
                           <span className={cn(
                             'rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase',
                             p.role === 'triage' ? 'bg-ink-100 text-ink-600' : 'bg-sky2-50 text-skype-deep',
-                          )}>{p.role === 'triage' ? 'small brain' : 'big brain'}</span>
+                          )}>{p.role === 'triage' ? translate("small brain") : translate("big brain")}</span>
                         </td>
                         <td className="py-1 font-mono text-ink-700">{p.model}</td>
                         <td className="py-1 text-right tabular-nums text-ink-600">${p.inPer1M}</td>
                         <td className="py-1 text-right tabular-nums text-ink-600">${p.cachedInPer1M}</td>
                         <td className="py-1 text-right tabular-nums text-ink-600">${p.outPer1M}</td>
-                        <td className="py-1 text-right">{p.estimated && <span className="rounded bg-coral-soft px-1.5 py-0.5 text-[9px] font-bold uppercase text-coral-deep">est</span>}</td>
+                        <td className="py-1 text-right">{p.estimated && <span className="rounded bg-coral-soft px-1.5 py-0.5 text-[9px] font-bold uppercase text-coral-deep">{translate("est")}</span>}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -814,13 +810,11 @@ function TriageEconomicsPanel(props: {
 
             {data.byoaShare > 0 && (
               <div className="rounded-[10px] border border-gold bg-cloud px-3.5 py-2.5 text-[11px] leading-[1.6] text-gold-deep">
-                <b>{fmtPct(data.byoaShare)} of these run on BYOA</b> (your own Claude/Codex). If that's a flat-rate plan (e.g. Claude Max), these dollars are <b>meter-equivalent</b> — what the same tokens would cost on the pay-as-you-go API, <b>NOT your real bill</b> (which is ≈ $0 marginal until you hit your plan's rate limit). For a flat-rate plan the real, plan-independent cost is the <b>tokens / quota</b>, not the $. The $ is still a faithful RELATIVE measure of triage-vs-turn.
-              </div>
+                <b>{fmtPct(data.byoaShare)} {translate("of these run on BYOA")}</b> {translate("(your own Claude/Codex). If that's a flat-rate plan (e.g. Claude Max), these dollars are")}{' '}<b>{translate("meter-equivalent")}</b> {translate("— what the same tokens would cost on the pay-as-you-go API,")}{' '}<b>{translate("NOT your real bill")}</b> {translate("(which is ≈ $0 marginal until you hit your plan's rate limit). For a flat-rate plan the real, plan-independent cost is the")}{' '}<b>{translate("tokens / quota")}</b>{translate(", not the $. The $ is still a faithful RELATIVE measure of triage-vs-turn.")}{' '}</div>
             )}
 
             <div className="rounded-[10px] border border-ink-100 bg-cloud px-3.5 py-2.5 text-[11px] leading-[1.6] text-ink-500">
-              <b className="text-ink-700">What "saved" means &amp; why it's an estimate:</b> a SKIP prevents a big-brain turn, so the saving is the <b>big-brain token cost that turn would have incurred</b> — which we can't know exactly (it didn't run). We approximate it with each agent's OWN mean effective turn cost in this window: <b>avoided = Σ(skips × that agent's avg turn $)</b>, then <b>net = avoided − triage spend</b>. Caveat: skipping can also let the big brain's prompt cache go cold (5-min TTL), so a later real turn may pay full uncached input — savings shift, they don't vanish. Everything except the avoided figure is measured; cache-aware (cache-reads ~10× cheaper than fresh input).
-              {data.costEstimated && <> Prices are <b>list-price estimates</b> — set <code className="rounded bg-paper px-1">CUMORA_MODEL_PRICES_JSON</code> for your real contracted rates.</>}
+              <b className="text-ink-700">{translate("What \"saved\" means &amp; why it's an estimate:")}</b> {translate("a SKIP prevents a big-brain turn, so the saving is the")}{' '}<b>{translate("big-brain token cost that turn would have incurred")}</b> {translate("— which we can't know exactly (it didn't run). We approximate it with each agent's OWN mean effective turn cost in this window:")}{' '}<b>{translate("avoided = Σ(skips × that agent's avg turn $)")}</b>{translate(", then")}{' '}<b>{translate("net = avoided − triage spend")}</b>{translate(". Caveat: skipping can also let the big brain's prompt cache go cold (5-min TTL), so a later real turn may pay full uncached input — savings shift, they don't vanish. Everything except the avoided figure is measured; cache-aware (cache-reads ~10× cheaper than fresh input).")}{' '}{data.costEstimated && <> {translate("Prices are")}{' '}<b>{translate("list-price estimates")}</b> {translate("— set")}{' '}<code className="rounded bg-paper px-1">CUMORA_MODEL_PRICES_JSON</code> {translate("for your real contracted rates.")}</>}
             </div>
 
             {/* Per-agent breakdown. */}
@@ -829,13 +823,13 @@ function TriageEconomicsPanel(props: {
                 <table className="w-full text-[11.5px]">
                   <thead className="bg-cloud text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-400">
                     <tr>
-                      <th className="px-3 py-2 text-left">Agent</th>
-                      <th className="px-3 py-2 text-right">Triages</th>
-                      <th className="px-3 py-2 text-right">Skip %</th>
-                      <th className="px-3 py-2 text-right">Triage $</th>
-                      <th className="px-3 py-2 text-right">Avg turn $</th>
-                      <th className="px-3 py-2 text-right">Cache-hit</th>
-                      <th className="px-3 py-2 text-right">Est. net</th>
+                      <th className="px-3 py-2 text-left">{translate("Agent")}</th>
+                      <th className="px-3 py-2 text-right">{translate("Triages")}</th>
+                      <th className="px-3 py-2 text-right">{translate("Skip %")}</th>
+                      <th className="px-3 py-2 text-right">{translate("Triage $")}</th>
+                      <th className="px-3 py-2 text-right">{translate("Avg turn $")}</th>
+                      <th className="px-3 py-2 text-right">{translate("Cache-hit")}</th>
+                      <th className="px-3 py-2 text-right">{translate("Est. net")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ink-100">
@@ -859,7 +853,7 @@ function TriageEconomicsPanel(props: {
 
             {/* Recent per-triage ledger. */}
             <div>
-              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">Recent triages</div>
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">{translate("Recent triages")}</div>
               <div className="space-y-1">
                 {(data.recent ?? []).map((t) => (
                   <div key={t.id} className="flex items-center gap-3 rounded-[8px] border border-ink-100 bg-paper px-3 py-1.5 text-[11.5px]">
@@ -877,7 +871,7 @@ function TriageEconomicsPanel(props: {
                     <span className="flex-1 truncate text-right text-[10px] text-ink-400">
                       {!t.actionable && t.estSavingUsd != null
                         ? <span style={t.estSavingUsd >= 0 ? { color: 'var(--avail)' } : undefined} className={t.estSavingUsd < 0 ? 'text-coral-deep' : undefined}>
-                            est. {t.estSavingUsd >= 0 ? 'saved ' : 'lost '}{fmtUsd(Math.abs(t.estSavingUsd))}
+                            {translate("est.")}{' '}{t.estSavingUsd >= 0 ? 'saved ' : 'lost '}{fmtUsd(Math.abs(t.estSavingUsd))}
                           </span>
                         : <span className="truncate">{t.reason ?? ''}</span>}
                     </span>
@@ -1081,8 +1075,8 @@ export function ObservabilityView() {
         <div className="border-b border-ink-100 px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h1 className="font-display text-[25px] font-medium tracking-tight text-ink-900">Agent Observability</h1>
-              <div className="mt-1 text-[12px] text-ink-500">Backend traces for every agent turn.</div>
+              <h1 className="font-display text-[25px] font-medium tracking-tight text-ink-900">{translate("Agent Observability")}</h1>
+              <div className="mt-1 text-[12px] text-ink-500">{translate("Backend traces for every agent turn.")}</div>
             </div>
             <RefreshButton
               loading={panel === 'traces' ? loading : workspaceLoading}
@@ -1109,8 +1103,7 @@ export function ObservabilityView() {
             <>
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <label className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-ink-400">
-                  Agent
-                  <Select
+                  {translate("Agent")}{' '}<Select
                     value={agentId}
                     onValueChange={setAgentId}
                     options={[
@@ -1121,8 +1114,7 @@ export function ObservabilityView() {
                   />
                 </label>
                 <label className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-ink-400">
-                  Status
-                  <Select<StatusFilter>
+                  {translate("Status")}{' '}<Select<StatusFilter>
                     value={status}
                     onValueChange={setStatus}
                     options={STATUS_OPTIONS.map((s) => ({
@@ -1144,8 +1136,7 @@ export function ObservabilityView() {
             </>
           ) : (
             <label className="mt-4 block text-[10.5px] font-bold uppercase tracking-[0.12em] text-ink-400">
-              Agent workspace
-              <Select
+              {translate("Agent workspace")}{' '}<Select
                 value={workspaceAgentId}
                 onValueChange={(next) => {
                   setWorkspaceAgentId(next)
@@ -1173,8 +1164,7 @@ export function ObservabilityView() {
           {panel === 'workspace' ? (
             workspaceFiles.length === 0 ? (
               <div className="grid h-full place-items-center px-8 text-center text-[13px] leading-[1.6] text-ink-400">
-                This agent workspace has no files yet.
-              </div>
+                {translate("This agent workspace has no files yet.")}{' '}</div>
             ) : (
               <FileTree
                 nodes={fileTree}
@@ -1188,8 +1178,7 @@ export function ObservabilityView() {
           ) : (
             runs.length === 0 ? (
               <div className="grid h-full place-items-center px-8 text-center text-[13px] leading-[1.6] text-ink-400">
-                No agent traces yet. Send a message to an agent conversation and the next wake will appear here.
-              </div>
+                {translate("No agent traces yet. Send a message to an agent conversation and the next wake will appear here.")}{' '}</div>
             ) : (
               <div className="space-y-2">
                 {runs.map((run) => (
@@ -1209,7 +1198,7 @@ export function ObservabilityView() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
                   <h2 className="truncate font-display text-[24px] font-medium text-ink-900">
-                    {workspaceFile?.path ?? 'Agent Workspace'}
+                    {workspaceFile?.path ?? translate("Agent Workspace")}
                   </h2>
                   <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-ink-400">
                     <span>{workspaceAgentId || 'no-agent'}</span>
@@ -1218,15 +1207,15 @@ export function ObservabilityView() {
                         <span>/</span>
                         <span>{bytes(workspaceFile.size)}</span>
                         <span>/</span>
-                        <span>{workspaceFile.lineCount} lines</span>
+                        <span>{workspaceFile.lineCount} {translate("lines")}</span>
                         <span>/</span>
-                        <span>updated {relative(workspaceFile.updatedAt)}</span>
+                        <span>{translate("updated")}{' '}{relative(workspaceFile.updatedAt)}</span>
                       </>
                     )}
                   </div>
                 </div>
                 <div className="rounded-[10px] border border-ink-100 bg-paper px-3 py-2">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">Files</div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">{translate("Files")}</div>
                   <div className="mt-1 font-mono text-[13px] text-ink-900">{workspaceFiles.length}</div>
                 </div>
               </div>
@@ -1241,8 +1230,7 @@ export function ObservabilityView() {
                 </article>
               ) : (
                 <div className="grid h-full place-items-center text-[13px] text-ink-400">
-                  Select a workspace file to inspect its contents.
-                </div>
+                  {translate("Select a workspace file to inspect its contents.")}{' '}</div>
               )}
             </div>
           </div>
@@ -1275,19 +1263,19 @@ export function ObservabilityView() {
                 </div>
                 <div className="grid min-w-[360px] grid-cols-4 gap-2">
                   <div className="rounded-[10px] border border-ink-100 bg-paper px-3 py-2">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">Duration</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">{translate("Duration")}</div>
                     <div className="mt-1 font-mono text-[13px] text-ink-900">{elapsed(selected.durationMs)}</div>
                   </div>
                   <div className="rounded-[10px] border border-ink-100 bg-paper px-3 py-2">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">Inbox</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">{translate("Inbox")}</div>
                     <div className="mt-1 font-mono text-[13px] text-ink-900">{selected.inboxCount}</div>
                   </div>
                   <div className="rounded-[10px] border border-ink-100 bg-paper px-3 py-2">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">Tools</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">{translate("Tools")}</div>
                     <div className="mt-1 font-mono text-[13px] text-ink-900">{selected.toolCallCount}</div>
                   </div>
                   <div className="rounded-[10px] border border-ink-100 bg-paper px-3 py-2">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">Tokens</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">{translate("Tokens")}</div>
                     <div className="mt-1 font-mono text-[13px] text-ink-900">{selected.tokenCount}</div>
                   </div>
                 </div>
@@ -1296,7 +1284,7 @@ export function ObservabilityView() {
 
             <div className="min-h-0 overflow-auto px-6 py-5">
               {events.length === 0 ? (
-                <div className="grid h-full place-items-center text-[13px] text-ink-400">No events recorded for this run.</div>
+                <div className="grid h-full place-items-center text-[13px] text-ink-400">{translate("No events recorded for this run.")}</div>
               ) : (
                 <div className="max-w-[1040px]">
                   {events.map((event) => (
@@ -1307,7 +1295,7 @@ export function ObservabilityView() {
             </div>
           </div>
         ) : (
-          <div className="grid h-full place-items-center text-[13px] text-ink-400">Select a run to inspect the timeline.</div>
+          <div className="grid h-full place-items-center text-[13px] text-ink-400">{translate("Select a run to inspect the timeline.")}</div>
         )}
       </section>
     </main>

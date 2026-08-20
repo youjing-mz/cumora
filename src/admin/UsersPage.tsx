@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Users — paginated, searchable, with inline detail expand + tier /
  * admin toggles per row.
@@ -95,7 +96,7 @@ export function UsersPage({ stats }: { stats: AdminStats | null }) {
     <div className="admin-page">
       <header className="admin-page-head">
         <div>
-          <h1 className="admin-h1">Users</h1>
+          <h1 className="admin-h1">{translate("Users")}</h1>
           <div className="admin-sub">
             {stats
               ? <>{stats.users.total} {t('admin.total')} · {stats.users.admins} {t('admin.admin')} · {stats.users.tiers.free} {t('admin.free')} · {stats.users.tiers.pro} {t('admin.pro')} · {stats.users.tiers.max} {t('admin.max')}</>
@@ -200,9 +201,9 @@ function CreateUserModal({ onClose, onCreated }: {
           <button className="admin-modal-close" onClick={onClose} disabled={busy} aria-label={t('admin.close')}>×</button>
         </div>
         <form onSubmit={submit} className="admin-form">
-          <label>{t('auth.username')}<input className="admin-input" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. alice" autoFocus /></label>
-          <label>{t('admin.displayName')}<input className="admin-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Alice" /></label>
-          <label>{t('admin.email')} <span className="admin-form-hint">{t('admin.optionalLocal')}</span><input className="admin-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="alice@example.com" /></label>
+          <label>{t('auth.username')}<input className="admin-input" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder={translate("e.g. alice")} autoFocus /></label>
+          <label>{t('admin.displayName')}<input className="admin-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={translate("Alice")} /></label>
+          <label>{t('admin.email')} <span className="admin-form-hint">{t('admin.optionalLocal')}</span><input className="admin-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={translate("alice@example.com")} /></label>
           <label>{t('admin.initialPassword')} <span className="admin-form-hint">{t('admin.atLeast16')}</span><input className="admin-input" type="password" required minLength={16} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></label>
           <div className="admin-form-row">
             <label>{t('admin.tier')}<select className="admin-select" value={tier} onChange={(e) => setTier(e.target.value as Tier)}><option value="free">{t('admin.free')}</option><option value="pro">{t('admin.pro')}</option><option value="max">{t('admin.max')}</option></select></label>
@@ -254,12 +255,12 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
     <>
       <div className={`admin-row ${u.suspended ? 'admin-row-suspended' : ''}`} onClick={onToggleExpand} role="button">
         <div className="admin-cell-user">
-          <img className="admin-avatar" src={u.avatarUrl} alt="" loading="lazy" />
+          <img className="admin-avatar" src={u.avatarUrl} alt={translate("")} loading="lazy" />
           <div className="admin-cell-user-text">
             <div className="admin-cell-user-name">
               {u.name}
-              {isMe && <span className="admin-pill admin-pill-soft" style={{ marginLeft: 8 }}>you</span>}
-              {u.suspended && <span className="admin-pill admin-pill-warn" style={{ marginLeft: 8 }}>suspended</span>}
+              {isMe && <span className="admin-pill admin-pill-soft" style={{ marginLeft: 8 }}>{translate("you")}</span>}
+              {u.suspended && <span className="admin-pill admin-pill-warn" style={{ marginLeft: 8 }}>{translate("suspended")}</span>}
             </div>
             <div className="admin-cell-user-email">@{u.username ?? '—'} · {u.email}</div>
           </div>
@@ -267,9 +268,9 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
         <div onClick={(e) => e.stopPropagation()} data-label="Tier">
           <select className="admin-select admin-select-sm"
             value={u.tier} onChange={(e) => onTierChange(e.target.value as Tier)}>
-            <option value="free">Free</option>
-            <option value="pro">Pro</option>
-            <option value="max">Max</option>
+            <option value="free">{translate("Free")}</option>
+            <option value="pro">{translate("Pro")}</option>
+            <option value="max">{translate("Max")}</option>
           </select>
         </div>
         <div onClick={(e) => e.stopPropagation()} data-label="Admin">
@@ -288,7 +289,7 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
       </div>
       {expanded && (
         <div className="admin-row-detail">
-          {loadingDetail && <div className="admin-empty">Loading details…</div>}
+          {loadingDetail && <div className="admin-empty">{translate("Loading details…")}</div>}
           {detail && (
             <div className="admin-detail-grid">
               <DetailField label="User ID" value={detail.id} mono />
@@ -300,10 +301,10 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
                   operator has all the context before deciding to unsuspend. */}
               {detail.suspended && (
                 <div className="admin-detail-suspended">
-                  <div className="admin-detail-label">Suspended</div>
+                  <div className="admin-detail-label">{translate("Suspended")}</div>
                   <div className="admin-detail-suspended-meta">
                     {detail.suspendedAt ? fmtDateTime(detail.suspendedAt) : '—'}
-                    {detail.suspendedBy ? <> · by <span className="admin-cell-mono">{detail.suspendedBy}</span></> : null}
+                    {detail.suspendedBy ? <> {translate("· by")}{' '}<span className="admin-cell-mono">{detail.suspendedBy}</span></> : null}
                   </div>
                   {detail.suspensionReason && (
                     <div className="admin-detail-suspended-reason">{detail.suspensionReason}</div>
@@ -317,19 +318,19 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
                   disabled={isMe && !detail.suspended}
                   title={isMe && !detail.suspended ? "You can't suspend yourself" : ''}
                 >
-                  {detail.suspended ? 'Unsuspend' : 'Suspend account'}
+                  {detail.suspended ? 'Unsuspend' : translate("Suspend account")}
                 </button>
               </div>
               <div className="admin-detail-companies">
-                <div className="admin-detail-label">Companies ({detail.companies.length})</div>
-                {detail.companies.length === 0 && <div className="admin-empty">No companies.</div>}
+                <div className="admin-detail-label">{translate("Companies (")}{detail.companies.length})</div>
+                {detail.companies.length === 0 && <div className="admin-empty">{translate("No companies.")}</div>}
                 {detail.companies.map((c) => (
                   <div key={c.id} className="admin-detail-company">
                     <div>
                       <div style={{ fontWeight: 600 }}>{c.name}</div>
                       <div className="admin-cell-user-email">{c.slug} · {c.role}</div>
                     </div>
-                    <div className="admin-cell-mono">{c.agentCount} agents</div>
+                    <div className="admin-cell-mono">{c.agentCount} {translate("agents")}</div>
                   </div>
                 ))}
               </div>

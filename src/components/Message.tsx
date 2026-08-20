@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { createContext, memo, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import hljs from 'highlight.js/lib/common'
@@ -46,8 +47,8 @@ function MentionChip({ id }: { id: string }) {
         className="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full font-semibold text-coral-deep bg-coral-soft"
         style={{ verticalAlign: '-0.15em' }}
       >
-        <img src="/everyone.png" alt="" className="w-4 h-4 rounded-full object-cover" />
-        <span style={{ lineHeight: '16px' }}>@all</span>
+        <img src="/everyone.png" alt={translate("")} className="w-4 h-4 rounded-full object-cover" />
+        <span style={{ lineHeight: '16px' }}>{translate("@all")}</span>
       </span>
     )
   }
@@ -372,7 +373,7 @@ function MessagePeekCard(
           </div>
         </div>
         <div className="text-[12.5px] text-ink-700 leading-[1.55] line-clamp-5 break-words">
-          {bodyPreview || <span className="italic text-ink-400">(no text)</span>}
+          {bodyPreview || <span className="italic text-ink-400">{translate("(no text)")}</span>}
         </div>
       </div>
     </div>
@@ -616,7 +617,7 @@ function DocumentArtifactCard({ id: rawId, conversationId }: { id: string; conve
 
         <div className="min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-skype-deep">Document</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-skype-deep">{translate("Document")}</span>
             <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />
             <span className="text-[10.5px] text-ink-400 truncate">{id}</span>
           </div>
@@ -624,19 +625,18 @@ function DocumentArtifactCard({ id: rawId, conversationId }: { id: string; conve
           <div className="mt-1 flex items-center gap-1.5 min-w-0 text-[11.5px] text-ink-500">
             {author && <span className="truncate">{author}</span>}
             {author && updated && <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />}
-            {updated && <span className="shrink-0">Updated {updated}</span>}
+            {updated && <span className="shrink-0">{translate("Updated")}{' '}{updated}</span>}
             {isPinnedHere && (
               <>
                 <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />
-                <span className="shrink-0 text-gold-deep">in this conversation</span>
+                <span className="shrink-0 text-gold-deep">{translate("in this conversation")}</span>
               </>
             )}
           </div>
         </div>
 
         <div className="ml-1 h-8 px-3 rounded-full bg-sky2-50 text-skype-deep text-[11.5px] font-semibold inline-flex items-center gap-1.5 transition group-hover:bg-skype group-hover:text-white">
-          Open
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+          {translate("Open")}{' '}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
             <path d="M9 18l6-6-6-6" />
           </svg>
         </div>
@@ -706,27 +706,26 @@ function BoardArtifactCard({ id: rawId }: { id: string }) {
 
         <div className="min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-skype-deep">Kanban</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-skype-deep">{translate("Kanban")}</span>
             <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />
             <span className="text-[10.5px] text-ink-400 truncate">{id}</span>
           </div>
           <div className="mt-1 text-[14px] font-semibold text-ink-900 truncate">{title}</div>
           <div className="mt-1 flex items-center gap-1.5 min-w-0 text-[11.5px] text-ink-500">
-            {columns !== null && <span>{columns} columns</span>}
+            {columns !== null && <span>{columns} {translate("columns")}</span>}
             {columns !== null && cards !== null && <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />}
-            {cards !== null && <span>{cards} cards</span>}
+            {cards !== null && <span>{cards} {translate("cards")}</span>}
             {updated && (
               <>
                 <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />
-                <span className="shrink-0">Updated {timeAgo(updated)}</span>
+                <span className="shrink-0">{translate("Updated")}{' '}{timeAgo(updated)}</span>
               </>
             )}
           </div>
         </div>
 
         <div className="ml-1 h-8 px-3 rounded-full bg-sky2-50 text-skype-deep text-[11.5px] font-semibold inline-flex items-center gap-1.5 transition group-hover:bg-skype-deep group-hover:text-white">
-          Open
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+          {translate("Open")}{' '}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
             <path d="M9 18l6-6-6-6" />
           </svg>
         </div>
@@ -794,7 +793,7 @@ function CardArtifactCard({ id: rawId }: { id: string }) {
 
         <div className="min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-skype-deep">Kanban card</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-skype-deep">{translate("Kanban card")}</span>
             <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />
             <span className="text-[10.5px] text-ink-400 truncate">{id}</span>
           </div>
@@ -810,15 +809,14 @@ function CardArtifactCard({ id: rawId }: { id: string }) {
             {updated && (
               <>
                 <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />
-                <span className="shrink-0">Updated {updated}</span>
+                <span className="shrink-0">{translate("Updated")}{' '}{updated}</span>
               </>
             )}
           </div>
         </div>
 
         <div className="ml-1 h-8 px-3 rounded-full bg-sky2-50 text-skype-deep text-[11.5px] font-semibold inline-flex items-center gap-1.5 transition group-hover:bg-skype-deep group-hover:text-white">
-          Peek
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+          {translate("Peek")}{' '}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
             <path d="M9 18l6-6-6-6" />
           </svg>
         </div>
@@ -873,7 +871,7 @@ function CalendarArtifactCard({ id: rawId }: { id: string }) {
 
         <div className="min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-skype-deep">Calendar</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-skype-deep">{translate("Calendar")}</span>
             <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />
             <span className="text-[10.5px] text-ink-400 truncate">{id}</span>
           </div>
@@ -883,7 +881,7 @@ function CalendarArtifactCard({ id: rawId }: { id: string }) {
             {event?.kind === 'agent_task' && assignee && (
               <>
                 <span className="w-1 h-1 rounded-full bg-ink-200 shrink-0" />
-                <span className="truncate">for {assignee}</span>
+                <span className="truncate">{translate("for")}{' '}{assignee}</span>
               </>
             )}
             {event?.status && (
@@ -896,8 +894,7 @@ function CalendarArtifactCard({ id: rawId }: { id: string }) {
         </div>
 
         <div className="ml-1 h-8 px-3 rounded-full bg-sky2-50 text-skype-deep text-[11.5px] font-semibold inline-flex items-center gap-1.5 transition group-hover:bg-skype group-hover:text-white">
-          Open
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+          {translate("Open")}{' '}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
             <path d="M9 18l6-6-6-6" />
           </svg>
         </div>
@@ -1144,12 +1141,12 @@ function _EmailCard({ msg }: { msg: Message }) {
           )}
         </div>
         <div className="font-display font-medium text-[16px] leading-snug text-ink-900 break-words">
-          {e.subject || <span className="text-ink-400 italic">(no subject)</span>}
+          {e.subject || <span className="text-ink-400 italic">{translate("(no subject)")}</span>}
         </div>
       </div>
       <div className="px-4 py-2.5 text-[11.5px] text-ink-500 space-y-0.5 border-b border-[rgba(120,110,95,0.18)]">
         <div className="flex gap-2">
-          <span className="font-semibold w-7 shrink-0 text-ink-300 uppercase tracking-wider text-[10px] pt-0.5">From</span>
+          <span className="font-semibold w-7 shrink-0 text-ink-300 uppercase tracking-wider text-[10px] pt-0.5">{translate("From")}</span>
           <span className="text-ink-700 break-all">{e.from}</span>
         </div>
         {recipients.length > 0 && recipients.map((r, i) => (
@@ -1162,11 +1159,11 @@ function _EmailCard({ msg }: { msg: Message }) {
       {showHtml ? (
         <div className="px-2 py-2 bg-white">
           {htmlLoading && (
-            <div className="px-3 py-6 text-[12px] text-ink-400 italic">loading html…</div>
+            <div className="px-3 py-6 text-[12px] text-ink-400 italic">{translate("loading html…")}</div>
           )}
           {htmlError && (
             <div className="px-3 py-3 text-[12px] text-coral-deep">
-              couldn't load html: {htmlError}
+              {translate("couldn't load html:")}{' '}{htmlError}
             </div>
           )}
           {htmlBody !== null && !htmlError && (
@@ -1190,7 +1187,7 @@ function _EmailCard({ msg }: { msg: Message }) {
           className="px-4 py-2 text-[11.5px] text-coral-deep border-t border-[rgba(196,60,50,0.25)]"
           style={{ background: 'rgba(196, 60, 50, 0.06)' }}
         >
-          delivery failed: {e.transportError}
+          {translate("delivery failed:")}{' '}{e.transportError}
         </div>
       )}
       <div className="flex items-center gap-2 px-4 py-2 border-t border-[rgba(120,110,95,0.18)]">
@@ -1200,8 +1197,7 @@ function _EmailCard({ msg }: { msg: Message }) {
           className="inline-flex items-center gap-1.5 py-1.5 px-3 text-[11.5px] font-semibold text-ink-700 bg-cloud border border-ink-100 rounded-[7px] hover:border-sky2-200 hover:text-skype-deep transition"
         >
           <IMail className="w-3.5 h-3.5" strokeWidth={2} />
-          Reply
-        </button>
+          {translate("Reply")}{' '}</button>
       </div>
     </div>
   )
@@ -1225,7 +1221,7 @@ function EmailAttachmentRow({ att }: { att: NonNullable<NonNullable<Message['ema
         <div className="truncate font-medium">{att.filename}</div>
         <div className="text-[10.5px] text-ink-400 uppercase tracking-wider">
           {att.mimeType}{att.sizeBytes > 0 && ` · ${humanSize(att.sizeBytes)}`}
-          {att.truncated && ' · skipped (too large)'}
+          {att.truncated && translate(" · skipped (too large)")}
         </div>
       </div>
       {att.url ? (
@@ -1236,10 +1232,9 @@ function EmailAttachmentRow({ att }: { att: NonNullable<NonNullable<Message['ema
           download={att.filename}
           className="shrink-0 text-[11.5px] font-semibold text-skype-deep hover:underline"
         >
-          download
-        </a>
+          {translate("download")}{' '}</a>
       ) : (
-        <span className="shrink-0 text-[11.5px] text-ink-300 italic">unavailable</span>
+        <span className="shrink-0 text-[11.5px] text-ink-300 italic">{translate("unavailable")}</span>
       )}
     </div>
   )
@@ -1297,7 +1292,7 @@ function EmailHtmlFrame({ html }: { html: string }) {
       sandbox="allow-popups allow-popups-to-escape-sandbox"
       referrerPolicy="no-referrer"
       style={{ width: '100%', height: h, border: 0, background: 'white', borderRadius: 6 }}
-      title="HTML email body"
+      title={translate("HTML email body")}
     />
   )
 }
@@ -1321,9 +1316,8 @@ function WhisperLink({ msg }: { msg: Message }) {
         <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M3 12c0-4 4-8 9-8s9 4 9 8-4 8-9 8a10 10 0 01-3-.5L3 21l1.5-5A8 8 0 013 12z"/></svg>
       </div>
       <div className="min-w-0 flex-1">
-        <span className="text-whisper-deep font-bold">{a?.name}</span> and <span className="text-whisper-deep font-bold">{b?.name}</span> are whispering — <em className="font-display italic font-normal text-whisper-deep">{w.snippet}</em> · {w.count} messages
-      </div>
-      <div className="ml-auto text-[11px] font-semibold py-1 px-2.5 rounded-full bg-[rgba(124,92,255,0.15)] text-whisper-deep shrink-0">Peek →</div>
+        <span className="text-whisper-deep font-bold">{a?.name}</span> {translate("and")}{' '}<span className="text-whisper-deep font-bold">{b?.name}</span> {translate("are whispering —")}{' '}<em className="font-display italic font-normal text-whisper-deep">{w.snippet}</em> · {w.count} {translate("messages")}{' '}</div>
+      <div className="ml-auto text-[11px] font-semibold py-1 px-2.5 rounded-full bg-[rgba(124,92,255,0.15)] text-whisper-deep shrink-0">{translate("Peek →")}</div>
     </div>
   )
 }
@@ -1558,7 +1552,7 @@ export function SystemRow({ msg, delay = 0, animate = true }: { msg: { body: str
       <div className={cn('flex justify-center my-3', riseCls)} style={riseStyle}>
         <div className="max-w-[min(100%,540px)] flex items-center gap-2 px-3 py-1.5 rounded-md bg-skype/10 border border-skype/20 text-skype text-[11.5px] font-display">
           <span className="leading-[1.4] shrink-0">📅</span>
-          <span className="leading-[1.4]">Calendar fired: {title}</span>
+          <span className="leading-[1.4]">{translate("Calendar fired:")}{' '}{title}</span>
           {typeof payload.eventId === 'string' && <CalendarLink id={payload.eventId} />}
         </div>
       </div>
@@ -1585,16 +1579,16 @@ export function SystemRow({ msg, delay = 0, animate = true }: { msg: { body: str
         {payload.kind === 'kicked' && actor ? (
           <>
             <SystemActor p={actor} onClick={() => openAgentInfo(actor.id)} />
-            <span>— removed</span>
+            <span>{translate("— removed")}</span>
             <SystemActor p={subject} onClick={onClick} />
-            <span>from the group</span>
+            <span>{translate("from the group")}</span>
           </>
         ) : (
           <>
             <SystemActor p={subject} onClick={onClick} />
-            <span>— {payload.kind === 'joined' ? 'joined the group'
-              : payload.kind === 'left'     ? 'left the group'
-              : payload.kind ?? 'updated the group'}</span>
+            <span>— {payload.kind === 'joined' ? translate("joined the group")
+              : payload.kind === 'left'     ? translate("left the group")
+              : payload.kind ?? translate("updated the group")}</span>
           </>
         )}
       </div>
@@ -1638,7 +1632,7 @@ function QuoteCard({ msg }: { msg: Message }) {
         className="mb-1 max-w-[min(100%,580px)] flex items-stretch gap-2 text-left rounded-md bg-cloud/60 border border-ink-100 hover:border-ink-200 px-2 py-1.5 transition-colors"
       >
         <span className="w-[3px] rounded bg-ink-200" />
-        <span className="min-w-0 text-[11.5px] text-ink-400 italic">[message deleted]</span>
+        <span className="min-w-0 text-[11.5px] text-ink-400 italic">{translate("[message deleted]")}</span>
       </button>
     )
   }
@@ -1650,7 +1644,7 @@ function QuoteCard({ msg }: { msg: Message }) {
     <button
       onClick={jump}
       className="mb-1 max-w-[min(100%,580px)] flex items-stretch gap-2 text-left rounded-md bg-cloud/60 border border-ink-100 hover:border-ink-200 hover:bg-cloud px-2 py-1.5 transition-colors"
-      title="Jump to original"
+      title={translate("Jump to original")}
     >
       <span className="w-[3px] rounded bg-skype" />
       <span className="min-w-0 flex flex-col gap-0.5">
@@ -1670,8 +1664,8 @@ function ReplyIconButton({ msg }: { msg: Message }) {
     <button
       onClick={() => setReplyingTo(msg.conversationId, msg.id)}
       className="w-6 h-6 rounded-full hover:bg-sky2-50 grid place-items-center text-ink-400 hover:text-skype-deep"
-      title="Reply"
-      aria-label="Reply to this message"
+      title={translate("Reply")}
+      aria-label={translate("Reply to this message")}
     >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="9 17 4 12 9 7" />
@@ -1788,18 +1782,18 @@ function MessageRowImpl({ msg, author, delay = 0, animate = true }: MessageRowPr
 
         {(msg.failed || msg.unconfirmed) && (
           <div className="mt-1 flex items-center gap-2 text-[11px] text-coral-deep">
-            <span>{msg.unconfirmed ? 'Delivery not confirmed' : 'Failed to send'}</span>
+            <span>{msg.unconfirmed ? translate("Delivery not confirmed") : translate("Failed to send")}</span>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); void retryFailedMessage(msg.conversationId, msg.id) }}
               className="font-semibold underline underline-offset-2 hover:text-coral-700"
-            >Retry</button>
+            >{translate("Retry")}</button>
             <span className="text-ink-300">·</span>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); discardFailedMessage(msg.conversationId, msg.id) }}
               className="font-semibold underline underline-offset-2 hover:text-coral-700"
-            >Dismiss</button>
+            >{translate("Dismiss")}</button>
           </div>
         )}
 
@@ -1857,16 +1851,16 @@ export function TypingRow({ names }: { names: string[] }) {
   const visible = names.length > 0
   let body: React.ReactNode = null
   if (names.length === 1) {
-    body = <><b className="text-ink-700 font-semibold">{names[0]}</b> is typing…</>
+    body = <><b className="text-ink-700 font-semibold">{names[0]}</b> {translate("is typing…")}</>
   } else if (names.length === 2) {
-    body = <><b className="text-ink-700 font-semibold">{names[0]}</b> and <b className="text-ink-700 font-semibold">{names[1]}</b> are typing…</>
+    body = <><b className="text-ink-700 font-semibold">{names[0]}</b> {translate("and")}{' '}<b className="text-ink-700 font-semibold">{names[1]}</b> {translate("are typing…")}</>
   } else if (names.length >= 3) {
     body = (
       <>
         <b className="text-ink-700 font-semibold">{names[0]}</b>, <b className="text-ink-700 font-semibold">{names[1]}</b>
         {names.length === 3
-          ? <> and <b className="text-ink-700 font-semibold">{names[2]}</b> are typing…</>
-          : <> and <b className="text-ink-700 font-semibold">{names.length - 2} more</b> are typing…</>}
+          ? <> {translate("and")}{' '}<b className="text-ink-700 font-semibold">{names[2]}</b> {translate("are typing…")}</>
+          : <> {translate("and")}{' '}<b className="text-ink-700 font-semibold">{names.length - 2} {translate("more")}</b> {translate("are typing…")}</>}
       </>
     )
   }

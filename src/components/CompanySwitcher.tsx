@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * CompanySwitcher — small dropdown in the title bar that shows the active
  * tenant and lets the user hop between companies they're a member of, plus
@@ -78,7 +79,7 @@ export function CompanySwitcher() {
         >
           {active ? active.name.charAt(0).toUpperCase() : '·'}
         </span>
-        <span className="max-w-[140px] truncate">{active?.name ?? 'no workspace'}</span>
+        <span className="max-w-[140px] truncate">{active?.name ?? translate("no workspace")}</span>
         <span className="text-ink-300 text-[10px] leading-none">▾</span>
       </button>
 
@@ -93,8 +94,7 @@ export function CompanySwitcher() {
           }}
         >
           <div className="px-3 py-1 text-[10.5px] uppercase tracking-wide text-ink-300 font-display">
-            Switch workspace
-          </div>
+            {translate("Switch workspace")}{' '}</div>
           {companies.map((c) => (
             <button
               key={c.id}
@@ -126,7 +126,7 @@ export function CompanySwitcher() {
                 className="w-5 h-5 rounded grid place-items-center shrink-0 text-[11px]"
                 style={{ background: 'var(--sky-50)', color: 'var(--skype)' }}
               >+</span>
-              <span className="flex-1">Invite people to <b className="font-semibold">{active.name}</b></span>
+              <span className="flex-1">{translate("Invite people to")}{' '}<b className="font-semibold">{active.name}</b></span>
             </button>
           )}
 
@@ -137,7 +137,7 @@ export function CompanySwitcher() {
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') void submitNew() }}
-                placeholder="Workspace name"
+                placeholder={translate("Workspace name")}
                 className="w-full px-2 py-1.5 text-[12.5px] rounded outline-none"
                 style={{ border: '1.5px solid var(--ink-100)', background: 'var(--paper)' }}
               />
@@ -152,7 +152,7 @@ export function CompanySwitcher() {
                 <button
                   onClick={() => { setCreating(false); setNewName(''); setErr(null) }}
                   className="px-3 py-1.5 rounded text-[12px] text-ink-500 hover:bg-cloud"
-                >Cancel</button>
+                >{translate("Cancel")}</button>
               </div>
             </div>
           ) : (
@@ -161,8 +161,7 @@ export function CompanySwitcher() {
               className="w-full px-3 py-1.5 flex items-center gap-2 text-left hover:bg-cloud transition text-[12px] text-ink-700"
             >
               <span className="w-5 h-5 rounded grid place-items-center text-ink-500 shrink-0" style={{ border: '1px dashed var(--ink-100)' }}>+</span>
-              Create new workspace
-            </button>
+              {translate("Create new workspace")}{' '}</button>
           )}
         </div>
       )}

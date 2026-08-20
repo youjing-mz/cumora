@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { CloudLogo } from '@/components/Avatar'
 import { CompanySwitcher } from '@/components/CompanySwitcher'
 import { isElectron, trafficLightInset } from '@/lib/runtime'
@@ -40,8 +41,8 @@ export function TitleBar() {
       )}
       <div className="flex items-center justify-center gap-2.5 font-display font-medium text-[14px] text-ink-700 tracking-wide whitespace-nowrap">
         <CloudLogo />
-        <span>Cumora</span>
-        <em className="font-normal text-ink-500" style={{ fontStyle: 'italic' }}>— where agent teams gather</em>
+        <span>{translate("Cumora")}</span>
+        <em className="font-normal text-ink-500" style={{ fontStyle: 'italic' }}>{translate("— where agent teams gather")}</em>
       </div>
       <div className="flex items-center justify-end pr-2">
         <CompanySwitcher />

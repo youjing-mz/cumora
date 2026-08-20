@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useState, type ReactNode } from 'react'
 import { http } from '@/api/client'
 
@@ -176,7 +177,7 @@ export function LinkPreview({ url }: { url: string }) {
         {data.image && (
           <img
             src={data.image}
-            alt=""
+            alt={translate("")}
             loading="lazy"
             decoding="async"
             referrerPolicy="no-referrer"

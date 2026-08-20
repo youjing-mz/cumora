@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Floating popover that lists every member of a conversation. Anchored to a
  * trigger element via DOMRect; closes on outside click / Esc. Click any row
@@ -74,7 +75,7 @@ export function MembersPopover({ members, anchor, triggerRef, onClose }: Props) 
     <div
       ref={ref}
       role="dialog"
-      aria-label="Conversation members"
+      aria-label={translate("Conversation members")}
       className="fixed z-[60] w-[280px] py-1 rounded-[12px] bg-cloud animate-rise"
       style={{
         left: anchor.right - 280,
@@ -102,7 +103,7 @@ export function MembersPopover({ members, anchor, triggerRef, onClose }: Props) 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[13px] font-semibold text-ink-900 truncate">{p.name}</span>
-                  {isYou && <span className="text-[9.5px] font-bold py-px px-1.5 rounded uppercase tracking-wider bg-sky2-100 text-skype-deep">you</span>}
+                  {isYou && <span className="text-[9.5px] font-bold py-px px-1.5 rounded uppercase tracking-wider bg-sky2-100 text-skype-deep">{translate("you")}</span>}
                   {!isYou && p.kind === 'human' && <HumanBadge />}
                 </div>
                 <div className="text-[11.5px] text-ink-500 truncate flex items-center gap-1.5">

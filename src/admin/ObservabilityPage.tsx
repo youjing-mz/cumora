@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Admin Observability — the operator-facing answer to:
  *
@@ -281,16 +282,15 @@ export function ObservabilityPage() {
     <div className="admin-page obs-page">
       <header className="admin-page-head">
         <div>
-          <h1 className="admin-h1">Observability</h1>
+          <h1 className="admin-h1">{translate("Observability")}</h1>
           <div className="admin-sub">
-            Every LLM call — cloud AND BYOA — attributed to the business logic that spent it.
-            {data?.summary && (
-              <> Window: last {data.summary.sinceDays}d · {fmtInt(data.summary.activeTenants)} active tenants.</>
+            {translate("Every LLM call — cloud AND BYOA — attributed to the business logic that spent it.")}{' '}{data?.summary && (
+              <> {translate("Window: last")}{' '}{data.summary.sinceDays}{translate("d ·")}{' '}{fmtInt(data.summary.activeTenants)} {translate("active tenants.")}</>
             )}
           </div>
         </div>
         <div className="admin-filters obs-filters">
-          <div className="obs-pills" role="tablist" aria-label="Time range">
+          <div className="obs-pills" role="tablist" aria-label={translate("Time range")}>
             {RANGES.map((r) => (
               <button
                 key={r.days}
@@ -301,7 +301,7 @@ export function ObservabilityPage() {
               >{r.label}</button>
             ))}
           </div>
-          <div className="obs-pills" role="tablist" aria-label="Source">
+          <div className="obs-pills" role="tablist" aria-label={translate("Source")}>
             {SOURCE_FILTERS.map((s) => (
               <button
                 key={s.key}
@@ -314,7 +314,7 @@ export function ObservabilityPage() {
           </div>
           {/* Unit toggle — $ are seeded estimates; tokens are the platform-
               neutral truth (the whole reason BYOA can't trust the $). */}
-          <div className="obs-pills" role="tablist" aria-label="Unit">
+          <div className="obs-pills" role="tablist" aria-label={translate("Unit")}>
             {UNITS.map((u) => (
               <button
                 key={u.key}
@@ -328,7 +328,7 @@ export function ObservabilityPage() {
           </div>
           <input
             className="admin-input obs-model-input"
-            placeholder="Filter model (e.g. gpt-5.4-mini)"
+            placeholder={translate("Filter model (e.g. gpt-5.4-mini)")}
             value={modelFilter}
             onChange={(e) => setModelFilter(e.target.value)}
           />
@@ -347,7 +347,7 @@ export function ObservabilityPage() {
               onClick={triggerRefresh}
               disabled={refreshing}
               title={lastUpdated ? `Last updated ${new Date(lastUpdated).toLocaleTimeString()} — click to refresh` : 'Refresh'}
-              aria-label="Refresh now"
+              aria-label={translate("Refresh now")}
             >
               <span className={`obs-refresh-icon${refreshing ? ' is-spinning' : ''}`} aria-hidden>↻</span>
             </button>
@@ -355,21 +355,21 @@ export function ObservabilityPage() {
               value={String(autoRefreshMs)}
               onValueChange={(v) => setAutoRefreshMs(Number(v))}
               options={REFRESH_INTERVALS.map((r) => ({ value: String(r.ms), label: r.label }))}
-              ariaLabel="Auto-refresh interval"
+              ariaLabel={translate("Auto-refresh interval")}
               className="min-w-[150px]"
             />
           </div>
         </div>
         {lastUpdated && (
           <div className="obs-updated" aria-live="polite">
-            Updated {new Date(lastUpdated).toLocaleTimeString()}
-            {autoRefreshMs > 0 && <> · auto every {REFRESH_INTERVALS.find((r) => r.ms === autoRefreshMs)?.label.replace('Every ', '')}</>}
-            {refreshing && <> · refreshing…</>}
+            {translate("Updated")}{' '}{new Date(lastUpdated).toLocaleTimeString()}
+            {autoRefreshMs > 0 && <> {translate("· auto every")}{' '}{REFRESH_INTERVALS.find((r) => r.ms === autoRefreshMs)?.label.replace('Every ', '')}</>}
+            {refreshing && <> {translate("· refreshing…")}</>}
           </div>
         )}
       </header>
 
-      {error && <div className="obs-error">Failed to load: {error}</div>}
+      {error && <div className="obs-error">{translate("Failed to load:")}{' '}{error}</div>}
 
       {/* Hero KPIs — paper-toned, with one richly-treated "Spend" tile as
           the visual anchor. The four cards always render so the page doesn't
@@ -410,8 +410,8 @@ export function ObservabilityPage() {
       <section className="obs-card obs-trend-card">
         <div className="obs-card-head">
           <div>
-            <div className="obs-card-title">{unit === 'usd' ? 'Daily cost by purpose' : 'Daily input tokens by purpose'}</div>
-            <div className="obs-card-sub">UTC days · stacked by purpose · {modelFilter ? `model = ${modelFilter}` : 'all models'}{unit !== 'usd' && ' · cached + uncached input'}</div>
+            <div className="obs-card-title">{unit === 'usd' ? translate("Daily cost by purpose") : translate("Daily input tokens by purpose")}</div>
+            <div className="obs-card-sub">{translate("UTC days · stacked by purpose ·")}{' '}{modelFilter ? `model = ${modelFilter}` : translate("all models")}{unit !== 'usd' && translate(" · cached + uncached input")}</div>
           </div>
         </div>
         <TrendChart buckets={data?.trend ?? []} unit={unit} loading={loading} />
@@ -427,10 +427,9 @@ export function ObservabilityPage() {
       <section className="obs-card">
         <div className="obs-card-head">
           <div>
-            <div className="obs-card-title">{unit === 'usd' ? 'Spend' : 'Tokens'} by purpose × model × source</div>
+            <div className="obs-card-title">{unit === 'usd' ? 'Spend' : 'Tokens'} {translate("by purpose × model × source")}</div>
             <div className="obs-card-sub">
-              Sorted by {unit === 'usd' ? 'cost' : 'tokens'} desc · click a column to re-sort
-              {sourceFilter !== 'all' && <> · filtered to <strong>{SOURCE_FILTERS.find((s) => s.key === sourceFilter)?.label}</strong></>}
+              {translate("Sorted by")}{' '}{unit === 'usd' ? 'cost' : 'tokens'} {translate("desc · click a column to re-sort")}{' '}{sourceFilter !== 'all' && <> {translate("· filtered to")}{' '}<strong>{SOURCE_FILTERS.find((s) => s.key === sourceFilter)?.label}</strong></>}
             </div>
           </div>
         </div>
@@ -448,8 +447,8 @@ export function ObservabilityPage() {
       <section className="obs-card">
         <div className="obs-card-head">
           <div>
-            <div className="obs-card-title">Top spenders</div>
-            <div className="obs-card-sub">By agent · top 20 over the window</div>
+            <div className="obs-card-title">{translate("Top spenders")}</div>
+            <div className="obs-card-sub">{translate("By agent · top 20 over the window")}</div>
           </div>
         </div>
         <TopAgentsTable
@@ -468,8 +467,8 @@ export function ObservabilityPage() {
       <section className="obs-card">
         <div className="obs-card-head">
           <div>
-            <div className="obs-card-title">By daemon version</div>
-            <div className="obs-card-sub">Spend × cache behaviour per agent-cli release · drill into a row to see its calls</div>
+            <div className="obs-card-title">{translate("By daemon version")}</div>
+            <div className="obs-card-sub">{translate("Spend × cache behaviour per agent-cli release · drill into a row to see its calls")}</div>
           </div>
         </div>
         <DaemonVersionTable
@@ -511,13 +510,13 @@ function HeroSpendCard({ summary, unit, loading }: { summary: LlmObservabilityPa
   return (
     <div className="obs-hero-card obs-hero-spend">
       <div className="obs-hero-spend-shine" aria-hidden />
-      <div className="obs-hero-label">{unit === 'usd' ? 'Spend' : 'Tokens'} · last {summary?.sinceDays ?? 30}d</div>
+      <div className="obs-hero-label">{unit === 'usd' ? 'Spend' : 'Tokens'} {translate("· last")}{' '}{summary?.sinceDays ?? 30}{translate("d")}</div>
       <div className="obs-hero-value">{loading ? '—' : unit === 'usd' ? fmtUsd(totalUsd, totalUsd < 100 ? 4 : 2) : fmtTokens(totalTok)}</div>
       <div className="obs-hero-sub">
         {summary
           ? (unit === 'usd'
-              ? <>{fmtTokens(uncachedIn + cachedIn)} input · {fmtTokens(out)} output</>
-              : <>{fmtTokens(uncachedIn)} in · {fmtTokens(cachedIn)} cached · {fmtTokens(out)} out</>)
+              ? <>{fmtTokens(uncachedIn + cachedIn)} {translate("input ·")}{' '}{fmtTokens(out)} {translate("output")}</>
+              : <>{fmtTokens(uncachedIn)} {translate("in ·")}{' '}{fmtTokens(cachedIn)} {translate("cached ·")}{' '}{fmtTokens(out)} {translate("out")}</>)
           : <> </>}
       </div>
     </div>
@@ -584,8 +583,8 @@ function TrendChart({ buckets, unit, loading }: { buckets: LlmTrendBucket[]; uni
     return { purposes, series, totalByDay, maxStack }
   }, [buckets, days, unit])
 
-  if (loading) return <div className="obs-chart-empty">Loading…</div>
-  if (days.length === 0) return <div className="obs-chart-empty">No data in this window.</div>
+  if (loading) return <div className="obs-chart-empty">{translate("Loading…")}</div>
+  if (days.length === 0) return <div className="obs-chart-empty">{translate("No data in this window.")}</div>
 
   const innerW = W - PADL - PADR
   const innerH = H - PADT - PADB
@@ -638,7 +637,7 @@ function TrendChart({ buckets, unit, loading }: { buckets: LlmTrendBucket[]; uni
 
   return (
     <div className="obs-chart">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Daily cost by purpose">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={translate("Daily cost by purpose")}>
         {/* Grid */}
         {ticks.map((t, i) => (
           <g key={i}>
@@ -757,32 +756,31 @@ function CacheHealthCard({ summary, trend, rollup, unit, loading }: {
     <section className="obs-card obs-cache-card">
       <div className="obs-card-head">
         <div>
-          <div className="obs-card-title">Cache health</div>
+          <div className="obs-card-title">{translate("Cache health")}</div>
           <div className="obs-card-sub">
-            How much you're paying for tokens the cache could have served.
-          </div>
+            {translate("How much you're paying for tokens the cache could have served.")}{' '}</div>
         </div>
       </div>
 
       <div className="obs-cache-hero">
         <div className="obs-cache-hero-main">
-          <div className="obs-cache-hero-label">Overall hit rate</div>
+          <div className="obs-cache-hero-label">{translate("Overall hit rate")}</div>
           <div className={`obs-cache-hero-value ${cacheToneClass(hit)}`}>
             {hit != null ? fmtPct(hit, 1) : '—'}
           </div>
           <div className="obs-cache-hero-sub">
             {hit != null
-              ? <>of {fmtTokens((summary?.totalInputTokens ?? 0) + (summary?.totalCachedInputTokens ?? 0))} input tokens served from cache</>
+              ? <>{translate("of")}{' '}{fmtTokens((summary?.totalInputTokens ?? 0) + (summary?.totalCachedInputTokens ?? 0))} {translate("input tokens served from cache")}</>
               : '—'}
           </div>
         </div>
         <div className="obs-cache-hero-aside">
-          <div className="obs-cache-hero-label">{unit === 'usd' ? 'Money on the table' : 'Cacheable tokens'}</div>
+          <div className="obs-cache-hero-label">{unit === 'usd' ? translate("Money on the table") : translate("Cacheable tokens")}</div>
           <div className="obs-cache-hero-value obs-cache-tone-warn">
             {loading ? '—' : unit === 'usd' ? fmtUsd(savable, savable < 1 ? 4 : 2) : fmtTokens(summary?.totalInputTokens ?? 0)}
           </div>
           <div className="obs-cache-hero-sub">
-            upper bound · {unit === 'usd' ? 'if every input were cached' : 'uncached input tokens'}
+            {translate("upper bound ·")}{' '}{unit === 'usd' ? translate("if every input were cached") : translate("uncached input tokens")}
           </div>
         </div>
       </div>
@@ -790,8 +788,8 @@ function CacheHealthCard({ summary, trend, rollup, unit, loading }: {
       <CacheDailyChart days={daily} loading={loading} />
 
       <div className="obs-cache-bars">
-        <div className="obs-cache-bars-head">By purpose · sorted by {unit === 'usd' ? 'savable $' : 'cacheable tokens'}</div>
-        {perPurpose.length === 0 && <div className="obs-empty">No input traffic in this window.</div>}
+        <div className="obs-cache-bars-head">{translate("By purpose · sorted by")}{' '}{unit === 'usd' ? translate("savable $") : translate("cacheable tokens")}</div>
+        {perPurpose.length === 0 && <div className="obs-empty">{translate("No input traffic in this window.")}</div>}
         {perPurpose.map((p) => (
           <CachePurposeBar key={p.purpose} {...p} unit={unit} />
         ))}
@@ -821,8 +819,8 @@ function CacheDailyChart({ days, loading }: {
   const innerW = W - PADL - PADR
   const innerH = H - PADT - PADB
 
-  if (loading) return <div className="obs-chart-empty obs-cache-chart-empty">Loading…</div>
-  if (days.length === 0) return <div className="obs-chart-empty obs-cache-chart-empty">No daily data yet.</div>
+  if (loading) return <div className="obs-chart-empty obs-cache-chart-empty">{translate("Loading…")}</div>
+  if (days.length === 0) return <div className="obs-chart-empty obs-cache-chart-empty">{translate("No daily data yet.")}</div>
 
   // Points; skip nulls (no traffic) so the line interpolates instead of dropping to 0.
   const points = days
@@ -852,7 +850,7 @@ function CacheDailyChart({ days, loading }: {
 
   return (
     <div className="obs-cache-chart">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Daily cache hit rate">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={translate("Daily cache hit rate")}>
         <defs>
           <linearGradient id="obsCacheGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--skype-deep)" stopOpacity={0.18} />
@@ -917,11 +915,11 @@ function CachePurposeBar({ purpose, hitRate, savableUsd, costUsd, uncachedIn, ca
         {unit === 'usd'
           ? <>
               {savableUsd > 0 ? <span className="obs-cache-bar-savable-amt">{fmtUsd(savableUsd, savableUsd < 1 ? 4 : 2)}</span> : <span className="obs-cache-bar-savable-na">—</span>}
-              <span className="obs-cache-bar-savable-sub"> of {fmtUsd(costUsd, costUsd < 1 ? 4 : 2)}</span>
+              <span className="obs-cache-bar-savable-sub"> {translate("of")}{' '}{fmtUsd(costUsd, costUsd < 1 ? 4 : 2)}</span>
             </>
           : <>
               {uncachedIn > 0 ? <span className="obs-cache-bar-savable-amt">{fmtTokens(uncachedIn)}</span> : <span className="obs-cache-bar-savable-na">—</span>}
-              <span className="obs-cache-bar-savable-sub"> of {fmtTokens(uncachedIn + cachedIn)} in</span>
+              <span className="obs-cache-bar-savable-sub"> {translate("of")}{' '}{fmtTokens(uncachedIn + cachedIn)} {translate("in")}</span>
             </>}
       </div>
     </div>
@@ -963,19 +961,19 @@ function RollupTable({ rows, unit, loading, onDrill }: { rows: LlmRollupRow[]; u
     </button>
   )
 
-  if (loading && rows.length === 0) return <div className="obs-empty">Loading…</div>
-  if (!loading && rows.length === 0) return <div className="obs-empty">No spend in this window. (Either no traffic, or the ledger hasn’t recorded any calls yet.)</div>
+  if (loading && rows.length === 0) return <div className="obs-empty">{translate("Loading…")}</div>
+  if (!loading && rows.length === 0) return <div className="obs-empty">{translate("No spend in this window. (Either no traffic, or the ledger hasn’t recorded any calls yet.)")}</div>
 
   return (
     <div className="obs-table">
       <div className="obs-thead">
-        <div className="obs-th-left">Purpose</div>
-        <div className="obs-th-left">Model · source</div>
+        <div className="obs-th-left">{translate("Purpose")}</div>
+        <div className="obs-th-left">{translate("Model · source")}</div>
         <div>{unit === 'usd' ? head('Cost', 'costUsd') : head('Tokens', 'totalTok')}</div>
         <div>{head('Calls', 'calls')}</div>
         <div>{head('Input', 'inputTokens')}</div>
         <div>{head('Output', 'outputTokens')}</div>
-        <div>{head('Cache hit', 'cacheHitRate')}</div>
+        <div>{head(translate("Cache hit"), 'cacheHitRate')}</div>
         <div>{head('Failed', 'failureRate')}</div>
       </div>
       {sorted.map((r, i) => {
@@ -986,7 +984,7 @@ function RollupTable({ rows, unit, loading, onDrill }: { rows: LlmRollupRow[]; u
             className="obs-row obs-row-button"
             key={`${r.purpose}-${r.model}-${r.source}-${i}`}
             onClick={() => onDrill(r)}
-            title="Click to see every call in this bucket"
+            title={translate("Click to see every call in this bucket")}
           >
             <div className="obs-cell-purpose">
               <span className="obs-dot" style={{ background: m.swatch }} aria-hidden />
@@ -1003,15 +1001,15 @@ function RollupTable({ rows, unit, loading, onDrill }: { rows: LlmRollupRow[]; u
                     cost on the metered API. The operator's actual bill is a
                     flat subscription. Flagging this on the row keeps the $
                     column honest without hiding the comparable signal. */}
-                {unit === 'usd' && isByoaSource(r.source) && <span className="obs-meter-flag" title="BYOA spend is meter-equivalent (what these tokens would cost on the metered API) — operator's actual bill is a flat subscription">·meter</span>}
-                {unit === 'usd' && r.costEstimated && <span className="obs-est-flag" title="Cost computed from a seeded estimate, not an operator-supplied rate">·est</span>}
+                {unit === 'usd' && isByoaSource(r.source) && <span className="obs-meter-flag" title={translate("BYOA spend is meter-equivalent (what these tokens would cost on the metered API) — operator's actual bill is a flat subscription")}>{translate("·meter")}</span>}
+                {unit === 'usd' && r.costEstimated && <span className="obs-est-flag" title={translate("Cost computed from a seeded estimate, not an operator-supplied rate")}>{translate("·est")}</span>}
               </div>
             </div>
             <div className="obs-cell-num obs-cell-cost">{unit === 'usd' ? fmtUsd(r.costUsd, r.costUsd < 1 ? 4 : 2) : fmtTokens(r.totalTok)}</div>
             <div className="obs-cell-num">{fmtInt(r.calls)}</div>
             <div className="obs-cell-num">
               {fmtTokens(r.inputTokens + r.cachedInputTokens)}
-              {r.cachedInputTokens > 0 && <span className="obs-cell-sub"> · {fmtTokens(r.cachedInputTokens)} cached</span>}
+              {r.cachedInputTokens > 0 && <span className="obs-cell-sub"> · {fmtTokens(r.cachedInputTokens)} {translate("cached")}</span>}
             </div>
             <div className="obs-cell-num">{fmtTokens(r.outputTokens)}</div>
             <div className="obs-cell-num">{r.cacheHitRate > 0 ? fmtPct(r.cacheHitRate, 0) : '—'}</div>
@@ -1019,7 +1017,7 @@ function RollupTable({ rows, unit, loading, onDrill }: { rows: LlmRollupRow[]; u
               {r.failureRate > 0
                 ? <span style={{ color: r.failureRate > 0.1 ? 'var(--coral-deep)' : 'var(--ink-700)' }}>{fmtPct(r.failureRate, 1)}</span>
                 : '—'}
-              {r.rateLimitedCalls > 0 && <span className="obs-cell-sub"> · {r.rateLimitedCalls} rl</span>}
+              {r.rateLimitedCalls > 0 && <span className="obs-cell-sub"> · {r.rateLimitedCalls} {translate("rl")}</span>}
             </div>
           </button>
         )
@@ -1037,7 +1035,7 @@ function AgentAvatar({ url, initial, bg, size = 26 }: { url: string | null; init
   return (
     <span className="obs-agent-avatar" style={{ width: size, height: size, background: showImg ? 'transparent' : (bg ?? 'var(--ink-200)') }} aria-hidden>
       {showImg
-        ? <img src={url} alt="" width={size} height={size} onError={() => setBroke(true)} />
+        ? <img src={url} alt={translate("")} width={size} height={size} onError={() => setBroke(true)} />
         : <span>{initial ?? '?'}</span>}
     </span>
   )
@@ -1050,15 +1048,15 @@ function TopAgentsTable({ rows, unit, loading, onDrill }: { rows: LlmObservabili
     () => unit === 'usd' ? rows : [...rows].sort((a, b) => totalTokens(b) - totalTokens(a)),
     [rows, unit],
   )
-  if (loading && rows.length === 0) return <div className="obs-empty">Loading…</div>
-  if (!loading && rows.length === 0) return <div className="obs-empty">No agent-attributed spend in this window.</div>
+  if (loading && rows.length === 0) return <div className="obs-empty">{translate("Loading…")}</div>
+  if (!loading && rows.length === 0) return <div className="obs-empty">{translate("No agent-attributed spend in this window.")}</div>
   return (
     <div className="obs-table obs-table-compact">
       <div className="obs-thead obs-thead-compact">
-        <div className="obs-th-left">Agent</div>
-        <div className="obs-th-left">Company</div>
+        <div className="obs-th-left">{translate("Agent")}</div>
+        <div className="obs-th-left">{translate("Company")}</div>
         <div className="obs-th-right">{unit === 'usd' ? 'Cost' : 'Tokens'}</div>
-        <div className="obs-th-right">Calls</div>
+        <div className="obs-th-right">{translate("Calls")}</div>
       </div>
       {sorted.map((r, i) => (
         <button
@@ -1081,7 +1079,7 @@ function TopAgentsTable({ rows, unit, loading, onDrill }: { rows: LlmObservabili
           </div>
           <div className="obs-cell-num obs-cell-cost">
             {unit === 'usd' ? fmtUsd(r.costUsd, r.costUsd < 1 ? 4 : 2) : fmtTokens(totalTokens(r))}
-            {unit !== 'usd' && r.cachedInputTokens > 0 && <span className="obs-cell-sub"> · {fmtTokens(r.cachedInputTokens)} cached</span>}
+            {unit !== 'usd' && r.cachedInputTokens > 0 && <span className="obs-cell-sub"> · {fmtTokens(r.cachedInputTokens)} {translate("cached")}</span>}
           </div>
           <div className="obs-cell-num">{fmtInt(r.calls)}</div>
         </button>
@@ -1107,23 +1105,22 @@ function DaemonVersionTable({ rows, unit, loading }: {
   unit: Unit
   loading: boolean
 }) {
-  if (loading && rows.length === 0) return <div className="obs-empty">Loading…</div>
+  if (loading && rows.length === 0) return <div className="obs-empty">{translate("Loading…")}</div>
   if (!loading && rows.length === 0) return (
     <div className="obs-empty">
-      No daemon-version data yet. Operators' daemons start populating this once they upgrade to the version that reports it.
-    </div>
+      {translate("No daemon-version data yet. Operators' daemons start populating this once they upgrade to the version that reports it.")}{' '}</div>
   )
   return (
     <div className="obs-table obs-table-daemon">
       <div className="obs-thead obs-thead-daemon">
-        <div className="obs-th-left">Version</div>
-        <div className="obs-th-left">Source</div>
-        <div className="obs-th-right">Calls</div>
+        <div className="obs-th-left">{translate("Version")}</div>
+        <div className="obs-th-left">{translate("Source")}</div>
+        <div className="obs-th-right">{translate("Calls")}</div>
         <div className="obs-th-right">{unit === 'usd' ? 'Cost' : 'Tokens'}</div>
-        <div className="obs-th-right">Cache hit</div>
-        <div className="obs-th-right">Avg / call</div>
-        <div className="obs-th-right">Failed</div>
-        <div className="obs-th-right">Last seen</div>
+        <div className="obs-th-right">{translate("Cache hit")}</div>
+        <div className="obs-th-right">{translate("Avg / call")}</div>
+        <div className="obs-th-right">{translate("Failed")}</div>
+        <div className="obs-th-right">{translate("Last seen")}</div>
       </div>
       {rows.map((r, i) => {
         const totalIn = r.inputTokens + r.cachedInputTokens
@@ -1134,9 +1131,9 @@ function DaemonVersionTable({ rows, unit, loading }: {
         return (
           <div className="obs-row obs-row-daemon" key={`${r.daemonVersion}-${r.source}-${i}`}>
             <div className="obs-cell-version">
-              <span className="obs-cell-purpose-label">v{r.daemonVersion}</span>
+              <span className="obs-cell-purpose-label">{translate("v")}{r.daemonVersion}</span>
             </div>
-            <div className="obs-cell-source">{r.source}{isByoaSource(r.source) && <span className="obs-meter-flag">·meter</span>}</div>
+            <div className="obs-cell-source">{r.source}{isByoaSource(r.source) && <span className="obs-meter-flag">{translate("·meter")}</span>}</div>
             <div className="obs-cell-num">{fmtInt(r.calls)}</div>
             <div className="obs-cell-num obs-cell-cost">{unit === 'usd' ? fmtUsd(r.costUsd, r.costUsd < 1 ? 4 : 2) : fmtTokens(totalTok)}</div>
             <div className="obs-cell-num">{hitRate != null ? <span className={cacheToneClass(hitRate)}>{fmtPct(hitRate, 1)}</span> : '—'}</div>
@@ -1251,11 +1248,11 @@ function DrillPanel({ drill, sinceDays, companyId, unit, refreshSignal, onClose,
               <div className="obs-drill-sub">{subtitle}</div>
             </div>
           </div>
-          <button type="button" className="obs-drill-close" onClick={onClose} aria-label="Close">×</button>
+          <button type="button" className="obs-drill-close" onClick={onClose} aria-label={translate("Close")}>×</button>
         </header>
 
         <div className="obs-drill-sortbar">
-          <span className="obs-drill-sortbar-label">Sort</span>
+          <span className="obs-drill-sortbar-label">{translate("Sort")}</span>
           {(['cost', 'latency', 'hop', 'created'] as CallSort[]).map((s) => (
             <button
               key={s}
@@ -1267,9 +1264,9 @@ function DrillPanel({ drill, sinceDays, companyId, unit, refreshSignal, onClose,
         </div>
 
         <div className="obs-drill-body">
-          {err && <div className="obs-error">Failed to load: {err}</div>}
-          {loading && !rows && <div className="obs-empty">Loading…</div>}
-          {rows && rows.length === 0 && <div className="obs-empty">No calls in this window.</div>}
+          {err && <div className="obs-error">{translate("Failed to load:")}{' '}{err}</div>}
+          {loading && !rows && <div className="obs-empty">{translate("Loading…")}</div>}
+          {rows && rows.length === 0 && <div className="obs-empty">{translate("No calls in this window.")}</div>}
           {rows && rows.map((c) => (
             <DrillCallCard
               key={c.id}
@@ -1325,11 +1322,11 @@ function DrillCallCard({ call, unit, onJumpToRun, onJumpToAgent }: {
           <div className="obs-drill-card-sub">
             <span className="obs-mono">{call.model}</span>
             <span> · {call.source}</span>
-            {unit === 'usd' && call.costEstimated && <span className="obs-est-flag">·est</span>}
-            {unit === 'usd' && isByoaSource(call.source) && <span className="obs-meter-flag">·meter</span>}
+            {unit === 'usd' && call.costEstimated && <span className="obs-est-flag">{translate("·est")}</span>}
+            {unit === 'usd' && isByoaSource(call.source) && <span className="obs-meter-flag">{translate("·meter")}</span>}
             {call.daemonVersion && (
               <span className="obs-version-flag" title={`Recorded by daemon (npm cumora) version ${call.daemonVersion}`}>
-                · v{call.daemonVersion}
+                {translate("· v")}{call.daemonVersion}
               </span>
             )}
             <span className={call.status === 'ok' ? '' : 'obs-drill-status-bad'}> · {call.status}</span>
@@ -1345,7 +1342,7 @@ function DrillCallCard({ call, unit, onJumpToRun, onJumpToAgent }: {
         {hopIndex != null  && <Chip label="hop"      value={`#${hopIndex}`} />}
         {toolUses != null  && <Chip label="tools"    value={fmtInt(toolUses)} />}
         {textChars != null && <Chip label="text"     value={`${fmtInt(textChars)}c`} />}
-        {compressionRatio  && <Chip label="compress" value={`${compressionRatio}×`} title="inputTokensBefore / outputTokens" />}
+        {compressionRatio  && <Chip label="compress" value={`${compressionRatio}×`} title={translate("inputTokensBefore / outputTokens")} />}
         {itemsDropped != null && <Chip label="dropped" value={fmtInt(itemsDropped)} />}
         {call.latencyMs && call.latencyMs > 0 && <Chip label="latency" value={`${(call.latencyMs / 1000).toFixed(1)}s`} />}
       </div>
@@ -1359,14 +1356,14 @@ function DrillCallCard({ call, unit, onJumpToRun, onJumpToAgent }: {
 
       {call.error && (
         <div className="obs-drill-err">
-          <div className="obs-drill-err-label">error</div>
+          <div className="obs-drill-err-label">{translate("error")}</div>
           <div className="obs-drill-err-body">{call.error}</div>
         </div>
       )}
 
       {otherExtras.length > 0 && (
         <details className="obs-drill-rawextras">
-          <summary>extras ({otherExtras.length})</summary>
+          <summary>{translate("extras (")}{otherExtras.length})</summary>
           <dl>
             {otherExtras.map(([k, v]) => (
               <div key={k} className="obs-drill-kv">
@@ -1381,12 +1378,12 @@ function DrillCallCard({ call, unit, onJumpToRun, onJumpToAgent }: {
       <footer className="obs-drill-card-foot">
         {call.runId && (
           <button type="button" className="obs-drill-link" onClick={() => onJumpToRun(call.runId!)}>
-            run trail <span className="obs-mono">{call.runId.slice(0, 8)}…</span>
+            {translate("run trail")}{' '}<span className="obs-mono">{call.runId.slice(0, 8)}…</span>
           </button>
         )}
         {call.agentId && (
           <button type="button" className="obs-drill-link" onClick={() => onJumpToAgent(call.agentId!, call.agentName)}>
-            agent {call.agentName ?? <span className="obs-mono">{call.agentId.slice(0, 8)}…</span>}
+            {translate("agent")}{' '}{call.agentName ?? <span className="obs-mono">{call.agentId.slice(0, 8)}…</span>}
           </button>
         )}
       </footer>
@@ -1459,8 +1456,8 @@ function TenantPicker({ tenants, value, unit, onChange }: {
       value={value}
       onValueChange={onChange}
       options={options}
-      ariaLabel="Filter by tenant"
-      placeholder="All accounts"
+      ariaLabel={translate("Filter by tenant")}
+      placeholder={translate("All accounts")}
       searchPlaceholder="Search workspaces…"
       className="w-[320px]"
     />

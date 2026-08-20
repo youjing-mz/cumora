@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Virtuoso } from 'react-virtuoso'
@@ -187,7 +188,7 @@ function ConvoAvatar({ c }: { c: Conversation }) {
             border: '1.5px solid var(--paper)',
             color: '#7A6A3F',
           }}
-          title="Email thread"
+          title={translate("Email thread")}
         >
           <IMail className="w-2.5 h-2.5" strokeWidth={2.5} />
         </span>
@@ -211,7 +212,7 @@ function Tag({ c }: { c: Conversation }) {
     <span
       className="text-[10px] font-semibold tracking-wider uppercase whitespace-nowrap"
       style={{ color: 'var(--skype-deep)' }}
-    >teammate</span>
+    >{translate("teammate")}</span>
   )
   return null
 }
@@ -432,7 +433,7 @@ function SearchResultsPane({
   if (total === 0) {
     return (
       <div className="px-4 py-8 text-center text-[12.5px] text-ink-300 italic font-display">
-        No matches for <span className="text-ink-700 not-italic font-semibold">"{q}"</span>
+        {translate("No matches for")}{' '}<span className="text-ink-700 not-italic font-semibold">"{q}"</span>
       </div>
     )
   }
@@ -595,7 +596,7 @@ function SearchConvoButton({ id, kind, title, members, byId, query, index, isSel
       <div className="min-w-0">
         <div className="text-[13px] font-semibold text-ink-900 truncate">{highlight(title, query)}</div>
         <div className="text-[11px] text-ink-500 truncate">
-          {kind === 'whisper' ? 'whisper · ' : kind === 'group' ? 'group · ' : ''}
+          {kind === 'whisper' ? translate("whisper · ") : kind === 'group' ? translate("group · ") : ''}
           {members.length} {members.length === 1 ? 'member' : 'members'}
         </div>
       </div>
@@ -907,7 +908,7 @@ export function ConversationsPane({ onResizeStart }: { onResizeStart?: (e: React
             </svg>
           </button>
         ) : (
-          <kbd className="font-mono text-[10px] py-px px-1.5 bg-ink-100 rounded text-ink-500 shrink-0">⌘K</kbd>
+          <kbd className="font-mono text-[10px] py-px px-1.5 bg-ink-100 rounded text-ink-500 shrink-0">{translate("⌘K")}</kbd>
         )}
       </div>
 
@@ -1142,8 +1143,7 @@ function AddToGroupPicker({ participantId, participantName, groups, onClose }: {
             </div>
           ) : groups.length === 0 ? (
             <div className="py-6 text-center text-[12.5px] text-ink-500 italic font-display">
-              {participantName} is already in every group you have, or you have no groups yet.
-            </div>
+              {participantName} {translate("is already in every group you have, or you have no groups yet.")}{' '}</div>
           ) : (
             <div className="flex flex-col gap-1.5">
               {groups.map((g) => (
@@ -1160,7 +1160,7 @@ function AddToGroupPicker({ participantId, participantName, groups, onClose }: {
                       {g.members.length} {g.members.length === 1 ? 'member' : 'members'}
                     </div>
                   </div>
-                  <span className="text-skype-deep text-[12.5px] font-semibold">+ Add</span>
+                  <span className="text-skype-deep text-[12.5px] font-semibold">{translate("+ Add")}</span>
                 </button>
               ))}
             </div>
@@ -1293,7 +1293,7 @@ function AddMembersPicker({ group, candidates, onClose }: {
         )}
         <div className="flex-1 overflow-y-auto py-2">
           {filtered.length === 0 && query.trim() && (
-            <div className="px-6 py-4 text-[12px] italic text-ink-300 font-display">no match for "{query}"</div>
+            <div className="px-6 py-4 text-[12px] italic text-ink-300 font-display">{translate("no match for \"")}{query}"</div>
           )}
           {filtered.map((p) => {
             const busy = busyId === p.id
@@ -1308,12 +1308,12 @@ function AddMembersPicker({ group, candidates, onClose }: {
                 <div className="flex-1 min-w-0">
                   <div className="text-[13.5px] font-semibold text-ink-900 truncate">{p.name}</div>
                   <div className="text-[11px] text-ink-500 truncate">
-                    {p.role ?? (p.kind === 'human' ? 'human teammate' : 'agent')}
+                    {p.role ?? (p.kind === 'human' ? translate("human teammate") : 'agent')}
                   </div>
                 </div>
                 {busy
-                  ? <span className="text-[11px] text-ink-300">adding…</span>
-                  : <span className="text-[11px] text-skype-deep font-semibold">Add</span>}
+                  ? <span className="text-[11px] text-ink-300">{translate("adding…")}</span>
+                  : <span className="text-[11px] text-skype-deep font-semibold">{translate("Add")}</span>}
               </button>
             )
           })}

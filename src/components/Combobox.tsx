@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -129,7 +130,7 @@ export function Combobox<T extends string = string>({
         )}
         <button
           type="button"
-          aria-label="Toggle menu"
+          aria-label={translate("Toggle menu")}
           tabIndex={-1}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => { if (open) { setOpen(false); setQuery('') } else openMenu() }}

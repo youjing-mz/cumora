@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * A small, refined "scroll to latest message" pill that appears in the
  * bottom-right of the chat stream once the user has scrolled up off the
@@ -34,8 +35,8 @@ export function ScrollToLatestButton({ visible, onClick, bottomOffset = 16 }: Pr
     <button
       type="button"
       onClick={onClick}
-      aria-label="Scroll to latest message"
-      title="Latest message"
+      aria-label={translate("Scroll to latest message")}
+      title={translate("Latest message")}
       className={cn(
         // Positioning: absolute within the chat stream's relative container.
         'absolute right-4 z-20 grid place-items-center',

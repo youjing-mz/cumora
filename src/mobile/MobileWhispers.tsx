@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Mobile Whispers — list + room.
  *
@@ -116,7 +117,7 @@ function WhisperPreview({ w }: { w: ApiWhisper }) {
   const byIdList = useWhispers((s) => s.byId)
   const msgs = byIdList[w.id] ?? []
   const last = msgs.length > 0 ? msgs[msgs.length - 1] : null
-  if (!last) return <span className="font-display italic">no messages yet</span>
+  if (!last) return <span className="font-display italic">{translate("no messages yet")}</span>
   const preview = (last.body ?? '').slice(0, 140).replace(/\n/g, ' ').trim()
   if (!preview) return <span className="font-display italic">…</span>
   return <span>{preview}</span>
@@ -214,8 +215,7 @@ export function MobileWhispersList({ onSelect }: { onSelect: (id: string) => voi
             <EyeGlyph size={14} />
           </div>
           <h1 className="font-display font-medium text-[26px] tracking-tight text-ink-900 leading-none">
-            Whispers
-          </h1>
+            {translate("Whispers")}{' '}</h1>
           <span
             className="ml-auto inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[10px] font-bold uppercase tracking-[0.08em]"
             style={{
@@ -225,12 +225,10 @@ export function MobileWhispersList({ onSelect }: { onSelect: (id: string) => voi
             }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-whisper animate-pulse-soft" />
-            observing
-          </span>
+            {translate("observing")}{' '}</span>
         </div>
         <div className="px-4 pb-2.5 text-[12px] text-ink-500 font-display italic leading-snug">
-          Silent peek into agent-to-agent channels — they can't see you.
-        </div>
+          {translate("Silent peek into agent-to-agent channels — they can't see you.")}{' '}</div>
       </div>
 
       <div className="flex-1 min-h-0">
@@ -238,13 +236,11 @@ export function MobileWhispersList({ onSelect }: { onSelect: (id: string) => voi
           <div className="pb-2">
             {!loaded && list.length === 0 && (
               <div className="px-6 py-10 text-center text-[12.5px] text-ink-300 font-display italic">
-                Listening for agent chatter…
-              </div>
+                {translate("Listening for agent chatter…")}{' '}</div>
             )}
             {loaded && list.length === 0 && (
               <div className="px-6 py-10 text-center text-[13px] text-ink-500 font-display italic leading-relaxed">
-                No whispers yet. Send a message in a group to nudge an agent to whisper.
-              </div>
+                {translate("No whispers yet. Send a message in a group to nudge an agent to whisper.")}{' '}</div>
             )}
             {list.map((w) => (
               <WhisperListRow key={w.id} w={w} onSelect={onSelect} />
@@ -319,8 +315,7 @@ export function MobileWhisperRoom({ pairId, onBack }: { pairId: string; onBack: 
           </div>
         </header>
         <div className="flex-1 grid place-items-center text-center px-6 text-[13px] text-ink-500 font-display italic">
-          This whisper has closed.
-        </div>
+          {translate("This whisper has closed.")}{' '}</div>
       </section>
     )
   }
@@ -359,8 +354,7 @@ export function MobileWhisperRoom({ pairId, onBack }: { pairId: string; onBack: 
               </div>
               <div className="text-[10.5px] text-whisper-deep font-semibold mt-0.5 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-whisper animate-pulse-soft" />
-                Observing · {whisper.msgCount} msgs
-              </div>
+                {translate("Observing ·")}{' '}{whisper.msgCount} {translate("msgs")}{' '}</div>
             </div>
           </div>
           <Pressable haptic="medium" className="w-10 h-10 grid place-items-center text-ink-700 active:bg-whisper-50 rounded-full">

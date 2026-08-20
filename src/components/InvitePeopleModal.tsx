@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Modal for inviting humans to a company workspace.
  *
@@ -116,11 +117,10 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
       >
         <div className="px-6 py-5 border-b border-ink-100 shrink-0">
           <h2 className="font-display font-medium text-[20px] tracking-tight">
-            Invite to {companyName}
+            {translate("Invite to")}{' '}{companyName}
           </h2>
           <div className="text-[12.5px] text-ink-500 italic font-display mt-0.5">
-            Add humans to this workspace. Share a link or invite by email.
-          </div>
+            {translate("Add humans to this workspace. Share a link or invite by email.")}{' '}</div>
         </div>
 
         <div className="px-6 py-5 overflow-y-auto flex-1 min-h-0 space-y-5">
@@ -139,7 +139,7 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
                     color: on ? 'white' : 'var(--ink-500)',
                   }}
                 >
-                  {t === 'link' ? 'Invite link' : 'By email'}
+                  {t === 'link' ? translate("Invite link") : translate("By email")}
                 </button>
               )
             })}
@@ -150,18 +150,16 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
             <div className="space-y-3">
               <div>
                 <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-500 mb-1">
-                  Email
-                </label>
+                  {translate("Email")}{' '}</label>
                 <div className="text-[11.5px] text-ink-300 mb-1.5 font-display italic">
-                  Single-use, locked to this address. They must sign in with the same email to redeem.
-                </div>
+                  {translate("Single-use, locked to this address. They must sign in with the same email to redeem.")}{' '}</div>
                 <input
                   type="email"
                   autoFocus
                   autoComplete="off"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="teammate@example.com"
+                  placeholder={translate("teammate@example.com")}
                   className="ip-input"
                 />
               </div>
@@ -177,12 +175,9 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
                   />
                   <span className="flex-1 min-w-0">
                     <span className="block text-[12.5px] font-semibold text-ink-800">
-                      Email this invite to them
-                    </span>
+                      {translate("Email this invite to them")}{' '}</span>
                     <span className="block text-[11.5px] text-ink-400 font-display italic mt-0.5 leading-snug">
-                      We'll send a short note from <b className="not-italic text-ink-600">invites@cumora.ai</b> with your name on it.
-                      Replies go to your inbox. Uncheck if you'd rather share the link yourself.
-                    </span>
+                      {translate("We'll send a short note from")}{' '}<b className="not-italic text-ink-600">{translate("invites@cumora.ai")}</b> {translate("with your name on it. Replies go to your inbox. Uncheck if you'd rather share the link yourself.")}{' '}</span>
                   </span>
                 </label>
               )}
@@ -191,15 +186,13 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
 
           {tab === 'link' && (
             <div className="rounded-[10px] p-3 text-[12px] text-ink-500 font-display italic" style={{ background: 'var(--paper)', border: '1px dashed var(--ink-200)' }}>
-              Anyone with the link can join. Use this for a small team — the link expires in 7 days and can be revoked anytime.
-            </div>
+              {translate("Anyone with the link can join. Use this for a small team — the link expires in 7 days and can be revoked anytime.")}{' '}</div>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-500 mb-1">
-                Role
-              </label>
+                {translate("Role")}{' '}</label>
               <div className="flex gap-1.5">
                 {(['member', 'admin'] as const).map((r) => {
                   const on = role === r
@@ -224,15 +217,14 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
 
             <div>
               <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-500 mb-1">
-                Note
-                <span className="ml-1.5 text-ink-300 normal-case font-medium tracking-normal">— optional</span>
+                {translate("Note")}{' '}<span className="ml-1.5 text-ink-300 normal-case font-medium tracking-normal">{translate("— optional")}</span>
               </label>
               <input
                 type="text"
                 maxLength={120}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="What's this invite for?"
+                placeholder={translate("What's this invite for?")}
                 className="ip-input"
               />
             </div>
@@ -256,9 +248,9 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
                 boxShadow: '0 4px 12px -3px rgba(0, 168, 240, 0.5)',
               }}
             >
-              {busy ? 'Creating…'
-                : tab === 'email' ? 'Create email invite'
-                : 'Create invite link'}
+              {busy ? translate("Creating…")
+                : tab === 'email' ? translate("Create email invite")
+                : translate("Create invite link")}
             </button>
           </div>
 
@@ -266,15 +258,14 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
           <div className="pt-2">
             <div className="flex items-center gap-2 mb-2">
               <h3 className="text-[12.5px] font-bold tracking-wide uppercase text-ink-500">
-                Pending invitations
-              </h3>
+                {translate("Pending invitations")}{' '}</h3>
               <span className="text-[11px] text-ink-300">{activeInvitations.length}</span>
             </div>
             {loadingList && (
-              <div className="text-[12px] text-ink-300 italic font-display py-4 text-center">loading…</div>
+              <div className="text-[12px] text-ink-300 italic font-display py-4 text-center">{translate("loading…")}</div>
             )}
             {!loadingList && activeInvitations.length === 0 && (
-              <div className="text-[12.5px] text-ink-400 italic font-display py-3">No pending invitations.</div>
+              <div className="text-[12.5px] text-ink-400 italic font-display py-3">{translate("No pending invitations.")}</div>
             )}
             <div className="flex flex-col gap-1.5">
               {activeInvitations.map((inv) => (
@@ -284,7 +275,7 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
             {historicalInvitations.length > 0 && (
               <details className="mt-3">
                 <summary className="text-[11.5px] text-ink-400 cursor-pointer font-display italic hover:text-ink-600">
-                  Show {historicalInvitations.length} past invitation{historicalInvitations.length === 1 ? '' : 's'}
+                  {translate("Show")}{' '}{historicalInvitations.length} {translate("past invitation")}{historicalInvitations.length === 1 ? '' : 's'}
                 </summary>
                 <div className="flex flex-col gap-1.5 mt-2">
                   {historicalInvitations.map((inv) => (
@@ -301,14 +292,13 @@ export function InvitePeopleModal({ companyId, companyName, onClose }: Props) {
 
         <div className="px-6 py-4 border-t border-ink-100 flex items-center gap-2 bg-paper shrink-0">
           <div className="text-[11.5px] text-ink-300 italic font-display">
-            Invitations expire after 7 days.
-          </div>
+            {translate("Invitations expire after 7 days.")}{' '}</div>
           <div className="flex-1" />
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-[9px] text-[12.5px] font-semibold text-ink-700 bg-cloud hover:bg-sky2-50 transition"
             style={{ border: '1px solid var(--ink-100)' }}
-          >Done</button>
+          >{translate("Done")}</button>
         </div>
       </div>
 
@@ -362,21 +352,19 @@ function CreatedInviteCard({ invite, onDone }: { invite: ApiInvitationWithToken;
       <div className="text-[11.5px] text-ink-500 italic font-display">
         {invite.email
           ? delivery?.attempted && delivery.ok
-            ? <>Email delivered to <b className="not-italic text-ink-700">{invite.email}</b>. The link below is the same one we sent — copy it if you want to nudge them on another channel.</>
-            : <>Locked to <b className="not-italic text-ink-700">{invite.email}</b> — they must sign in with that email.</>
-          : <>Anyone with this link can join as a {invite.role}.</>}
+            ? <>{translate("Email delivered to")}{' '}<b className="not-italic text-ink-700">{invite.email}</b>{translate(". The link below is the same one we sent — copy it if you want to nudge them on another channel.")}</>
+            : <>{translate("Locked to")}{' '}<b className="not-italic text-ink-700">{invite.email}</b> {translate("— they must sign in with that email.")}</>
+          : <>{translate("Anyone with this link can join as a")}{' '}{invite.role}.</>}
       </div>
       {delivery && delivery.attempted && !delivery.ok && (
         <div className="text-[11.5px] py-1.5 px-2.5 rounded-[8px]"
              style={{ background: 'var(--coral-soft)', color: 'var(--coral-deep)', border: '1px solid var(--coral-deep)' }}>
-          Email send failed: {delivery.error ?? 'unknown error'}. Copy the link and share it manually.
-        </div>
+          {translate("Email send failed:")}{' '}{delivery.error ?? translate("unknown error")}{translate(". Copy the link and share it manually.")}{' '}</div>
       )}
       {delivery?.skipped === 'no_email_config' && (
         <div className="text-[11.5px] text-ink-500 py-1.5 px-2.5 rounded-[8px]"
              style={{ background: 'var(--cloud)', border: '1px dashed var(--ink-200)' }}>
-          This server isn't set up for outbound email — copy the link and share it manually.
-        </div>
+          {translate("This server isn't set up for outbound email — copy the link and share it manually.")}{' '}</div>
       )}
       <div className="flex items-stretch gap-2">
         <input
@@ -396,7 +384,7 @@ function CreatedInviteCard({ invite, onDone }: { invite: ApiInvitationWithToken;
         <button
           onClick={onDone}
           className="text-[11.5px] text-ink-400 hover:text-ink-700 transition"
-        >Dismiss</button>
+        >{translate("Dismiss")}</button>
       </div>
     </div>
   )
@@ -427,7 +415,7 @@ function InvitationRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
           <div className="text-[13px] font-semibold text-ink-900 truncate">
-            {inv.email ?? <span className="text-ink-500 italic font-display">Shareable link</span>}
+            {inv.email ?? <span className="text-ink-500 italic font-display">{translate("Shareable link")}</span>}
           </div>
           <span
             className="px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
@@ -437,11 +425,11 @@ function InvitationRow({
         </div>
         <div className="text-[11px] text-ink-400 mt-0.5 font-display italic flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
           {!inv.email && (
-            <span>{inv.useCount}/{inv.maxUses} used</span>
+            <span>{inv.useCount}/{inv.maxUses} {translate("used")}</span>
           )}
-          {inv.status === 'active' && <span>· expires {expiresDistance}</span>}
+          {inv.status === 'active' && <span>{translate("· expires")}{' '}{expiresDistance}</span>}
           {inv.status === 'consumed' && inv.lastAcceptedAt && (
-            <span>· last accepted {relativeFrom(inv.lastAcceptedAt)}</span>
+            <span>{translate("· last accepted")}{' '}{relativeFrom(inv.lastAcceptedAt)}</span>
           )}
           {inv.note && <span>· {inv.note}</span>}
         </div>
@@ -453,7 +441,7 @@ function InvitationRow({
             onClick={onRevoke}
             className="px-2 py-1.5 text-[11.5px] font-semibold rounded-[8px] transition"
             style={{ color: 'var(--coral-deep)', border: '1px solid var(--ink-100)' }}
-          >Revoke</button>
+          >{translate("Revoke")}</button>
         </div>
       )}
     </div>
@@ -477,10 +465,10 @@ function CopyLinkButton({ inviteId }: { inviteId: string }) {
   return (
     <button
       onClick={onClick}
-      title="Copy invite reference (the original link cannot be re-fetched — issue a new invite if you've lost it)"
+      title={translate("Copy invite reference (the original link cannot be re-fetched — issue a new invite if you've lost it)")}
       className="px-2 py-1.5 text-[11.5px] font-semibold rounded-[8px] transition"
       style={{ color: 'var(--ink-500)', border: '1px solid var(--ink-100)' }}
-    >{copied ? 'Copied' : 'Copy ref'}</button>
+    >{copied ? 'Copied' : translate("Copy ref")}</button>
   )
 }
 

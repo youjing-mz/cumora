@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso'
 import { Pressable } from './Pressable'
@@ -512,8 +513,7 @@ export function MobileChat() {
               </div>
               <div className="text-[11px] font-semibold flex items-center gap-1 leading-none mt-0.5 text-working">
                 <span className="w-1.5 h-1.5 rounded-full animate-pulse-soft bg-working" />
-                {agents.length} agents
-              </div>
+                {agents.length} {translate("agents")}{' '}</div>
             </div>
           </Pressable>
           <Pressable
@@ -689,7 +689,7 @@ export function MobileChat() {
                 {t('chat.replyingTo', { name: byId[replyingToMsg?.authorId ?? '']?.name ?? replyingToMsg?.authorId ?? '…' })}
               </div>
               <div className="text-[12px] text-ink-500 truncate">
-                {replyingToMsg ? replyingToMsg.body.slice(0, 140).replace(/\n/g, ' ') : '(loading…)'}
+                {replyingToMsg ? replyingToMsg.body.slice(0, 140).replace(/\n/g, ' ') : translate("(loading…)")}
               </div>
             </div>
             <button
@@ -730,7 +730,7 @@ export function MobileChat() {
                       active ? 'bg-sky2-50' : 'active:bg-sky2-50',
                     )}
                   >
-                    <img src="/everyone.png" alt="" className="w-[28px] h-[28px] rounded-full object-cover" />
+                    <img src="/everyone.png" alt={translate("")} className="w-[28px] h-[28px] rounded-full object-cover" />
                     <div className="flex-1 min-w-0">
                       <div className="text-[13px] font-semibold text-ink-900 truncate">{t('chat.everyone')}</div>
                       <div className="text-[11px] text-ink-500 truncate">{t('chat.notifyEveryone')}</div>
@@ -1339,10 +1339,10 @@ export function MobileChatInfo() {
                   <Avatar p={p} size={32} />
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-semibold text-ink-900 truncate">
-                      {p.name}{isSelf && <span className="text-ink-300 font-normal"> · you</span>}
+                      {p.name}{isSelf && <span className="text-ink-300 font-normal"> {translate("· you")}</span>}
                     </div>
                     <div className="text-[11px] text-ink-500 truncate font-display italic">
-                      {p.kind === 'agent' ? (p.role ?? 'agent') : 'human teammate'}
+                      {p.kind === 'agent' ? (p.role ?? 'agent') : translate("human teammate")}
                     </div>
                   </div>
                   <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: `var(--${p.status ?? 'avail'})` }} />

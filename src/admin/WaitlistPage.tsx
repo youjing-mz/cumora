@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Waitlist queue. Three sub-tabs: pending / approved / rejected.
  * Approve calls the server which provisions everything (user + company
@@ -106,7 +107,7 @@ export function WaitlistPage({ onChanged }: { onChanged: () => void }) {
           <div>{t('admin.decided')}</div>
           <div>{t('admin.actions')}</div>
         </div>
-        {loading && items.length === 0 && <div className="admin-row admin-empty">Loading…</div>}
+        {loading && items.length === 0 && <div className="admin-row admin-empty">{translate("Loading…")}</div>}
         {!loading && items.length === 0 && (
           <div className="admin-row admin-empty">
             {q
@@ -117,11 +118,11 @@ export function WaitlistPage({ onChanged }: { onChanged: () => void }) {
         {items.map((entry) => (
           <div key={entry.id} className="admin-row admin-row-waitlist">
             <div className="admin-cell-user">
-              <img className="admin-avatar" src={entry.avatarUrl} alt="" loading="lazy" />
+              <img className="admin-avatar" src={entry.avatarUrl} alt={translate("")} loading="lazy" />
               <div className="admin-cell-user-text">
                 <div className="admin-cell-user-name">{entry.displayName}</div>
                 <div className="admin-cell-user-email">{entry.email}</div>
-                {entry.note && <div className="admin-note">note: {entry.note}</div>}
+                {entry.note && <div className="admin-note">{translate("note:")}{' '}{entry.note}</div>}
               </div>
             </div>
             <div data-label="Provider">

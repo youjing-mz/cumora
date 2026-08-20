@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * WebShell — the entire UI surface that ships on app.cumora.ai (and any
  * other public `app.*` hostname). Cumora is a desktop-only product, so
@@ -73,10 +74,9 @@ function WebHandoff() {
       <div className="w-[360px] flex flex-col items-center gap-7 text-center">
         <CloudLogo size={64} />
         <div className="space-y-1">
-          <div className="font-display text-[22px] text-ink-900">You're signed in</div>
+          <div className="font-display text-[22px] text-ink-900">{translate("You're signed in")}</div>
           <div className="font-display italic text-[13px] text-ink-400">
-            Opening Cumora on your desktop…
-          </div>
+            {translate("Opening Cumora on your desktop…")}{' '}</div>
         </div>
         <div className="w-full flex flex-col gap-2.5">
           <button
@@ -86,16 +86,15 @@ function WebHandoff() {
               background: 'var(--skype)',
               boxShadow: '0 6px 16px -4px rgba(0, 168, 240, 0.5)',
             }}
-          >Open in Cumora desktop</button>
+          >{translate("Open in Cumora desktop")}</button>
           <GetDesktopAppLink variant="button-secondary" />
           <button
             onClick={() => void signOut()}
             className="text-[12px] text-ink-400 hover:text-ink-700 transition font-display italic mt-1"
-          >Sign out</button>
+          >{translate("Sign out")}</button>
         </div>
         <div className="text-[11px] text-ink-300 font-display italic">
-          Cumora only runs as a desktop app — open it or install it to continue.
-        </div>
+          {translate("Cumora only runs as a desktop app — open it or install it to continue.")}{' '}</div>
       </div>
     </div>
   )
@@ -130,10 +129,9 @@ function WebLanding() {
       <div className="w-[360px] flex flex-col items-center gap-7">
         <CloudLogo size={64} />
         <div className="text-center space-y-1">
-          <div className="font-display text-[22px] text-ink-900">Cumora is a desktop app</div>
+          <div className="font-display text-[22px] text-ink-900">{translate("Cumora is a desktop app")}</div>
           <div className="font-display italic text-[13px] text-ink-400">
-            Sign in to join, or open the desktop app if it's already installed
-          </div>
+            {translate("Sign in to join, or open the desktop app if it's already installed")}{' '}</div>
         </div>
         <div className="w-full flex flex-col gap-3">
           <button
@@ -143,7 +141,7 @@ function WebLanding() {
             className="h-11 rounded-[10px] border border-ink-200 bg-white hover:bg-cloud transition-colors flex items-center justify-center gap-3 text-[14px] text-ink-800 disabled:opacity-60"
           >
             <GoogleMark />
-            {busy === 'google' ? 'Redirecting…' : 'Continue with Google'}
+            {busy === 'google' ? translate("Redirecting…") : translate("Continue with Google")}
           </button>
           <button
             type="button"
@@ -152,7 +150,7 @@ function WebLanding() {
             className="h-11 rounded-[10px] bg-[#1f2328] hover:bg-[#2a3037] text-white transition-colors flex items-center justify-center gap-3 text-[14px] disabled:opacity-60"
           >
             <GitHubMark />
-            {busy === 'github' ? 'Redirecting…' : 'Continue with GitHub'}
+            {busy === 'github' ? translate("Redirecting…") : translate("Continue with GitHub")}
           </button>
         </div>
         {err && (
@@ -162,8 +160,7 @@ function WebLanding() {
         )}
         <div className="w-full flex items-center gap-3 text-[11px] text-ink-300 font-display italic">
           <div className="flex-1 h-px bg-ink-100" />
-          or
-          <div className="flex-1 h-px bg-ink-100" />
+          {translate("or")}{' '}<div className="flex-1 h-px bg-ink-100" />
         </div>
         <div className="w-full flex flex-col gap-2.5">
           <button
@@ -171,7 +168,7 @@ function WebLanding() {
             onClick={() => tryDeepLink('cumora://open')}
             className="w-full py-3 rounded-[12px] text-[14px] font-semibold text-ink-700 transition"
             style={{ background: 'var(--cloud)', border: '1px solid var(--ink-100)' }}
-          >Open in Cumora desktop</button>
+          >{translate("Open in Cumora desktop")}</button>
           <GetDesktopAppLink
             variant="button-secondary"
             gateBypass={approvedEntry}
@@ -180,8 +177,7 @@ function WebLanding() {
           />
         </div>
         <div className="text-[11px] text-ink-300 text-center font-display italic">
-          We use your provider only to verify it's you — no posting, no scope creep.
-        </div>
+          {translate("We use your provider only to verify it's you — no posting, no scope creep.")}{' '}</div>
       </div>
     </div>
   )

@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -149,13 +150,11 @@ export function DocumentEditor({ documentId, variant = 'full', onClose, onOpenFu
 
   if (!doc) return (
     <div className="h-full flex items-center justify-center text-stone-400 text-sm">
-      Document not found.
-    </div>
+      {translate("Document not found.")}{' '}</div>
   )
   if (!user || !session) return (
     <div className="h-full flex items-center justify-center text-stone-400 text-sm">
-      Loading…
-    </div>
+      {translate("Loading…")}{' '}</div>
   )
 
   const commitTitle = async () => {
@@ -186,8 +185,8 @@ export function DocumentEditor({ documentId, variant = 'full', onClose, onOpenFu
             'flex-1 min-w-0 bg-transparent font-medium text-stone-900 focus:outline-none',
             isPeek ? 'text-[16px] leading-[1.35]' : 'text-xl',
           )}
-          placeholder="Untitled"
-          aria-label="Document title"
+          placeholder={translate("Untitled")}
+          aria-label={translate("Document title")}
         />
         <div className="shrink-0">
           <PresenceStrip session={session} synced={synced} />
@@ -197,8 +196,8 @@ export function DocumentEditor({ documentId, variant = 'full', onClose, onOpenFu
             type="button"
             onClick={onOpenFull}
             className="w-8 h-8 rounded-[8px] grid place-items-center text-ink-500 hover:text-skype-deep hover:bg-sky2-100 transition"
-            title="Open in Documents"
-            aria-label="Open in Documents"
+            title={translate("Open in Documents")}
+            aria-label={translate("Open in Documents")}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
               <path d="M14 4h6v6" />
@@ -212,8 +211,8 @@ export function DocumentEditor({ documentId, variant = 'full', onClose, onOpenFu
             type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-[8px] grid place-items-center text-ink-400 hover:text-ink-900 hover:bg-ink-100/70 transition"
-            title="Close document"
-            aria-label="Close document"
+            title={translate("Close document")}
+            aria-label={translate("Close document")}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="w-4 h-4">
               <path d="M6 6l12 12M18 6L6 18" />
@@ -228,8 +227,7 @@ export function DocumentEditor({ documentId, variant = 'full', onClose, onOpenFu
             }}
             className="text-xs leading-none text-stone-500 hover:text-red-600 transition-colors"
           >
-            Delete
-          </button>
+            {translate("Delete")}{' '}</button>
         )}
       </header>
       <CollaborativeEditor
@@ -421,60 +419,60 @@ function Toolbar({ editor, disabled }: ToolbarProps) {
       <button
         type="button" className={btn(editor.isActive('bold'))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleBold().run()}
-        title="Bold (⌘B)"
+        title={translate("Bold (⌘B)")}
       ><IBold className="w-4 h-4" /></button>
       <button
         type="button" className={btn(editor.isActive('italic'))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        title="Italic (⌘I)"
+        title={translate("Italic (⌘I)")}
       ><IItalic className="w-4 h-4" /></button>
       <button
         type="button" className={btn(editor.isActive('strike'))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleStrike().run()}
-        title="Strikethrough"
+        title={translate("Strikethrough")}
       ><IStrike className="w-4 h-4" /></button>
       <ToolbarSep />
       <button
         type="button" className={btn(editor.isActive('heading', { level: 1 }))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        title="Heading 1"
+        title={translate("Heading 1")}
       ><IH1 className="w-4 h-4" /></button>
       <button
         type="button" className={btn(editor.isActive('heading', { level: 2 }))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        title="Heading 2"
+        title={translate("Heading 2")}
       ><IH2 className="w-4 h-4" /></button>
       <button
         type="button" className={btn(editor.isActive('heading', { level: 3 }))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        title="Heading 3"
+        title={translate("Heading 3")}
       ><IH3 className="w-4 h-4" /></button>
       <ToolbarSep />
       <button
         type="button" className={btn(editor.isActive('bulletList'))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        title="Bullet list"
+        title={translate("Bullet list")}
       ><IList className="w-4 h-4" /></button>
       <button
         type="button" className={btn(editor.isActive('orderedList'))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        title="Ordered list"
+        title={translate("Ordered list")}
       ><IListOrdered className="w-4 h-4" /></button>
       <button
         type="button" className={btn(editor.isActive('blockquote'))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        title="Quote"
+        title={translate("Quote")}
       ><IQuote className="w-4 h-4" /></button>
       <ToolbarSep />
       <button
         type="button" className={btn(editor.isActive('code'))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleCode().run()}
-        title="Inline code"
+        title={translate("Inline code")}
       ><ICode className="w-4 h-4" /></button>
       <button
         type="button" className={btn(editor.isActive('codeBlock'))} disabled={disabled}
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        title="Code block"
+        title={translate("Code block")}
       ><ICodeBlock className="w-4 h-4" /></button>
       <LinkButton editor={editor} disabled={disabled} />
       <ImageButton editor={editor} disabled={disabled} />
@@ -482,12 +480,12 @@ function Toolbar({ editor, disabled }: ToolbarProps) {
       <button
         type="button" className={btn(false)} disabled={disabled || !editor.can().undo()}
         onClick={() => editor.chain().focus().undo().run()}
-        title="Undo (⌘Z)"
+        title={translate("Undo (⌘Z)")}
       ><IUndo className="w-4 h-4" /></button>
       <button
         type="button" className={btn(false)} disabled={disabled || !editor.can().redo()}
         onClick={() => editor.chain().focus().redo().run()}
-        title="Redo (⌘⇧Z)"
+        title={translate("Redo (⌘⇧Z)")}
       ><IRedo className="w-4 h-4" /></button>
     </div>
   )
@@ -601,7 +599,7 @@ function LinkButton({ editor, disabled }: { editor: Editor; disabled: boolean })
             : 'text-stone-600 hover:bg-stone-100'
         ),
       )}
-      title="Link"
+      title={translate("Link")}
     >
       <ILink className="w-4 h-4" />
     </button>
@@ -634,8 +632,8 @@ function PresenceStrip({ session, synced }: { session: YDocSession; synced: bool
   // ascent/descent (16.5px for 12px Manrope), not line-height, so it
   // centers on a different baseline than the 12px-tall Delete button.
   // As a block, height = leading-none line-height = 12px = same box.
-  if (!synced) return <span className="block text-xs leading-none text-stone-400">syncing…</span>
-  if (peers.length === 0) return <span className="block text-xs leading-none text-stone-400">only you</span>
+  if (!synced) return <span className="block text-xs leading-none text-stone-400">{translate("syncing…")}</span>
+  if (peers.length === 0) return <span className="block text-xs leading-none text-stone-400">{translate("only you")}</span>
   return (
     <div className="flex items-center -space-x-1.5">
       {peers.slice(0, 6).map((p) => (

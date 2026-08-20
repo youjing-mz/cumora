@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useState } from 'react'
 import { api, getPairingServerOrigin, type AgentInput } from '@/api/client'
 import { isNativePlatform } from '@/lib/native'
@@ -205,7 +206,7 @@ export function AgentEditor({ agent, onClose }: Props) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Saga"
+              placeholder={translate("e.g. Saga")}
             />
           </Field>
 
@@ -214,7 +215,7 @@ export function AgentEditor({ agent, onClose }: Props) {
               type="text"
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              placeholder="e.g. Storyteller"
+              placeholder={translate("e.g. Storyteller")}
             />
           </Field>
 
@@ -223,7 +224,7 @@ export function AgentEditor({ agent, onClose }: Props) {
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               rows={5}
-              placeholder="You write narratives. You sense what the team forgets to say out loud. Direct, warm, never preachy."
+              placeholder={translate("You write narratives. You sense what the team forgets to say out loud. Direct, warm, never preachy.")}
               className="font-display italic"
               style={{ minHeight: 110 }}
             />
@@ -234,7 +235,7 @@ export function AgentEditor({ agent, onClose }: Props) {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={2}
-              placeholder="A one-line description of what they're best at."
+              placeholder={translate("A one-line description of what they're best at.")}
             />
           </Field>
 
@@ -248,7 +249,7 @@ export function AgentEditor({ agent, onClose }: Props) {
               type="text"
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              placeholder="(default)"
+              placeholder={translate("(default)")}
               className="font-mono"
               spellCheck={false}
             />
@@ -267,7 +268,7 @@ export function AgentEditor({ agent, onClose }: Props) {
                 type="text"
                 value={fastModel}
                 onChange={(e) => setFastModel(e.target.value)}
-                placeholder="(default)"
+                placeholder={translate("(default)")}
                 className="font-mono"
                 spellCheck={false}
               />
@@ -319,8 +320,7 @@ export function AgentEditor({ agent, onClose }: Props) {
                 style={{ background: 'var(--sky-50)', border: '1px solid var(--sky-100)' }}
               >
                 <div className="text-[12px] font-semibold text-ink-900 mb-1">
-                  {selectedComputer?.name} is offline. Run this on that computer:
-                </div>
+                  {selectedComputer?.name} {translate("is offline. Run this on that computer:")}{' '}</div>
                 {repairErr ? (
                   <div className="text-[11.5px] text-coral-deep bg-coral-soft rounded-[8px] p-2">{repairErr}</div>
                 ) : repairCommand ? (
@@ -334,11 +334,11 @@ export function AgentEditor({ agent, onClose }: Props) {
                       className="mt-2 inline-flex items-center justify-center min-w-[108px] text-[11.5px] font-semibold px-3 py-1.5 rounded-[9px] text-white transition-colors duration-200"
                       style={{ background: repairCopied ? '#3BB273' : 'var(--skype)' }}
                     >
-                      {repairCopied ? '✓ Copied!' : 'Copy command'}
+                      {repairCopied ? translate("✓ Copied!") : translate("Copy command")}
                     </button>
                   </>
                 ) : (
-                  <div className="text-[11.5px] text-ink-400">Generating reconnect command…</div>
+                  <div className="text-[11.5px] text-ink-400">{translate("Generating reconnect command…")}</div>
                 )}
               </div>
             )}
@@ -457,8 +457,7 @@ export function AgentEditor({ agent, onClose }: Props) {
 
                 {generatingAvatar && (
                   <div className="text-[11.5px] text-whisper-deep font-display italic leading-[1.5]">
-                    Composing {name || 'your agent'}'s portrait — usually 15–30s. You can keep editing other fields.
-                  </div>
+                    {translate("Composing")}{' '}{name || translate("your agent")}{translate("'s portrait — usually 15–30s. You can keep editing other fields.")}{' '}</div>
                 )}
 
                 {avatarUrl && !generatingAvatar && (

@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * In-app notification toasts. Shown when a new message arrives while the
  * window is NOT focused (or the user is viewing a different conversation).
@@ -412,14 +413,14 @@ function ToastCard({ toast, onClick, onDismiss }: { toast: Toast; onClick: () =>
               {toast.kind === 'calendar.reminder' ? toast.conversationTitle : (author?.name ?? toast.authorId)}
             </span>
             <span className="text-[10.5px] text-ink-300 italic font-display truncate">
-              {toast.kind === 'calendar.reminder' ? 'Calendar reminder' : toast.conversationTitle}
+              {toast.kind === 'calendar.reminder' ? translate("Calendar reminder") : toast.conversationTitle}
             </span>
             {toast.count > 1 && (
               <span
                 className="ml-auto text-[9.5px] font-bold py-px px-1.5 rounded-full shrink-0"
                 style={{ background: 'var(--sky-100)', color: 'var(--skype-deep)' }}
                 title={`${toast.count - 1} more message${toast.count - 1 === 1 ? '' : 's'} from this conversation`}
-              >+{toast.count - 1} more</span>
+              >+{toast.count - 1} {translate("more")}</span>
             )}
           </div>
           <div

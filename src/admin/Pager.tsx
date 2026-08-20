@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Numbered paginator for admin list pages (Users, Waitlist). Works in
  * offset terms (0-based). Renders first/last + a window around the current
@@ -36,9 +37,9 @@ export function Pager({ total, pageSize, offset, loading, onPage }: {
 
   return (
     <div className="admin-pager">
-      <span>{offset + 1}–{Math.min(offset + pageSize, total)} of {total}</span>
+      <span>{offset + 1}–{Math.min(offset + pageSize, total)} {translate("of")}{' '}{total}</span>
       <div className="admin-pager-btns">
-        <button className="btn-ghost" disabled={current === 0 || loading} onClick={() => go(current - 1)}>Prev</button>
+        <button className="btn-ghost" disabled={current === 0 || loading} onClick={() => go(current - 1)}>{translate("Prev")}</button>
         {cells.map((c, i) => c === 'gap'
           ? <span key={`gap-${i}`} className="admin-pager-ellipsis">…</span>
           : (
@@ -52,7 +53,7 @@ export function Pager({ total, pageSize, offset, loading, onPage }: {
               {c + 1}
             </button>
           ))}
-        <button className="btn-ghost" disabled={current >= pages - 1 || loading} onClick={() => go(current + 1)}>Next</button>
+        <button className="btn-ghost" disabled={current >= pages - 1 || loading} onClick={() => go(current + 1)}>{translate("Next")}</button>
       </div>
     </div>
   )

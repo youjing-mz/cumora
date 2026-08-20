@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { Avatar } from '@/components/Avatar'
 import { cn } from '@/lib/utils'
@@ -90,7 +91,7 @@ export function MobileMe() {
           {me.name}
         </h2>
         <div className="font-display italic text-[13px] text-ink-500 mt-0.5 mb-2.5">
-          {authUser?.email ?? 'human · team owner'}
+          {authUser?.email ?? translate("human · team owner")}
         </div>
         <div className="font-display italic text-[12.5px] text-ink-700 max-w-[280px] mx-auto leading-snug">
           {stewardLine}
@@ -125,8 +126,7 @@ export function MobileMe() {
               style={{ border: '1px dashed var(--ink-100)' }}
             >
               <div className="font-display italic text-[13px] text-ink-500 leading-snug">
-                A quiet workspace — no agents have joined yet.
-              </div>
+                {translate("A quiet workspace — no agents have joined yet.")}{' '}</div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -255,9 +255,7 @@ function PushStatusTile() {
     return (
       <div className="bg-cloud rounded-[12px] p-3.5 text-[12px] text-ink-500 font-display italic"
         style={{ border: '1px solid var(--ink-100)' }}>
-        Push notifications run on the iOS / Android native shell — this
-        web preview just uses live socket messages.
-      </div>
+        {translate("Push notifications run on the iOS / Android native shell — this web preview just uses live socket messages.")}{' '}</div>
     )
   }
 
@@ -297,11 +295,11 @@ function PushStatusTile() {
       <div className="p-3.5 flex items-center gap-3">
         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: status.prefEnabled ? 'var(--avail)' : 'var(--coral)' }} />
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-[13px] text-ink-900 leading-tight">App preference</div>
+          <div className="font-semibold text-[13px] text-ink-900 leading-tight">{translate("App preference")}</div>
           <div className="font-display italic text-[11px] text-ink-500 mt-0.5">
             {status.prefEnabled
-              ? 'notify.push is ON — init will run on next app launch.'
-              : "notify.push is OFF — toggle it on above (or tap 'Reset & retry' below)."}
+              ? translate("notify.push is ON — init will run on next app launch.")
+              : translate("notify.push is OFF — toggle it on above (or tap 'Reset & retry' below).")}
           </div>
         </div>
         <span className="text-[10.5px] font-bold tracking-wider uppercase px-2 py-1 rounded-full"
@@ -312,15 +310,15 @@ function PushStatusTile() {
       <div className="p-3.5 flex items-center gap-3">
         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: permColor }} />
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-[13px] text-ink-900 leading-tight">iOS permission</div>
+          <div className="font-semibold text-[13px] text-ink-900 leading-tight">{translate("iOS permission")}</div>
           <div className="font-display italic text-[11px] text-ink-500 mt-0.5">
             {perm === 'denied'
-              ? 'Open iOS Settings → Cumora → Notifications to re-enable.'
+              ? translate("Open iOS Settings → Cumora → Notifications to re-enable.")
               : perm === 'granted'
-                ? 'iOS will deliver alerts when the app is in background.'
+                ? translate("iOS will deliver alerts when the app is in background.")
                 : perm === 'unknown'
-                  ? 'iOS hasn\'t been asked yet — see the last-step row below.'
-                  : 'iOS will show its dialog the next time init runs.'}
+                  ? translate("iOS hasn't been asked yet — see the last-step row below.")
+                  : translate("iOS will show its dialog the next time init runs.")}
           </div>
         </div>
         <span className="text-[10.5px] font-bold tracking-wider uppercase px-2 py-1 rounded-full"
@@ -331,25 +329,25 @@ function PushStatusTile() {
       <div className="p-3.5 flex items-center gap-3">
         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: status.tokenSuffix ? 'var(--avail)' : 'var(--ink-300)' }} />
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-[13px] text-ink-900 leading-tight">Device token</div>
+          <div className="font-semibold text-[13px] text-ink-900 leading-tight">{translate("Device token")}</div>
           <div className="font-display italic text-[11px] text-ink-500 mt-0.5">
             {status.tokenSuffix
               ? `Registered with server (…${status.tokenSuffix}).`
-              : 'No APNs token yet — see the last-step row below.'}
+              : translate("No APNs token yet — see the last-step row below.")}
           </div>
         </div>
       </div>
       {/* The smoking gun for "why is push silently dead?". Shows the
           deepest step the most recent init() reached. */}
       <div className="p-3.5">
-        <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-500 mb-1">Last init step</div>
+        <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-500 mb-1">{translate("Last init step")}</div>
         <div className="font-display italic text-[12px] text-ink-700 leading-snug">
           {stepLabel[status.lastStep]}
         </div>
       </div>
       {status.lastError && (
         <div className="p-3.5 text-[11.5px] font-display italic text-coral-deep leading-snug">
-          Last error: {status.lastError}
+          {translate("Last error:")}{' '}{status.lastError}
         </div>
       )}
       <button
@@ -358,10 +356,9 @@ function PushStatusTile() {
         disabled={busy}
         className="w-full text-left p-3.5 active:bg-paper transition text-[12.5px] font-semibold text-skype-deep disabled:opacity-50"
       >
-        {busy ? 'Working…' : 'Re-register this device'}
+        {busy ? translate("Working…") : translate("Re-register this device")}
         <span className="block font-display italic text-[11px] text-ink-500 mt-0.5 font-normal not-italic">
-          Runs init again — respects the app preference toggle.
-        </span>
+          {translate("Runs init again — respects the app preference toggle.")}{' '}</span>
       </button>
       <button
         type="button"
@@ -369,10 +366,8 @@ function PushStatusTile() {
         disabled={busy}
         className="w-full text-left p-3.5 active:bg-paper transition text-[12.5px] font-semibold text-coral-deep disabled:opacity-50"
       >
-        Reset &amp; retry (force)
-        <span className="block font-display italic text-[11px] text-ink-500 mt-0.5 font-normal not-italic">
-          Bypasses the in-app preference — useful if the toggle got stuck off.
-        </span>
+        {translate("Reset &amp; retry (force)")}{' '}<span className="block font-display italic text-[11px] text-ink-500 mt-0.5 font-normal not-italic">
+          {translate("Bypasses the in-app preference — useful if the toggle got stuck off.")}{' '}</span>
       </button>
     </div>
   )
@@ -395,8 +390,7 @@ function DeleteAccountButton() {
         className="w-full py-3 px-4 rounded-[12px] text-[13px] font-semibold text-coral-deep transition text-left active:opacity-70"
         style={{ border: '1px solid rgba(255, 122, 107, 0.3)' }}
       >
-        Delete account
-        <span className="block font-display italic text-[11px] text-ink-500 mt-0.5">permanently remove this Cumora account</span>
+        {translate("Delete account")}{' '}<span className="block font-display italic text-[11px] text-ink-500 mt-0.5">{translate("permanently remove this Cumora account")}</span>
       </button>
     )
   }
@@ -407,13 +401,9 @@ function DeleteAccountButton() {
       style={{ border: '1px solid var(--coral)', background: 'rgba(255, 122, 107, 0.06)' }}
     >
       <div className="font-display text-[13px] text-ink-900 font-semibold mb-1">
-        Permanently delete this account?
-      </div>
+        {translate("Permanently delete this account?")}{' '}</div>
       <div className="font-display italic text-[12px] text-ink-700 leading-snug mb-3">
-        Your sign-in, OAuth links, and personal profile will be erased. Messages
-        you posted in shared rooms stay (with your name shown as "Deleted
-        user") so other members keep their history. This cannot be undone.
-      </div>
+        {translate("Your sign-in, OAuth links, and personal profile will be erased. Messages you posted in shared rooms stay (with your name shown as \"Deleted user\") so other members keep their history. This cannot be undone.")}{' '}</div>
       {err && (
         <div className="text-[11.5px] text-coral-deep font-display italic mb-2 leading-snug">
           {err}
@@ -448,7 +438,7 @@ function DeleteAccountButton() {
           }}
           className="flex-1 h-9 rounded-[9px] text-[12.5px] font-semibold text-white transition active:opacity-70 disabled:opacity-50"
           style={{ background: 'var(--coral)' }}
-        >{stage === 'busy' ? 'Deleting…' : 'Delete'}</button>
+        >{stage === 'busy' ? translate("Deleting…") : 'Delete'}</button>
       </div>
     </div>
   )

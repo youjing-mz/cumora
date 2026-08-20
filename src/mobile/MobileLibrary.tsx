@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Mobile Library — Documents, Boards, Calendar in one tab.
  *
@@ -223,7 +224,7 @@ function BoardsList() {
                 <IBoard className="w-[18px] h-[18px]" />
               </div>
               <div className="min-w-0">
-                <div className="text-[14px] font-semibold text-ink-900 truncate">{b.title || 'Untitled board'}</div>
+                <div className="text-[14px] font-semibold text-ink-900 truncate">{b.title || translate("Untitled board")}</div>
                 <div className="text-[11.5px] text-ink-500 truncate font-display italic">
                   {b.description ? b.description : `${authorName} · ${timeAgo(b.updatedAt)}`}
                 </div>

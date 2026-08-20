@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useMemo, useState } from 'react'
 import { useApp } from '@/stores/app'
 import { useMe } from '@/stores/auth'
@@ -105,7 +106,7 @@ function AgentCard({ p, onEdit, onDelete }: {
               title={hostOffline ? `${hostLabel} is offline` : `Runs on ${hostLabel}`}>
               <span>{hostIcon}</span>
               <span className="max-w-[120px] truncate">{hostLabel}</span>
-              {hostOffline && <span className="italic text-ink-400">· sleeping</span>}
+              {hostOffline && <span className="italic text-ink-400">{translate("· sleeping")}</span>}
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useParticipants } from '@/stores/participants'
 import { useComputers } from '@/stores/computers'
@@ -257,11 +258,11 @@ function AboutSection() {
       <div className="bg-cloud rounded-[14px] p-5 flex items-center justify-between gap-4"
         style={{ border: '1px solid var(--ink-100)' }}>
         <div className="min-w-0">
-          <div className="font-display text-[14px] text-ink-800">Cumora <span className="font-mono text-[12px]">v{version}</span></div>
+          <div className="font-display text-[14px] text-ink-800">{translate("Cumora")}{' '}<span className="font-mono text-[12px]">{translate("v")}{version}</span></div>
           <div className="font-display italic text-[12px] text-ink-400 mt-0.5">
             {supported
-              ? 'Auto-update checks daily. You\'ll see a banner when a new version is ready.'
-              : 'Auto-update is not available in this build (open the dialog to see why).'}
+              ? translate("Auto-update checks daily. You'll see a banner when a new version is ready.")
+              : translate("Auto-update is not available in this build (open the dialog to see why).")}
           </div>
         </div>
         <button
@@ -353,7 +354,7 @@ function QuotaCard({ period, label, sub, window }: {
         <div className="font-display font-semibold text-[14px] text-ink-900">{label}</div>
         {limit != null
           ? <div className="font-mono text-[11px] font-semibold text-ink-500">{pct.toFixed(0)}%</div>
-          : <div className="font-mono text-[10px] tracking-wider uppercase text-ink-300">unlimited</div>}
+          : <div className="font-mono text-[10px] tracking-wider uppercase text-ink-300">{translate("unlimited")}</div>}
       </div>
       <div className="font-display tabular-nums text-[22px] tracking-tight text-ink-900" style={{ letterSpacing: '-0.02em' }}>
         {fmtUsd(used)}
@@ -395,13 +396,13 @@ function UsageTab() {
   if (state.kind === 'loading') {
     return (
       <div className="space-y-6">
-        <Section title="↳ Quota">
+        <Section title={translate("↳ Quota")}>
           <div className="grid grid-cols-3 gap-3">
             {PERIOD_META.map((p) => (
               <div key={p.key} className="bg-cloud rounded-[14px] p-5 h-[140px]"
                 style={{ border: '1px solid var(--ink-100)' }}>
                 <div className="font-display font-semibold text-[14px] text-ink-300">{p.label}</div>
-                <div className="font-display italic text-[12px] text-ink-300 mt-2">loading…</div>
+                <div className="font-display italic text-[12px] text-ink-300 mt-2">{translate("loading…")}</div>
               </div>
             ))}
           </div>
@@ -413,16 +414,15 @@ function UsageTab() {
   if (state.kind === 'error') {
     return (
       <div className="space-y-6">
-        <Section title="↳ Quota">
+        <Section title={translate("↳ Quota")}>
           <div className="bg-cloud rounded-[14px] p-6 text-center"
             style={{ border: '1px solid var(--ink-100)' }}>
-            <div className="font-display text-[14px] text-ink-700 mb-1">Couldn't fetch your quota</div>
+            <div className="font-display text-[14px] text-ink-700 mb-1">{translate("Couldn't fetch your quota")}</div>
             <div className="font-display italic text-[12px] text-coral-deep mb-3">{state.message}</div>
             <button onClick={load}
               className="px-4 py-1.5 rounded-[8px] text-[12px] font-semibold text-white"
               style={{ background: 'var(--skype)' }}>
-              Try again
-            </button>
+              {translate("Try again")}{' '}</button>
           </div>
         </Section>
       </div>
@@ -434,13 +434,12 @@ function UsageTab() {
   if (!configured) {
     return (
       <div className="space-y-6">
-        <Section title="↳ Quota">
+        <Section title={translate("↳ Quota")}>
           <div className="bg-cloud rounded-[14px] p-6"
             style={{ border: '1px dashed var(--ink-100)' }}>
-            <div className="font-display text-[14px] text-ink-700">No quota gateway on this deployment</div>
+            <div className="font-display text-[14px] text-ink-700">{translate("No quota gateway on this deployment")}</div>
             <div className="font-display italic text-[12px] text-ink-500 mt-1 max-w-xl">
-              This server isn't running a sub2api gateway, so per-period quotas aren't tracked. Usage is governed by the host's own API key allowance.
-            </div>
+              {translate("This server isn't running a sub2api gateway, so per-period quotas aren't tracked. Usage is governed by the host's own API key allowance.")}{' '}</div>
           </div>
         </Section>
       </div>
@@ -450,22 +449,21 @@ function UsageTab() {
   if (!snapshot) {
     return (
       <div className="space-y-6">
-        <Section title="↳ Quota">
+        <Section title={translate("↳ Quota")}>
           <div className="bg-cloud rounded-[14px] p-6"
             style={{ border: '1px dashed var(--ink-100)' }}>
             <div className="font-display text-[14px] text-ink-700">
-              {error ? 'Quota gateway is unreachable' : 'No active subscription'}
+              {error ? translate("Quota gateway is unreachable") : translate("No active subscription")}
             </div>
             <div className="font-display italic text-[12px] text-ink-500 mt-1 max-w-xl">
               {error
-                ? 'The cumora server couldn\'t reach the quota gateway. Try again in a moment.'
-                : 'Your account hasn\'t been provisioned on the quota gateway yet. This usually clears up on its own — try again in a minute.'}
+                ? translate("The cumora server couldn't reach the quota gateway. Try again in a moment.")
+                : translate("Your account hasn't been provisioned on the quota gateway yet. This usually clears up on its own — try again in a minute.")}
             </div>
             <button onClick={load}
               className="mt-3 px-4 py-1.5 rounded-[8px] text-[12px] font-semibold text-skype-deep bg-cloud hover:bg-sky2-50 transition"
               style={{ border: '1px dashed var(--sky2-300)' }}>
-              Refresh
-            </button>
+              {translate("Refresh")}{' '}</button>
           </div>
         </Section>
       </div>
@@ -474,10 +472,9 @@ function UsageTab() {
 
   return (
     <div className="space-y-6">
-      <Section title="↳ Quota">
+      <Section title={translate("↳ Quota")}>
         <div className="text-[13px] text-ink-500 leading-[1.55] mb-4 max-w-2xl font-display italic">
-          What your agents have spent on this account, across the rolling windows the gateway enforces. Numbers are in USD.
-          {snapshot.groupName ? <> Plan: <span className="not-italic font-semibold text-skype-deep">{snapshot.groupName}</span>.</> : null}
+          {translate("What your agents have spent on this account, across the rolling windows the gateway enforces. Numbers are in USD.")}{' '}{snapshot.groupName ? <> {translate("Plan:")}{' '}<span className="not-italic font-semibold text-skype-deep">{snapshot.groupName}</span>.</> : null}
         </div>
         <div className="grid grid-cols-3 gap-3">
           {PERIOD_META.map((p) => (
@@ -494,9 +491,8 @@ function UsageTab() {
           <button onClick={load}
             className="px-4 py-1.5 rounded-[8px] text-[12px] font-semibold text-skype-deep bg-cloud hover:bg-sky2-50 transition"
             style={{ border: '1px solid var(--ink-100)' }}>
-            Refresh
-          </button>
-          {error && <span className="text-[11.5px] text-coral-deep font-display italic">last refresh had a hiccup: {error}</span>}
+            {translate("Refresh")}{' '}</button>
+          {error && <span className="text-[11.5px] text-coral-deep font-display italic">{translate("last refresh had a hiccup:")}{' '}{error}</span>}
         </div>
       </Section>
     </div>
@@ -511,10 +507,9 @@ function TrustTab() {
 
   return (
     <div className="space-y-6">
-      <Section title="↳ Per-agent autonomy">
+      <Section title={translate("↳ Per-agent autonomy")}>
         <div className="text-[13px] text-ink-500 leading-[1.55] mb-4 max-w-2xl font-display italic">
-          Each agent has a threshold for acting on their own — pulling groups, kicking off tools, whispering peers. Adjust per agent if their judgment doesn't match yours.
-        </div>
+          {translate("Each agent has a threshold for acting on their own — pulling groups, kicking off tools, whispering peers. Adjust per agent if their judgment doesn't match yours.")}{' '}</div>
         <div className="space-y-2">
           {agents.map((a) => {
             const trust = autonomy[a.id]?.threshold ?? 0.6
@@ -530,7 +525,7 @@ function TrustTab() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-[11px] text-ink-500 mb-1.5 flex justify-between">
-                    <span>autonomy threshold</span>
+                    <span>{translate("autonomy threshold")}</span>
                     <span className="font-mono text-[11px] font-semibold text-ink-700">{trust.toFixed(2)}</span>
                   </div>
                   <input type="range" min={0} max={1} step={0.01} value={trust}
@@ -543,7 +538,7 @@ function TrustTab() {
         </div>
       </Section>
 
-      <Section title="↳ Pulled-group track records">
+      <Section title={translate("↳ Pulled-group track records")}>
         <div className="grid grid-cols-3 gap-3">
           {agents.slice(0, 3).map((a) => {
             const ar = autonomy[a.id]
@@ -615,17 +610,15 @@ function ProjectsTab() {
 
   return (
     <div className="space-y-6">
-      <Section title="↳ Projects">
+      <Section title={translate("↳ Projects")}>
         <div className="text-[13px] text-ink-500 leading-[1.55] mb-4 max-w-2xl font-display italic">
-          Projects bundle related groups under a name + a tint. Attach a group to a project so the team and the agents both see what scope the conversation belongs to.
-        </div>
+          {translate("Projects bundle related groups under a name + a tint. Attach a group to a project so the team and the agents both see what scope the conversation belongs to.")}{' '}</div>
 
         <div className="space-y-2">
           {visible.length === 0 && !creating && (
             <div className="bg-cloud rounded-[12px] p-6 text-center text-[13px] text-ink-500 italic font-display"
               style={{ border: '1px dashed var(--ink-100)' }}>
-              No projects yet. Click <b className="not-italic text-skype-deep">+ New project</b> to start one.
-            </div>
+              {translate("No projects yet. Click")}{' '}<b className="not-italic text-skype-deep">{translate("+ New project")}</b> {translate("to start one.")}{' '}</div>
           )}
           {visible.map((p) => (
             <div key={p.id} className="bg-cloud rounded-[12px] p-4 flex items-center gap-4"
@@ -634,10 +627,10 @@ function ProjectsTab() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <div className="font-semibold text-[14px] text-ink-900 truncate">{p.name}</div>
-                  {p.status === 'archived' && <span className="text-[10px] text-ink-300 uppercase tracking-wider">archived</span>}
+                  {p.status === 'archived' && <span className="text-[10px] text-ink-300 uppercase tracking-wider">{translate("archived")}</span>}
                 </div>
                 <div className="font-display italic text-[12px] text-ink-500 truncate">
-                  {p.description || '(no description)'}  ·  {p.conversationCount} conversation{p.conversationCount === 1 ? '' : 's'}
+                  {p.description || translate("(no description)")}  ·  {p.conversationCount} {translate("conversation")}{p.conversationCount === 1 ? '' : 's'}
                 </div>
               </div>
               <button
@@ -657,7 +650,7 @@ function ProjectsTab() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Project name"
+              placeholder={translate("Project name")}
               className="w-full px-3 py-2 text-[13px] rounded outline-none"
               style={{ border: '1px solid var(--ink-100)', background: 'var(--paper)' }}
             />
@@ -665,7 +658,7 @@ function ProjectsTab() {
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Short description (optional)"
+              placeholder={translate("Short description (optional)")}
               className="w-full px-3 py-2 text-[12.5px] rounded outline-none"
               style={{ border: '1px solid var(--ink-100)', background: 'var(--paper)' }}
             />
@@ -676,11 +669,11 @@ function ProjectsTab() {
                 disabled={!name.trim() || busy}
                 className="px-4 py-1.5 rounded-[8px] text-[12px] font-semibold text-white disabled:opacity-50"
                 style={{ background: 'var(--skype)' }}
-              >{busy ? '…' : 'Create project'}</button>
+              >{busy ? '…' : translate("Create project")}</button>
               <button
                 onClick={() => { setCreating(false); setName(''); setDescription(''); setErr(null) }}
                 className="px-3 py-1.5 rounded-[8px] text-[12px] text-ink-500 hover:bg-cloud"
-              >Cancel</button>
+              >{translate("Cancel")}</button>
             </div>
           </div>
         ) : (
@@ -689,13 +682,13 @@ function ProjectsTab() {
               onClick={() => setCreating(true)}
               className="px-4 py-2 rounded-[10px] text-[12.5px] font-semibold text-skype-deep bg-cloud hover:bg-sky2-50 transition"
               style={{ border: '1px dashed var(--sky2-300)' }}
-            >+ New project</button>
+            >{translate("+ New project")}</button>
             {archivedCount > 0 && (
               <button
                 onClick={() => setShowArchived((v) => !v)}
                 className="text-[11.5px] text-ink-500 hover:text-skype-deep transition italic font-display"
               >
-                {showArchived ? 'Hide archived' : `Show archived (${archivedCount})`}
+                {showArchived ? translate("Hide archived") : `Show archived (${archivedCount})`}
               </button>
             )}
           </div>
@@ -778,8 +771,7 @@ function SkypeSoundSection() {
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-[13px] text-ink-900">{t('me.playSounds')}</div>
             <div className="font-display italic font-normal text-[11.5px] text-ink-500 mt-0.5">
-              this device only · plays once when a Skype emoticon enters view; click an emoticon to replay
-            </div>
+              {translate("this device only · plays once when a Skype emoticon enters view; click an emoticon to replay")}{' '}</div>
           </div>
           <span className={cn('w-9 h-5 rounded-full relative shrink-0 transition-colors', on ? 'bg-skype' : 'bg-ink-200')}>
             <span className={cn('absolute w-4 h-4 bg-white rounded-full top-0.5 transition-all', on ? 'left-[18px]' : 'left-0.5')}
@@ -866,16 +858,11 @@ function ComputersTab() {
 
   return (
     <div className="space-y-6">
-      <Section title="↳ Where your agents run">
+      <Section title={translate("↳ Where your agents run")}>
         <p className="text-[13px] text-ink-500 mb-4 max-w-[640px]">
-          Every agent runs on a <strong>Computer</strong>. <em>Cumora Cloud</em> is built in and
-          always on. Pair your own machine or a VPS to run agents on your local
-          <span className="font-mono text-[12px]"> Claude Code</span> or
-          <span className="font-mono text-[12px]"> Codex</span> — each agent gets its own isolated
-          workspace, memory and skills there.
-        </p>
+          {translate("Every agent runs on a")}{' '}<strong>{translate("Computer")}</strong>. <em>{translate("Cumora Cloud")}</em> {translate("is built in and always on. Pair your own machine or a VPS to run agents on your local")}{' '}<span className="font-mono text-[12px]"> {translate("Claude Code")}</span> {translate("or")}{' '}<span className="font-mono text-[12px]"> {translate("Codex")}</span> {translate("— each agent gets its own isolated workspace, memory and skills there.")}{' '}</p>
 
-        {!loaded && <div className="text-[13px] text-ink-400">Loading…</div>}
+        {!loaded && <div className="text-[13px] text-ink-400">{translate("Loading…")}</div>}
 
         <div className="grid gap-3">
           {list.map((c) => {
@@ -900,15 +887,15 @@ function ComputersTab() {
                         <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-full"
                           style={{ background: 'rgba(244,183,64,0.18)', color: 'var(--gold-deep)' }}
                           title={c.latestDaemonVersion ? `Update to v${c.latestDaemonVersion}` : 'Update available'}>
-                          ↑ update{c.daemonVersion ? ` · v${c.daemonVersion}` : ''}
+                          {translate("↑ update")}{c.daemonVersion ? ` · v${c.daemonVersion}` : ''}
                         </span>
                       )}
                     </div>
                     <div className="text-[12px] text-ink-500 mt-0.5">
                       {c.availableEngines.map((e) => ENGINE_LABEL[e] ?? e).join(', ') || '—'}
-                      {' · '}{n} agent{n === 1 ? '' : 's'}
+                      {' · '}{n} {translate("agent")}{n === 1 ? '' : 's'}
                       {repairable && c.daemonVersion && (
-                        <>{' · '}<span className="font-mono text-[11px] text-ink-400">v{c.daemonVersion}</span></>
+                        <>{' · '}<span className="font-mono text-[11px] text-ink-400">{translate("v")}{c.daemonVersion}</span></>
                       )}
                     </div>
                   </div>
@@ -917,25 +904,23 @@ function ComputersTab() {
                       <span className="text-[12px] font-semibold text-skype-deep">{expanded ? 'Hide' : 'Reconnect'}</span>
                       <button onClick={(e) => { e.stopPropagation(); void remove(c.id, c.name) }}
                         className="text-[12px] font-semibold text-coral-deep hover:underline px-2 py-1">
-                        Remove
-                      </button>
+                        {translate("Remove")}{' '}</button>
                     </>
                   )}
                 </div>
                 {expanded && (
                   <div className="px-4 pb-4 pt-3 border-t border-ink-100">
                     <div className="text-[12px] text-ink-500 mb-2 italic font-display">
-                      Run this on “{c.name}” to reconnect it — its agents stay attached. This token stays valid.
-                    </div>
+                      {translate("Run this on “")}{c.name}{translate("” to reconnect it — its agents stay attached. This token stays valid.")}{' '}</div>
                     {!repairCode ? (
-                      <div className="text-[12px] text-ink-400">Generating…</div>
+                      <div className="text-[12px] text-ink-400">{translate("Generating…")}</div>
                     ) : (
                       <>
                         <pre className="bg-ink-900 text-cloud rounded-[10px] p-3 text-[12px] overflow-x-auto whitespace-pre-wrap break-all font-mono select-all">{repairCmd}</pre>
                         <button onClick={(e) => { e.stopPropagation(); void navigator.clipboard?.writeText(repairCmd); setRepairCopied(true) }}
                           className="mt-2 inline-flex items-center justify-center min-w-[120px] text-[12px] font-semibold px-3 py-1.5 rounded-[9px] text-white transition-colors duration-200"
                           style={{ background: repairCopied ? '#3BB273' : 'var(--skype)' }}>
-                          {repairCopied ? '✓ Copied!' : 'Copy command'}
+                          {repairCopied ? translate("✓ Copied!") : translate("Copy command")}
                         </button>
                       </>
                     )}
@@ -949,15 +934,13 @@ function ComputersTab() {
         {code ? (
           <div className="mt-4 bg-sky-50 rounded-[14px] p-4" style={{ border: '1px solid var(--sky-100)' }}>
             <div className="text-[13px] font-semibold text-ink-900 mb-1">
-              Run this on the machine you want to host agents:
-            </div>
+              {translate("Run this on the machine you want to host agents:")}{' '}</div>
             <div className="text-[11.5px] text-ink-500 mb-2.5 italic font-display">
-              Needs <span className="font-mono not-italic">claude</span>, <span className="font-mono not-italic">codex</span>, or <span className="font-mono not-italic">grok</span> installed. The computer names itself after that machine and appears here once paired. This token stays valid.
-            </div>
+              {translate("Needs")}{' '}<span className="font-mono not-italic">{translate("claude")}</span>, <span className="font-mono not-italic">{translate("codex")}</span>{translate(", or")}{' '}<span className="font-mono not-italic">{translate("grok")}</span> {translate("installed. The computer names itself after that machine and appears here once paired. This token stays valid.")}{' '}</div>
             <div className="flex items-center gap-2.5 mb-2.5">
-              <span className="text-[12px] text-ink-500">Engine</span>
+              <span className="text-[12px] text-ink-500">{translate("Engine")}</span>
               <div className="inline-flex rounded-[9px] p-0.5" style={{ background: 'var(--ink-100)' }}>
-                {([['claude', 'Claude Code'], ['codex', 'Codex'], ['grok', 'Grok Build']] as const).map(([id, label]) => (
+                {([['claude', translate("Claude Code")], ['codex', 'Codex'], ['grok', translate("Grok Build")]] as const).map(([id, label]) => (
                   <button key={id} type="button" onClick={() => setEngine(id)}
                     className="px-3 py-1 rounded-[7px] text-[12px] font-semibold transition-colors duration-150"
                     style={engine === id
@@ -967,18 +950,17 @@ function ComputersTab() {
                   </button>
                 ))}
               </div>
-              <span className="text-[11px] text-ink-400">just the default — this computer can still run agents on any detected engine</span>
+              <span className="text-[11px] text-ink-400">{translate("just the default — this computer can still run agents on any detected engine")}</span>
             </div>
             {isWindows ? (
               <div className="mb-2.5 text-[12px] text-ink-600">
-                Keep this terminal open while the agents run.
-                <span className="text-ink-400"> — background service install isn’t supported on Windows yet.</span>
+                {translate("Keep this terminal open while the agents run.")}{' '}<span className="text-ink-400"> {translate("— background service install isn’t supported on Windows yet.")}</span>
               </div>
             ) : (
               <label className="flex items-start gap-2 mb-2.5 cursor-pointer select-none">
                 <input type="checkbox" checked={asService} onChange={(e) => setAsService(e.target.checked)} className="mt-[3px]" />
                 <span className="text-[12px] text-ink-600">
-                  Keep it running in the background <span className="text-ink-400">— auto-start on boot, auto-restart on crash, auto-update. Otherwise this terminal has to stay open.</span>
+                  {translate("Keep it running in the background")}{' '}<span className="text-ink-400">{translate("— auto-start on boot, auto-restart on crash, auto-update. Otherwise this terminal has to stay open.")}</span>
                 </span>
               </label>
             )}
@@ -994,12 +976,12 @@ function ComputersTab() {
                       style={{ animation: 'cp-pop 0.32s cubic-bezier(.36,1.6,.4,1)' }}>
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    <span style={{ animation: 'cp-fade 0.2s ease' }}>Copied!</span>
+                    <span style={{ animation: 'cp-fade 0.2s ease' }}>{translate("Copied!")}</span>
                   </>
-                ) : 'Copy command'}
+                ) : translate("Copy command")}
               </button>
               <button onClick={() => setCode(null)}
-                className="text-[12px] font-semibold px-3 py-1.5 rounded-[9px] border border-ink-100 text-ink-600">Done</button>
+                className="text-[12px] font-semibold px-3 py-1.5 rounded-[9px] border border-ink-100 text-ink-600">{translate("Done")}</button>
             </div>
             <style>{`
               @keyframes cp-pop { 0% { transform: scale(0.2); opacity: 0 } 55% { transform: scale(1.3) } 100% { transform: scale(1); opacity: 1 } }
@@ -1011,7 +993,7 @@ function ComputersTab() {
             {err && <div className="mt-4 text-[12px] text-coral-deep bg-coral-soft rounded-[8px] p-2">{err}</div>}
             <button onClick={addComputer} disabled={busy}
               className="mt-4 px-4 py-2 rounded-[10px] bg-skype text-white text-[13px] font-semibold disabled:opacity-50">
-              {busy ? 'Generating…' : '+ Add a computer'}
+              {busy ? translate("Generating…") : translate("+ Add a computer")}
             </button>
           </>
         )}
@@ -1059,30 +1041,29 @@ function DaemonUpgradeBanner({ onJump }: { onJump: () => void }) {
           style={{ background: 'rgba(244,183,64,0.22)', color: 'var(--gold-deep)' }}>↑</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="font-display font-semibold text-[15px] text-ink-900">Update available</span>
+            <span className="font-display font-semibold text-[15px] text-ink-900">{translate("Update available")}</span>
             {latest && (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-mono">
                 {one?.daemonVersion && (
-                  <span className="px-1.5 py-0.5 rounded-full" style={{ background: 'var(--ink-100)', color: 'var(--ink-500)' }}>v{one.daemonVersion}</span>
+                  <span className="px-1.5 py-0.5 rounded-full" style={{ background: 'var(--ink-100)', color: 'var(--ink-500)' }}>{translate("v")}{one.daemonVersion}</span>
                 )}
                 <span className="text-ink-300">→</span>
-                <span className="px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(244,183,64,0.30)', color: 'var(--gold-deep)' }}>v{latest}</span>
+                <span className="px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(244,183,64,0.30)', color: 'var(--gold-deep)' }}>{translate("v")}{latest}</span>
               </span>
             )}
           </div>
           <div className="text-[12.5px] text-ink-600 mt-1 leading-relaxed">
             {one ? (
-              <><strong className="text-ink-900 font-medium">{one.name}</strong> is running an outdated agent daemon.</>
+              <><strong className="text-ink-900 font-medium">{one.name}</strong> {translate("is running an outdated agent daemon.")}</>
             ) : (
-              <><strong className="text-ink-900 font-medium">{outdated.length} computers</strong> are running an outdated agent daemon: {outdated.map((c) => c.name).join(', ')}.</>
+              <><strong className="text-ink-900 font-medium">{outdated.length} {translate("computers")}</strong> {translate("are running an outdated agent daemon:")}{' '}{outdated.map((c) => c.name).join(', ')}.</>
             )}
             {allManual ? (
-              <>{' '}{one ? 'It runs' : 'They run'} as a foreground command — press <kbd className="font-mono text-[11px]">Ctrl-C</kbd> in {one ? 'its' : 'each'} terminal, then re-run to update. Tip: <code className="font-mono text-[11px]">--install-service</code> makes updates automatic.</>
+              <>{' '}{one ? translate("It runs") : translate("They run")} {translate("as a foreground command — press")}{' '}<kbd className="font-mono text-[11px]">{translate("Ctrl-C")}</kbd> {translate("in")}{' '}{one ? 'its' : 'each'} {translate("terminal, then re-run to update. Tip:")}{' '}<code className="font-mono text-[11px]">--install-service</code> {translate("makes updates automatic.")}</>
             ) : (
               <>
-                {' '}Restart {one ? 'it' : 'them'} to pick up the latest fixes — agents stay attached.
-                {manual.length > 0 && (
-                  <>{' '}({manual.map((c) => c.name).join(', ')} {manual.length === 1 ? 'runs' : 'run'} as a foreground command — Ctrl-C and re-run there instead.)</>
+                {' '}{translate("Restart")}{' '}{one ? 'it' : 'them'} {translate("to pick up the latest fixes — agents stay attached.")}{' '}{manual.length > 0 && (
+                  <>{' '}({manual.map((c) => c.name).join(', ')} {manual.length === 1 ? 'runs' : 'run'} {translate("as a foreground command — Ctrl-C and re-run there instead.)")}</>
                 )}
               </>
             )}
@@ -1092,12 +1073,11 @@ function DaemonUpgradeBanner({ onJump }: { onJump: () => void }) {
             <button onClick={copy}
               className="shrink-0 inline-flex items-center justify-center min-w-[82px] text-[12px] font-semibold px-3 rounded-[10px] text-white transition-colors duration-200"
               style={{ background: copied ? 'var(--avail)' : 'var(--gold-deep)' }}>
-              {copied ? '✓ Copied' : 'Copy'}
+              {copied ? translate("✓ Copied") : 'Copy'}
             </button>
           </div>
           <button onClick={onJump} className="mt-2 text-[11.5px] font-semibold text-gold-deep hover:underline" style={{ color: 'var(--gold-deep)' }}>
-            Manage computers →
-          </button>
+            {translate("Manage computers →")}{' '}</button>
         </div>
       </div>
     </div>
@@ -1147,7 +1127,7 @@ export function MeView() {
         {tab === 'Usage' && <UsageTab />}
         {tab === 'Computers' && <ComputersTab />}
         {tab === 'Projects' && <ProjectsTab />}
-        {tab === 'Trust & autonomy' && <TrustTab />}
+        {tab === translate("Trust & autonomy") && <TrustTab />}
         {tab === 'Preferences' && <PreferencesTab />}
       </div>
     </main>

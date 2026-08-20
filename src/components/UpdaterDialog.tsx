@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * UpdaterDialog — UI shell for the auto-update flow.
  *
@@ -160,8 +161,8 @@ export function UpdateBanner({ forceOpen, onOpen }: BannerProps) {
       </span>
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-semibold text-ink-900 truncate">
-          {isDownloaded ? 'Update ready' : isDownloading ? 'Updating Cumora' : 'New Cumora available'}
-          {version && <span className="ml-1.5 text-ink-500 font-normal">v{version}</span>}
+          {isDownloaded ? translate("Update ready") : isDownloading ? translate("Updating Cumora") : translate("New Cumora available")}
+          {version && <span className="ml-1.5 text-ink-500 font-normal">{translate("v")}{version}</span>}
         </div>
         {isDownloading && status.percent !== undefined && (
           <div className="text-[11px] text-ink-500 font-display italic mt-0.5">
@@ -180,7 +181,7 @@ export function UpdateBanner({ forceOpen, onOpen }: BannerProps) {
         <button
           onClick={() => setDismissed(true)}
           className="w-6 h-6 rounded-[6px] grid place-items-center text-ink-400 hover:text-ink-700 hover:bg-cloud transition text-[14px] shrink-0"
-          aria-label="Dismiss"
+          aria-label={translate("Dismiss")}
         >×</button>
       )}
       </div>
@@ -232,28 +233,27 @@ export function UpdaterDialog({ open, onClose }: DialogProps) {
       >
         <div className="px-6 py-5 border-b border-ink-100">
           <h2 className="font-display font-medium text-[18px] tracking-tight text-ink-900">
-            Cumora Update
-          </h2>
+            {translate("Cumora Update")}{' '}</h2>
           <div className="mt-1 text-[12.5px] text-ink-500 italic font-display">
-            {kind === 'idle' && 'You\'re on the latest version.'}
-            {kind === 'checking' && 'Checking for updates…'}
-            {kind === 'update-not-available' && 'You\'re on the latest version.'}
-            {kind === 'update-available' && 'A new version is ready to download.'}
-            {kind === 'downloading' && 'Downloading the update…'}
-            {kind === 'update-downloaded' && 'Update downloaded. Restart to install.'}
-            {kind === 'error' && 'Update check failed.'}
-            {isUnsupported && 'Auto-update is not available in this build.'}
+            {kind === 'idle' && translate("You're on the latest version.")}
+            {kind === 'checking' && translate("Checking for updates…")}
+            {kind === 'update-not-available' && translate("You're on the latest version.")}
+            {kind === 'update-available' && translate("A new version is ready to download.")}
+            {kind === 'downloading' && translate("Downloading the update…")}
+            {kind === 'update-downloaded' && translate("Update downloaded. Restart to install.")}
+            {kind === 'error' && translate("Update check failed.")}
+            {isUnsupported && translate("Auto-update is not available in this build.")}
           </div>
         </div>
 
         <div className="px-6 py-5 flex flex-col gap-4">
           {/* Version row */}
           <div className="flex items-center gap-3 font-mono text-[13px]">
-            <span className="text-ink-500">v{currentVersion}</span>
+            <span className="text-ink-500">{translate("v")}{currentVersion}</span>
             {(kind === 'update-available' || kind === 'downloading' || kind === 'update-downloaded') && (
               <>
                 <span className="text-ink-300">→</span>
-                <span className="text-ink-900 font-semibold">v{nextVersion}</span>
+                <span className="text-ink-900 font-semibold">{translate("v")}{nextVersion}</span>
               </>
             )}
           </div>
@@ -262,8 +262,7 @@ export function UpdaterDialog({ open, onClose }: DialogProps) {
           {changelog && (
             <div>
               <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-500 mb-2">
-                What's new
-              </div>
+                {translate("What's new")}{' '}</div>
               <div
                 className="text-[13px] text-ink-700 max-h-44 overflow-y-auto leading-relaxed rounded-[8px] p-3"
                 style={{ background: 'var(--cloud)', border: '1px solid var(--ink-100)' }}
@@ -277,7 +276,7 @@ export function UpdaterDialog({ open, onClose }: DialogProps) {
           {kind === 'downloading' && (
             <div>
               <div className="flex justify-between text-[11.5px] text-ink-500 mb-1.5 font-display italic">
-                <span>Downloading</span>
+                <span>{translate("Downloading")}</span>
                 <span className="font-mono text-ink-700">
                   {(status.percent ?? 0).toFixed(0)}% · {fmtBytes(status.transferred ?? 0)} / {fmtBytes(status.total ?? 0)}
                 </span>
@@ -304,7 +303,7 @@ export function UpdaterDialog({ open, onClose }: DialogProps) {
               style={{ background: 'rgba(110, 197, 106, 0.08)', color: '#2d8c72', border: '1px solid rgba(110, 197, 106, 0.25)' }}
             >
               <span className="font-bold">✓</span>
-              <span>Ready to install — Cumora will restart at the new version.</span>
+              <span>{translate("Ready to install — Cumora will restart at the new version.")}</span>
             </div>
           )}
 
@@ -335,14 +334,14 @@ export function UpdaterDialog({ open, onClose }: DialogProps) {
               onClick={() => void check()}
               className="px-4 py-2 rounded-[9px] text-[12.5px] font-semibold text-white transition"
               style={{ background: 'var(--skype)' }}
-            >Check again</button>
+            >{translate("Check again")}</button>
           )}
           {kind === 'checking' && (
             <button
               disabled
               className="px-4 py-2 rounded-[9px] text-[12.5px] font-semibold text-white opacity-60"
               style={{ background: 'var(--skype)' }}
-            >Checking…</button>
+            >{translate("Checking…")}</button>
           )}
           {kind === 'update-available' && (
             <button
@@ -352,14 +351,14 @@ export function UpdaterDialog({ open, onClose }: DialogProps) {
                 background: 'var(--skype)',
                 boxShadow: '0 4px 12px -3px rgba(0, 168, 240, 0.5)',
               }}
-            >Download</button>
+            >{translate("Download")}</button>
           )}
           {kind === 'downloading' && (
             <button
               disabled
               className="px-5 py-2 rounded-[9px] text-[12.5px] font-semibold text-white opacity-60"
               style={{ background: 'var(--skype)' }}
-            >Downloading…</button>
+            >{translate("Downloading…")}</button>
           )}
           {kind === 'update-downloaded' && (
             <button
@@ -369,7 +368,7 @@ export function UpdaterDialog({ open, onClose }: DialogProps) {
                 background: 'var(--skype)',
                 boxShadow: '0 4px 12px -3px rgba(0, 168, 240, 0.5)',
               }}
-            >Restart now</button>
+            >{translate("Restart now")}</button>
           )}
         </div>
       </div>

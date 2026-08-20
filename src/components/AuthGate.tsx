@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * AuthGate — wraps the entire app and decides whether to show the
  * sign-in screen or the real UI based on the auth store.
@@ -121,7 +122,7 @@ export function AuthGate({ children, unauthFallback }: AuthGateProps) {
       <div
         className="fixed inset-0 grid place-items-center text-ink-300 font-display italic text-[13px]"
         style={{ background: 'var(--paper)' }}
-      ><WindowDragStrip />loading…</div>
+      ><WindowDragStrip />{translate("loading…")}</div>
     )
   }
 

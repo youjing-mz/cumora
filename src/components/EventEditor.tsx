@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Modal for creating + editing a calendar event. Drives the AI-native
  * "schedule a task for an agent" flow: title + start time + assignee +
@@ -230,7 +231,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Daily standup digest"
+              placeholder={translate("e.g. Daily standup digest")}
               autoFocus
               maxLength={200}
             />
@@ -282,7 +283,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                 <DateTimePicker
                   mode={allDay ? 'date' : 'datetime'}
                   value={endAt}
-                  placeholder="—"
+                  placeholder={translate("—")}
                   allowClear
                   onChange={(v) => {
                     if (!v) { setEndAt(''); return }
@@ -371,7 +372,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                     <Input
                       type="number"
                       min={1}
-                      placeholder="∞"
+                      placeholder={translate("∞")}
                       value={recur.count ?? ''}
                       onChange={(e) => setRecur({ ...recur, count: e.target.value ? Math.max(1, Number(e.target.value)) : null })}
                       style={{ width: 80 }}
@@ -414,7 +415,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                       )
                     })}
                   </div>
-                  <span className="text-[11.5px] text-ink-400">or</span>
+                  <span className="text-[11.5px] text-ink-400">{translate("or")}</span>
                   <Input
                     type="number"
                     min={0}
@@ -501,7 +502,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
                 <TextArea
                   value={agentPrompt}
                   onChange={(e) => setAgentPrompt(e.target.value)}
-                  placeholder="e.g. Summarize the past 24h of conversation activity and post the digest here."
+                  placeholder={translate("e.g. Summarize the past 24h of conversation activity and post the digest here.")}
                   rows={4}
                   maxLength={8000}
                 />
@@ -524,7 +525,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
             <TextArea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Anything else worth knowing…"
+              placeholder={translate("Anything else worth knowing…")}
               rows={2}
               maxLength={4000}
             />
@@ -550,7 +551,7 @@ export function EventEditor({ event, prefill, onClose }: Props) {
               disabled={busy}
               className="px-3 py-2 rounded-[9px] text-[12.5px] font-semibold text-skype-deep bg-cloud hover:bg-sky2-100 transition"
               style={{ border: '1px solid var(--ink-100)' }}
-              title="Fire this event right now, without waiting for its next scheduled time"
+              title={translate("Fire this event right now, without waiting for its next scheduled time")}
             >{t('calendar.runNowAction')}</button>
           )}
           <div className="flex-1" />

@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import type { CSSProperties } from 'react'
 import type { Participant } from '@/types'
 import { cn, statusColor } from '@/lib/utils'
@@ -137,7 +138,7 @@ export function CloudLogo({ size = 22 }: { size?: number }) {
   return (
     <img
       src="/logo.png"
-      alt="Cumora"
+      alt={translate("Cumora")}
       draggable={false}
       width={size}
       height={size}

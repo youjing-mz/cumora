@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Renderer for the dedicated Electron notification BrowserWindow.
  *
@@ -307,7 +308,7 @@ function ToastCard({ toast, onClick, onDismiss }: { toast: Toast; onClick: () =>
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onDismiss() }}
-        aria-label="Dismiss"
+        aria-label={translate("Dismiss")}
         className="absolute grid place-items-center rounded-full text-ink-500 hover:bg-ink-100 hover:text-ink-900 transition"
         style={{
           top: 6, right: 6,

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { legacyText } from './legacy'
 
 export type Locale = 'en' | 'zh'
 
@@ -948,7 +949,8 @@ export const useLocale = create<LocaleState>((set) => ({
 }))
 
 export function text(key: string, locale: Locale = useLocale.getState().locale, vars?: Record<string, string | number>): string {
-  const value = messages[locale][key] ?? messages.en[key] ?? key
+  const catalogKey = Object.entries(messages.en).find(([, value]) => value === key)?.[0]
+  const value = messages[locale][key] ?? (catalogKey ? messages[locale][catalogKey] : undefined) ?? messages.en[key] ?? legacyText(key, locale)
   if (!vars) return value
   return value.replace(/\{\{(\w+)\}\}/g, (_, name: string) => String(vars[name] ?? `{{${name}}}`))
 }

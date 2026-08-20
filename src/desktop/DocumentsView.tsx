@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect } from 'react'
 import { useDocuments } from '@/stores/documents'
 import { useI18n } from '@/i18n'
@@ -57,8 +58,7 @@ export function DocumentsView() {
           )}
           {loaded && list.length === 0 && (
             <div className="px-4 py-6 text-xs text-stone-400">
-              No documents yet. Create one — humans and agents both edit live.
-            </div>
+              {translate("No documents yet. Create one — humans and agents both edit live.")}{' '}</div>
           )}
           {list.map((d) => {
             const author = byId[d.createdBy]
@@ -91,8 +91,8 @@ export function DocumentsView() {
         ) : (
           <div className="h-full grid place-items-center text-stone-400 text-sm">
             {list.length === 0
-              ? 'Create a document to start collaborating.'
-              : 'Select a document from the list.'}
+              ? translate("Create a document to start collaborating.")
+              : translate("Select a document from the list.")}
           </div>
         )}
       </main>

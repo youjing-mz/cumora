@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * EmailComposer — slide-in drawer for writing real email.
  *
@@ -381,7 +382,7 @@ export function EmailComposer() {
     <div className="fixed inset-0 z-[55] grid place-items-end pointer-events-none" aria-modal="true">
       {/* Click-outside backdrop. Click anywhere outside the panel to close. */}
       <button
-        aria-label="Close composer backdrop"
+        aria-label={translate("Close composer backdrop")}
         onClick={close}
         className="absolute inset-0 bg-ink-900/15 pointer-events-auto animate-fade-in"
         style={{ animationDuration: '120ms' }}
@@ -414,20 +415,19 @@ export function EmailComposer() {
               className="px-5 py-3 rounded-[10px] bg-cloud border border-sky2-200 text-skype-deep font-semibold text-[13px] flex items-center gap-2"
               style={{ boxShadow: '0 8px 24px -8px rgba(0, 168, 240, 0.35)' }}
             >
-              📎 Drop to attach
-            </div>
+              {translate("📎 Drop to attach")}{' '}</div>
           </div>
         )}
         <div className="flex items-center gap-2 py-3 px-4 border-b border-[rgba(120,110,95,0.25)]">
           <IMail className="w-4 h-4 text-[#7A6A3F]" strokeWidth={2} />
           <h2 className="text-[14px] font-semibold text-ink-900 tracking-tight">
-            {isReply ? 'Reply by email' : 'New email'}
+            {isReply ? translate("Reply by email") : translate("New email")}
           </h2>
           <button
             type="button"
             onClick={close}
             className="ml-auto w-7 h-7 rounded-full grid place-items-center text-ink-500 hover:bg-cloud transition"
-            aria-label="Close composer"
+            aria-label={translate("Close composer")}
           >×</button>
         </div>
 
@@ -436,7 +436,7 @@ export function EmailComposer() {
             label="To"
             entries={to}
             onChange={setTo}
-            placeholder="address or @id, comma to add"
+            placeholder={translate("address or @id, comma to add")}
             autocompletePool={pool}
           />
         )}
@@ -445,7 +445,7 @@ export function EmailComposer() {
             label="Cc"
             entries={cc}
             onChange={setCc}
-            placeholder="optional"
+            placeholder={translate("optional")}
             autocompletePool={pool}
           />
         ) : (
@@ -454,17 +454,17 @@ export function EmailComposer() {
               type="button"
               onClick={() => setShowCc(true)}
               className="text-[11px] text-skype-deep hover:underline"
-            >+ Cc</button>
+            >{translate("+ Cc")}</button>
           </div>
         ))}
         {!isReply && (
           <div className="grid grid-cols-[60px_1fr] gap-2 items-center py-2 px-3 border-b border-[rgba(120,110,95,0.25)]">
-            <span className="text-[10.5px] font-bold text-ink-300 uppercase tracking-wider">Subject</span>
+            <span className="text-[10.5px] font-bold text-ink-300 uppercase tracking-wider">{translate("Subject")}</span>
             <input
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="What's this about?"
+              placeholder={translate("What's this about?")}
               className="outline-none border-0 bg-transparent text-[15px] text-ink-900 placeholder:text-ink-300 font-display"
             />
           </div>
@@ -472,11 +472,11 @@ export function EmailComposer() {
         {isReply && replyOriginal?.email && (
           <div className="py-2 px-3 border-b border-[rgba(120,110,95,0.18)] bg-[rgba(120,110,95,0.04)] text-[11.5px] text-ink-500">
             <div className="flex items-baseline gap-2">
-              <span className="font-bold text-ink-300 uppercase tracking-wider text-[10px]">Re:</span>
-              <span className="text-ink-700 font-medium">{replyOriginal.email.subject || '(no subject)'}</span>
+              <span className="font-bold text-ink-300 uppercase tracking-wider text-[10px]">{translate("Re:")}</span>
+              <span className="text-ink-700 font-medium">{replyOriginal.email.subject || translate("(no subject)")}</span>
             </div>
             <div className="mt-0.5 truncate">
-              from <span className="text-ink-700">{replyOriginal.email.from}</span>
+              {translate("from")}{' '}<span className="text-ink-700">{replyOriginal.email.from}</span>
             </div>
           </div>
         )}
@@ -485,7 +485,7 @@ export function EmailComposer() {
             label="Cc"
             entries={cc}
             onChange={setCc}
-            placeholder="add anyone to cc (optional)"
+            placeholder={translate("add anyone to cc (optional)")}
             autocompletePool={pool}
           />
         )}
@@ -509,8 +509,8 @@ export function EmailComposer() {
                   <div className="truncate text-ink-700 font-medium">{a.filename}</div>
                   <div className="text-[10.5px] text-ink-400 uppercase tracking-wider">
                     {a.mimeType} · {humanBytes(a.sizeBytes)}
-                    {a.state === 'uploading' && ' · uploading…'}
-                    {a.state === 'error' && ` · ${a.error ?? 'upload failed'}`}
+                    {a.state === 'uploading' && translate(" · uploading…")}
+                    {a.state === 'error' && ` · ${a.error ?? translate("upload failed")}`}
                   </div>
                 </div>
                 <button
@@ -543,17 +543,17 @@ export function EmailComposer() {
             onClick={() => fileInputRef.current?.click()}
             disabled={sending}
             className="py-2 px-2.5 text-[12px] font-semibold text-ink-700 bg-cloud border border-ink-100 rounded-[7px] hover:border-sky2-200 hover:text-skype-deep transition disabled:opacity-50"
-            title="Attach a file"
-          >📎 Attach</button>
+            title={translate("Attach a file")}
+          >{translate("📎 Attach")}</button>
           <span className="text-[11px] text-ink-300 mr-auto">
-            from <span className="font-mono text-ink-500">{me?.email ?? '(no auth email)'}</span>
+            {translate("from")}{' '}<span className="font-mono text-ink-500">{me?.email ?? translate("(no auth email)")}</span>
           </span>
           <button
             type="button"
             onClick={close}
             disabled={sending}
             className="py-2 px-3 text-[12px] font-semibold text-ink-700 hover:text-ink-900 transition disabled:opacity-50"
-          >Cancel</button>
+          >{translate("Cancel")}</button>
           <button
             type="button"
             onClick={submit}
@@ -565,7 +565,7 @@ export function EmailComposer() {
               background: 'var(--skype)',
               boxShadow: '0 4px 12px -3px rgba(0, 168, 240, 0.45)',
             }}
-          >{sending ? 'Sending…' : isReply ? 'Send reply' : 'Send'}</button>
+          >{sending ? translate("Sending…") : isReply ? translate("Send reply") : 'Send'}</button>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Suggestion popup for the document editor's @mention extension.
  *
@@ -60,8 +61,7 @@ export const MentionList = forwardRef<MentionListHandle, MentionListProps>(funct
   if (items.length === 0) {
     return (
       <div className="rounded-lg bg-white border border-stone-200 shadow-lg px-3 py-2 text-xs text-stone-400">
-        no match
-      </div>
+        {translate("no match")}{' '}</div>
     )
   }
 

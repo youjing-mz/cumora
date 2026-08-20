@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '@/stores/app'
 import { useConversations } from '@/stores/conversations'
@@ -66,11 +67,9 @@ export function ConveneView() {
         style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 100%, rgba(143, 211, 247, 0.18), transparent 60%), var(--paper)' }}>
         <div className="text-center">
           <div className="font-display font-medium text-[24px] text-ink-900 mb-2" style={{ letterSpacing: '-0.02em' }}>
-            Pick a conversation
-          </div>
+            {translate("Pick a conversation")}{' '}</div>
           <div className="font-display italic text-[14px] text-ink-500">
-            Convene runs from a chat. Select one and click Convene to bring agents into a live session.
-          </div>
+            {translate("Convene runs from a chat. Select one and click Convene to bring agents into a live session.")}{' '}</div>
         </div>
       </main>
     )
@@ -82,17 +81,15 @@ export function ConveneView() {
         style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 100%, rgba(143, 211, 247, 0.18), transparent 60%), var(--paper)' }}>
         <div className="text-center max-w-sm">
           <div className="font-display font-medium text-[24px] text-ink-900 mb-2" style={{ letterSpacing: '-0.02em' }}>
-            {state.session ? 'Last convene wrapped' : 'No live convene'}
+            {state.session ? translate("Last convene wrapped") : translate("No live convene")}
           </div>
           <div className="font-display italic text-[14px] text-ink-500 mb-5">
-            Pull every agent in <b className="text-ink-700 font-semibold">{c.title}</b> into a live work session — each takes a turn, decisions are summarized at the end.
-          </div>
+            {translate("Pull every agent in")}{' '}<b className="text-ink-700 font-semibold">{c.title}</b> {translate("into a live work session — each takes a turn, decisions are summarized at the end.")}{' '}</div>
           <button
             onClick={startConvene}
             className="py-3 px-5 rounded-full text-white text-[13.5px] font-semibold inline-flex items-center gap-2"
             style={{ background: 'linear-gradient(135deg, var(--skype), var(--skype-deep))', boxShadow: '0 6px 16px -4px rgba(0, 168, 240, 0.5)' }}>
-            ▶ Start a Convene
-          </button>
+            {translate("▶ Start a Convene")}{' '}</button>
         </div>
       </main>
     )
@@ -104,8 +101,7 @@ export function ConveneView() {
         style={{ background: 'linear-gradient(90deg, rgba(255, 122, 107, 0.08) 0%, rgba(0, 168, 240, 0.06) 100%)' }}>
         <div className="inline-flex items-center gap-2 py-1.5 px-3 bg-coral-deep text-white rounded-full text-[10.5px] font-extrabold tracking-[0.12em] uppercase">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-soft" />
-          LIVE
-        </div>
+          {translate("LIVE")}{' '}</div>
         <div className="font-display font-medium text-[17px] text-ink-900" style={{ letterSpacing: '-0.01em' }}>
           {state.session.title}
         </div>
@@ -113,7 +109,7 @@ export function ConveneView() {
           <em className="italic text-coral-deep" style={{ fontStyle: 'italic', fontWeight: 400 }}>{state.session.flair}</em>
         )}
         <div className="text-[12px] text-ink-500 ml-auto">
-          started {new Date(state.session.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {translate("started")}{' '}{new Date(state.session.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
 
@@ -152,8 +148,7 @@ export function ConveneView() {
                 <div key={t.id} className="my-4 py-3.5 px-4 rounded-[12px] relative"
                   style={{ background: 'linear-gradient(135deg, var(--whisper-50), rgba(255,255,255,0.5))', border: '1.5px solid var(--whisper)' }}>
                   <div className="absolute -top-2.5 left-4 bg-whisper text-white text-[9.5px] font-extrabold tracking-[0.15em] py-1 px-2.5 rounded">
-                    DECISION
-                  </div>
+                    {translate("DECISION")}{' '}</div>
                   <div className="font-display font-medium text-[16px] text-ink-900 mt-1.5 mb-1">
                     {t.decision.headline}
                   </div>
@@ -180,9 +175,9 @@ export function ConveneView() {
         style={{ background: 'linear-gradient(180deg, #FBFDFE, #F4F8FC)' }}>
         <div className="py-3.5 px-[18px] pb-2.5 border-b border-ink-100">
           <h4 className="font-display font-medium text-[16px] tracking-tight mb-1">
-            Live <em className="italic text-skype-deep" style={{ fontWeight: 400 }}>transcript</em>
+            {translate("Live")}{' '}<em className="italic text-skype-deep" style={{ fontWeight: 400 }}>{translate("transcript")}</em>
           </h4>
-          <div className="text-[11px] text-ink-500">{state.transcript.length} entries</div>
+          <div className="text-[11px] text-ink-500">{state.transcript.length} {translate("entries")}</div>
         </div>
         <div className="py-3 px-[18px] pb-2 space-y-2">
           {state.transcript.map((t) => {

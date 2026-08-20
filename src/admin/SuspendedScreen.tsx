@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Shown to a returning OAuth visitor whose account is currently suspended.
  * Triggered by the `#suspended=1&email=...&reason=...` fragment that
@@ -41,24 +42,19 @@ export function SuspendedScreen({ email, reason }: { email: string | null; reaso
     <div className="cumora-waitlist-screen">
       <div className="cumora-waitlist-card">
         <div className="cumora-waitlist-emoji" aria-hidden>🔒</div>
-        <div className="cumora-waitlist-title">Your account is suspended</div>
+        <div className="cumora-waitlist-title">{translate("Your account is suspended")}</div>
         <div className="cumora-waitlist-sub" style={{ marginBottom: reason ? 16 : 24 }}>
-          Access for <span className="cumora-waitlist-email">{email ?? 'your account'}</span> has been
-          temporarily disabled by a Cumora administrator.
-        </div>
+          {translate("Access for")}{' '}<span className="cumora-waitlist-email">{email ?? translate("your account")}</span> {translate("has been temporarily disabled by a Cumora administrator.")}{' '}</div>
         {reason ? (
           <div className="cumora-suspended-reason" role="note">
-            <div className="cumora-suspended-reason-label">Reason from the admin</div>
+            <div className="cumora-suspended-reason-label">{translate("Reason from the admin")}</div>
             <div className="cumora-suspended-reason-body">{reason}</div>
           </div>
         ) : null}
         <div className="cumora-waitlist-sub" style={{ marginTop: 16, marginBottom: 24 }}>
-          If you think this is a mistake, reply to your most recent message from us, or
-          reach out to your workspace owner.
-        </div>
+          {translate("If you think this is a mistake, reply to your most recent message from us, or reach out to your workspace owner.")}{' '}</div>
         <button className="btn-ghost" onClick={() => setDismissed(true)}>
-          Done
-        </button>
+          {translate("Done")}{' '}</button>
       </div>
     </div>
   )

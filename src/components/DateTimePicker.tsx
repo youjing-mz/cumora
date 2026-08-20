@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Cumora-styled date + time picker. Drop-in replacement for the native
  * `<input type="datetime-local">` and `<input type="date">`, which look
@@ -220,7 +221,7 @@ export function DateTimePicker({
                 type="button"
                 onClick={() => setCursorMonth(new Date(cursorMonth.getFullYear(), cursorMonth.getMonth() - 1, 1))}
                 className="w-7 h-7 rounded-md grid place-items-center text-ink-500 hover:bg-ink-100 transition"
-                aria-label="Previous month"
+                aria-label={translate("Previous month")}
               >‹</button>
               <span className="text-[13px] font-semibold text-ink-900 mx-1 min-w-[120px] text-center">
                 {cursorMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
@@ -229,7 +230,7 @@ export function DateTimePicker({
                 type="button"
                 onClick={() => setCursorMonth(new Date(cursorMonth.getFullYear(), cursorMonth.getMonth() + 1, 1))}
                 className="w-7 h-7 rounded-md grid place-items-center text-ink-500 hover:bg-ink-100 transition"
-                aria-label="Next month"
+                aria-label={translate("Next month")}
               >›</button>
             </div>
             <div className="flex items-center gap-2">
@@ -246,13 +247,13 @@ export function DateTimePicker({
                   }
                 }}
                 className="text-[11.5px] font-medium text-skype-deep hover:underline px-1"
-              >Today</button>
+              >{translate("Today")}</button>
               {allowClear && value && (
                 <button
                   type="button"
                   onClick={() => { onChange(''); setOpen(false) }}
                   className="text-[11.5px] font-medium text-ink-400 hover:text-coral-deep transition px-1"
-                >Clear</button>
+                >{translate("Clear")}</button>
               )}
             </div>
           </div>

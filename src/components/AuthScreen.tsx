@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Sign-in screen — OAuth (Google + GitHub) with an optional password-login
  * modal. No signup or forgot-password flow. Provider buttons trigger a
@@ -202,7 +203,7 @@ export function AuthScreen() {
       <div className="w-[320px] flex flex-col items-center gap-8">
         <CloudLogo size={64} />
         <div className="text-center">
-          <div className="font-display text-[22px] text-ink-900">Welcome to cumora</div>
+          <div className="font-display text-[22px] text-ink-900">{translate("Welcome to cumora")}</div>
           <div className="font-display italic text-[13px] text-ink-400 mt-1">
             {t('auth.signInContinue')}
           </div>
@@ -307,7 +308,7 @@ export function AuthScreen() {
                 autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
+                placeholder={translate("admin")}
                 disabled={busy !== null}
                 className="h-11 px-3 rounded-[10px] border border-ink-200 bg-white text-[14px] text-ink-900 focus:outline-none focus:border-ink-400 disabled:opacity-60"
               />
@@ -396,7 +397,7 @@ function ServerSwitch({ open, onToggle }: { open: boolean; onToggle: () => void 
           type="url"
           value={custom}
           onChange={(e) => setCustom(e.target.value)}
-          placeholder="https://your-server"
+          placeholder={translate("https://your-server")}
           className="flex-1 h-9 px-2 rounded-[6px] border border-ink-200 text-[12px] focus:outline-none focus:border-ink-400"
         />
         <button

@@ -52,12 +52,12 @@ function normalize(value) {
   return value.replace(/\s+/g, ' ').trim()
 }
 
-function looksLikeCopy(value) {
+function looksLikeCopy(value, allowBareWord = false) {
   const text = normalize(value)
   if (!text || !/[A-Za-z\u3400-\u9fff]/.test(text)) return false
   if (/^&[A-Za-z]+;$/.test(text)) return false
   if (/^(https?:\/\/|data:|var\(|rgba?\(|#[0-9a-f]{3,8}\b)/i.test(text)) return false
-  if (/^[A-Za-z0-9_.:/@-]+$/.test(text) && !text.includes(' ')) return false
+  if (!allowBareWord && /^[A-Za-z0-9_.:/@-]+$/.test(text) && !text.includes(' ')) return false
   return true
 }
 
@@ -74,7 +74,7 @@ function isInsideTranslationCall(stack) {
   return stack.some((node) => {
     if (!ts.isCallExpression(node)) return false
     const expression = node.expression.getText()
-    return expression === 't' || expression === 'text' || expression.endsWith('.t')
+    return expression === 't' || expression === 'text' || expression === 'translate' || expression.endsWith('.t')
   })
 }
 
@@ -93,9 +93,9 @@ function literalValue(node) {
   return null
 }
 
-function addFinding(findings, sourceFile, node, kind, raw) {
+function addFinding(findings, sourceFile, node, kind, raw, allowBareWord = false) {
   const text = normalize(raw)
-  if (!looksLikeCopy(text)) return
+  if (!looksLikeCopy(text, allowBareWord)) return
   findings.push({
     file: path.relative(root, sourceFile.fileName),
     kind,
@@ -112,14 +112,14 @@ function scanFile(file) {
 
   function visit(node, stack = []) {
     if (ts.isJsxText(node) && !isInIgnoredTag(stack)) {
-      addFinding(findings, sourceFile, node, 'jsx-text', node.getText(sourceFile))
+      addFinding(findings, sourceFile, node, 'jsx-text', node.getText(sourceFile), true)
     }
 
     if (ts.isJsxAttribute(node)) {
       const name = attributeName(node)
       const raw = literalValue(node.initializer)
       if (raw !== null && visibleAttributes.has(name) && !ignoredAttributeNames.has(name)) {
-        addFinding(findings, sourceFile, node, `attribute:${name}`, raw)
+        addFinding(findings, sourceFile, node, `attribute:${name}`, raw, true)
       }
     }
 

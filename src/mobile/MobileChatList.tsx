@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useApp } from '@/stores/app'
@@ -172,7 +173,7 @@ function MobileRow({ c, onTap, onLongPress }: {
           )}>{c.title}</span>
           {muted && <MutedGlyph />}
           {isFresh && (
-            <span className="text-[8.5px] font-bold tracking-wider uppercase py-0.5 px-1.5 rounded text-gold-deep bg-[rgba(244,183,64,0.18)] shrink-0">NEW</span>
+            <span className="text-[8.5px] font-bold tracking-wider uppercase py-0.5 px-1.5 rounded text-gold-deep bg-[rgba(244,183,64,0.18)] shrink-0">{translate("NEW")}</span>
           )}
           {c.tag === 'human' && <HumanBadge />}
         </div>
@@ -501,8 +502,7 @@ export function MobileChatList() {
         <div className="px-4 pt-2 pb-3 flex items-center gap-2.5">
           <CloudLogo size={26} />
           <h1 className="font-display font-medium text-[26px] tracking-tight text-ink-900 leading-none">
-            Cumora
-          </h1>
+            {translate("Cumora")}{' '}</h1>
           <Pressable
             onClick={() => { setSearchOpen((v) => !v); if (searchOpen) setSearchQ('') }}
             className={cn(

@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Calendar — macOS-Calendar-style scheduling surface. Three view modes
  * (Day / Week / Month) share one toolbar; each one supports:
@@ -686,7 +687,7 @@ export function CalendarView() {
       <div className="flex flex-col min-h-0">
         <div className="px-6 py-3 border-b border-ink-100 flex items-center gap-3 shrink-0">
           <ICalendar className="w-5 h-5 text-skype" />
-          <h1 className="text-lg font-semibold text-ink-900">Calendar</h1>
+          <h1 className="text-lg font-semibold text-ink-900">{translate("Calendar")}</h1>
 
           <div className="flex items-center gap-1 ml-3">
             <button onClick={goPrev}
@@ -727,8 +728,7 @@ export function CalendarView() {
             }}
           >
             <IPlus className="w-4 h-4" strokeWidth={2.5} />
-            New
-          </button>
+            {translate("New")}{' '}</button>
         </div>
 
         {mode === 'month' && <MonthGrid cursor={cursor} events={events} onEdit={openEdit} onNew={openNew} />}
@@ -742,11 +742,11 @@ export function CalendarView() {
           <IClock className="w-4 h-4 text-ink-500" />
           <h2 className="text-sm font-semibold text-ink-700">{t('calendar.upcoming')}</h2>
           <div className="flex-1" />
-          <span className="text-xs text-ink-400">{agenda.length} item{agenda.length === 1 ? '' : 's'}</span>
+          <span className="text-xs text-ink-400">{agenda.length} {translate("item")}{agenda.length === 1 ? '' : 's'}</span>
         </div>
         <div className="flex-1 min-h-0 overflow-auto px-3 py-2 space-y-2">
           {!loaded && (
-            <div className="text-sm text-ink-400 px-1 py-2">Loading…</div>
+            <div className="text-sm text-ink-400 px-1 py-2">{translate("Loading…")}</div>
           )}
           {loaded && agenda.length === 0 && (
             <div className="px-1 py-6 text-center">
@@ -785,7 +785,7 @@ export function CalendarView() {
                       {it.event.isPrivate && (
                         <>
                           <span className="opacity-50">·</span>
-                          <span title="Private event — only the creator and assignee can see this. The workspace owner can also see private events that involve an agent.">🔒</span>
+                          <span title={translate("Private event — only the creator and assignee can see this. The workspace owner can also see private events that involve an agent.")}>🔒</span>
                         </>
                       )}
                     </div>
@@ -799,7 +799,7 @@ export function CalendarView() {
                         <span className="text-xs text-ink-600">→ {assignee.name}</span>
                         {it.event.targetConversationId && convosById[it.event.targetConversationId] && (
                           <span className="text-xs text-ink-400 truncate">
-                            in #{convosById[it.event.targetConversationId]}
+                            {translate("in #")}{convosById[it.event.targetConversationId]}
                           </span>
                         )}
                       </div>
@@ -808,7 +808,7 @@ export function CalendarView() {
                   <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     {it.event.kind === 'agent_task' && (
                       <button
-                        title="Run now"
+                        title={translate("Run now")}
                         onClick={async () => {
                           try { await runNow(it.event.id) } catch (err) { console.warn('[calendar] run-now failed', err) }
                         }}
@@ -817,7 +817,7 @@ export function CalendarView() {
                     )}
                     {(it.event.createdBy === meId) && (
                       <button
-                        title="Delete event"
+                        title={translate("Delete event")}
                         onClick={async () => {
                           if (!confirm(`Delete "${it.event.title}"?`)) return
                           try { await remove(it.event.id) } catch (err) { console.warn('[calendar] delete failed', err) }

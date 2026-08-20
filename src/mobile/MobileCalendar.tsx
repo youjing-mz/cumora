@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Mobile Calendar — month grid + day detail sheet.
  *
@@ -310,7 +311,7 @@ export function MobileCalendar() {
           />
         )}
         {!selectedDay && (
-          <div className="px-2 py-6 text-center text-[12.5px] text-ink-400 italic">Pick a day to see events.</div>
+          <div className="px-2 py-6 text-center text-[12.5px] text-ink-400 italic">{translate("Pick a day to see events.")}</div>
         )}
         {!loaded && events.length === 0 && (
           <div className="px-2 py-6 text-center text-[12.5px] text-ink-300 italic">{t('common.loading')}</div>
@@ -344,7 +345,7 @@ function DayDetail({ day, items, onEdit, onNew, byId }: {
         <div className="font-display font-medium text-[15px] text-ink-900 tracking-tight" style={{ letterSpacing: '-0.01em' }}>
           {heading}
         </div>
-        <span className="text-[11px] text-ink-400">· {items.length} event{items.length === 1 ? '' : 's'}</span>
+        <span className="text-[11px] text-ink-400">· {items.length} {translate("event")}{items.length === 1 ? '' : 's'}</span>
         <button
           onClick={onNew}
           className="ml-auto py-1 px-2 text-[11px] font-semibold rounded-full text-skype-deep bg-sky2-50 border border-sky2-100 active:bg-sky2-100 transition"
@@ -385,15 +386,14 @@ function DayDetail({ day, items, onEdit, onNew, byId }: {
                 <div className="flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.12em]"
                   style={{ color: tone.fg }}
                 >
-                  {ev.kind === 'agent_task' ? 'Agent task' : 'Personal'}
+                  {ev.kind === 'agent_task' ? translate("Agent task") : 'Personal'}
                   {it.isRecurring && (
                     <span className="inline-flex items-center gap-0.5 text-ink-400 font-normal normal-case tracking-normal text-[10.5px]">
-                      <IRepeat className="w-3 h-3" /> recurring
-                    </span>
+                      <IRepeat className="w-3 h-3" /> {translate("recurring")}{' '}</span>
                   )}
                 </div>
                 <div className="mt-1 font-semibold text-[14px] text-ink-900 leading-tight truncate">
-                  {ev.title || 'Untitled event'}
+                  {ev.title || translate("Untitled event")}
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-[11.5px] text-ink-600">
                   <IClock className="w-3 h-3 shrink-0" />

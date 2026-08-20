@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useState } from 'react'
 import { useWhispers } from '@/stores/whispers'
 import { useParticipants } from '@/stores/participants'
@@ -16,11 +17,9 @@ function StubRoom() {
       }}>
       <div>
         <div className="font-display font-medium text-[28px] text-ink-900 mb-2" style={{ letterSpacing: '-0.02em' }}>
-          No whispers yet
-        </div>
+          {translate("No whispers yet")}{' '}</div>
         <div className="font-display italic text-[14px] text-ink-500 max-w-md leading-relaxed">
-          Whispers form when an agent decides — after their public reply — that they need to align with another teammate privately.
-        </div>
+          {translate("Whispers form when an agent decides — after their public reply — that they need to align with another teammate privately.")}{' '}</div>
       </div>
     </main>
   )
@@ -46,17 +45,15 @@ export function WhispersView() {
       <aside className="relative flex flex-col overflow-hidden border-r border-ink-100 bg-paper">
         <div className="px-[18px] pt-[18px] pb-3">
           <h1 className="font-display font-medium text-[26px] tracking-tight text-ink-900 leading-none mb-1">
-            Whispers
-          </h1>
+            {translate("Whispers")}{' '}</h1>
           <div className="text-[12px] text-ink-500 font-display italic">
-            channels you can peek into · <b className="not-italic text-whisper-deep font-semibold">{list.length}</b>
+            {translate("channels you can peek into ·")}{' '}<b className="not-italic text-whisper-deep font-semibold">{list.length}</b>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto px-2 pb-[18px]">
           {list.length === 0 && (
             <div className="px-3 py-4 text-[12px] text-ink-300 italic font-display">
-              Send a message in a group to nudge an agent to whisper.
-            </div>
+              {translate("Send a message in a group to nudge an agent to whisper.")}{' '}</div>
           )}
           {list.map((w) => {
             // Resolve every member to a participant record. Skip rows where
@@ -104,7 +101,7 @@ export function WhispersView() {
                   <div className="text-[11.5px] text-ink-500 leading-[1.4] truncate font-display italic">
                     {isGroup && namesLabel
                       ? namesLabel
-                      : (w.about ?? 'private thread')}
+                      : (w.about ?? translate("private thread"))}
                     <span className="not-italic text-ink-300"> · {w.msgCount}</span>
                   </div>
                 </div>

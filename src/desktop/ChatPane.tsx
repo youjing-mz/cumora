@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso'
 import { useApp } from '@/stores/app'
@@ -238,7 +239,7 @@ function ChatHeader({
                 onClick={startEditTopic}
                 className="text-ink-300 italic font-display hover:text-skype-deep transition shrink-0"
                 title={t('chat.setTopic')}
-              >+ topic</button>
+              >{translate("+ topic")}</button>
             </>
           )}
         </div>
@@ -268,7 +269,7 @@ function ChatHeader({
             // final character. pr-1 + max-w-full keeps the layout
             // honest while leaving room for the slant.
             className="mt-0.5 text-[12px] text-ink-500 italic hover:text-skype-deep transition truncate text-left max-w-full font-display pr-1 block leading-[1.5]"
-            title="Click to edit topic"
+            title={translate("Click to edit topic")}
           >
             {c.topic}
           </button>
@@ -286,7 +287,7 @@ function ChatHeader({
           'rounded-full transition hover:opacity-80 active:scale-95 shrink-0 hidden lg:block focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky2-300',
           membersAnchor && 'opacity-100',
         )}
-        title="Show conversation members"
+        title={translate("Show conversation members")}
       >
         <AvatarStack ps={agentMembers} size={28} max={4} />
       </button>
@@ -1039,12 +1040,12 @@ export function Composer({
             <button
               onClick={() => setAttachment(null)}
               className="ml-1 w-6 h-6 rounded-md grid place-items-center text-ink-500 hover:bg-cloud hover:text-ink-900 transition shrink-0"
-              aria-label="Remove attachment"
+              aria-label={translate("Remove attachment")}
             >×</button>
           </div>
         )}
         {uploading && (
-          <div className="mb-2 text-[11.5px] text-ink-500 italic">uploading…</div>
+          <div className="mb-2 text-[11.5px] text-ink-500 italic">{translate("uploading…")}</div>
         )}
         {uploadError && (
           <div className="mb-2 text-[11.5px] py-1 px-2 rounded-md text-coral-deep bg-coral-soft inline-block max-w-full truncate">
@@ -1056,7 +1057,7 @@ export function Composer({
             <div className="w-[3px] rounded bg-skype shrink-0" />
             <div className="min-w-0 flex-1 flex flex-col gap-0.5">
               <div className="text-[10.5px] font-bold uppercase tracking-wider text-skype-deep">
-                Replying to {byId[replyingToMsg?.authorId ?? '']?.name ?? replyingToMsg?.authorId ?? '…'}
+                {translate("Replying to")}{' '}{byId[replyingToMsg?.authorId ?? '']?.name ?? replyingToMsg?.authorId ?? '…'}
               </div>
               {/* CJK text has no whitespace, so `truncate` (white-space: nowrap)
                   blocks any soft break and the flex item's min-content equals
@@ -1070,7 +1071,7 @@ export function Composer({
               >
                 {replyingToMsg
                   ? <PreviewText body={replyingToMsg.body.slice(0, 140).replace(/\n/g, ' ')} />
-                  : '(loading…)'}
+                  : translate("(loading…)")}
               </div>
             </div>
             <button
@@ -1119,7 +1120,7 @@ export function Composer({
               onMouseDown={(e) => e.preventDefault()}
             >
               <div className="px-3 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-300">
-                Slash command {slashQuery ? `· "/${slashQuery}"` : ''}
+                {translate("Slash command")}{' '}{slashQuery ? `· "/${slashQuery}"` : ''}
               </div>
               {filteredSlashCommands.map((cmd, i) => {
                 const active = i === slashIndex
@@ -1177,7 +1178,7 @@ export function Composer({
                     >
                       <img
                         src="/everyone.png"
-                        alt=""
+                        alt={translate("")}
                         className="w-[26px] h-[26px] rounded-full object-cover"
                       />
                       <div className="flex-1 min-w-0">
@@ -1297,8 +1298,7 @@ function ThreadLoader() {
           </div>
         </div>
         <div className="font-display italic text-[13px] text-ink-500 tracking-tight">
-          Gathering messages…
-        </div>
+          {translate("Gathering messages…")}{' '}</div>
       </div>
     </div>
   )
@@ -1341,8 +1341,7 @@ function ThreadError({ message, onRetry }: { message: string; onRetry: () => voi
           </svg>
         </div>
         <div className="font-display font-medium text-[15px] tracking-tight text-ink-700">
-          Couldn't load messages
-        </div>
+          {translate("Couldn't load messages")}{' '}</div>
         <div className="text-[12.5px] text-ink-500 leading-relaxed break-words">
           {message}
         </div>
@@ -1358,8 +1357,7 @@ function ThreadError({ message, onRetry }: { message: string; onRetry: () => voi
           {retrying ? (
             <>
               <span className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-              Retrying…
-            </>
+              {translate("Retrying…")}{' '}</>
           ) : (
             <>
               <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5" aria-hidden>
@@ -1368,8 +1366,7 @@ function ThreadError({ message, onRetry }: { message: string; onRetry: () => voi
                   stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
                 />
               </svg>
-              Try again
-            </>
+              {translate("Try again")}{' '}</>
           )}
         </button>
       </div>
@@ -1510,7 +1507,7 @@ function EmptyConversationState() {
                 <button
                   type="button"
                   onClick={onCloudPoke}
-                  aria-label="Hello cloud"
+                  aria-label={translate("Hello cloud")}
                   className="cumora-cloud-poke group block w-full h-full cursor-pointer p-0 border-0 bg-transparent focus:outline-none"
                   style={{
                     // Silky-spring transition. The hover-state CSS rule
@@ -1548,7 +1545,7 @@ function EmptyConversationState() {
                   <div className="relative w-full h-full">
                     <img
                       src="/cloud.png"
-                      alt=""
+                      alt={translate("")}
                       width={240}
                       height={176}
                       draggable={false}
@@ -1565,7 +1562,7 @@ function EmptyConversationState() {
                     />
                     <img
                       src="/cloud-blink.png"
-                      alt=""
+                      alt={translate("")}
                       width={240}
                       height={176}
                       draggable={false}
@@ -1647,22 +1644,20 @@ function EmptyConversationState() {
               className="font-display font-medium text-[28px] text-ink-900 leading-[1.12]"
               style={{ letterSpacing: '-0.025em' }}
             >
-              Pick up where you left off
-            </h2>
+              {translate("Pick up where you left off")}{' '}</h2>
             <p className="mt-2.5 font-display italic text-[14px] text-ink-500 leading-relaxed max-w-[360px]">
-              Choose a thread on the left to slip back in.
-            </p>
+              {translate("Choose a thread on the left to slip back in.")}{' '}</p>
 
             {total > 0 && (
               <div className="mt-6 text-[12px] text-ink-400 font-display italic flex items-center gap-1.5">
                 <span className="text-gold leading-none not-italic" style={{ fontSize: 10 }}>★</span>
                 <b className="not-italic text-ink-700 font-semibold tabular-nums">{total}</b>
-                <span>{total === 1 ? 'thread waiting' : 'threads waiting'}</span>
+                <span>{total === 1 ? translate("thread waiting") : translate("threads waiting")}</span>
                 {unread > 0 && (
                   <>
                     <span className="text-ink-200" aria-hidden>·</span>
                     <b className="not-italic text-coral-deep font-semibold tabular-nums">{unread}</b>
-                    <span>unread</span>
+                    <span>{translate("unread")}</span>
                   </>
                 )}
               </div>
@@ -2041,8 +2036,7 @@ export function ChatPane() {
                   ) : (
                     <div className="flex items-center gap-3 text-ink-300 text-[11px] font-bold tracking-[0.08em] uppercase">
                       <span className="flex-1 h-px bg-gradient-to-r from-transparent via-ink-100 to-transparent" />
-                      Beginning
-                      <span className="flex-1 h-px bg-gradient-to-r from-transparent via-ink-100 to-transparent" />
+                      {translate("Beginning")}{' '}<span className="flex-1 h-px bg-gradient-to-r from-transparent via-ink-100 to-transparent" />
                     </div>
                   )}
                 </div>

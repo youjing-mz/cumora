@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Shown to a brand-new OAuth visitor whose sign-in attempt landed
  * them on the waitlist instead of creating an account. Triggered by
@@ -43,17 +44,13 @@ export function WaitlistConfirmedScreen({ email }: { email: string | null }) {
     <div className="cumora-waitlist-screen">
       <div className="cumora-waitlist-card">
         <div className="cumora-waitlist-emoji">⏳</div>
-        <div className="cumora-waitlist-title">You're on the waitlist</div>
+        <div className="cumora-waitlist-title">{translate("You're on the waitlist")}</div>
         <div className="cumora-waitlist-sub" style={{ marginBottom: 18 }}>
-          We saved <span className="cumora-waitlist-email">{email ?? 'your email'}</span> and will let you know
-          the moment your account is ready. No further action needed.
-        </div>
+          {translate("We saved")}{' '}<span className="cumora-waitlist-email">{email ?? translate("your email")}</span> {translate("and will let you know the moment your account is ready. No further action needed.")}{' '}</div>
         <div style={{ marginBottom: 24, fontSize: 12.5, color: 'var(--ink-400)', fontStyle: 'italic' }}>
-          Want to get a head start? <GetDesktopAppLink variant="text" /> — you'll be one click from your workspace the second you're approved.
-        </div>
+          {translate("Want to get a head start?")}{' '}<GetDesktopAppLink variant="text" /> {translate("— you'll be one click from your workspace the second you're approved.")}{' '}</div>
         <button className="btn-ghost" onClick={() => setDismissed(true)}>
-          Done
-        </button>
+          {translate("Done")}{' '}</button>
       </div>
     </div>
   )

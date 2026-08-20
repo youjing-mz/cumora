@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 /**
  * Tiny "HUMAN" label tag rendered next to a human author's name. Same
  * treatment in message rows and the members popover so the two surfaces
@@ -16,7 +17,6 @@ export function HumanBadge() {
         boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.7)',
       }}
     >
-      human
-    </span>
+      {translate("human")}{' '}</span>
   )
 }

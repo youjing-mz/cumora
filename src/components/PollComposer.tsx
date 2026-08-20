@@ -1,3 +1,4 @@
+import { text as translate } from '@/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '@/api/client'
 import { cn } from '@/lib/utils'
@@ -147,12 +148,12 @@ export function PollComposer({ onSubmitted, onCancel, conversationId }: Props) {
             <rect x="17" y="14" width="4" height="6" rx="1" />
           </svg>
         </span>
-        <span className="font-semibold text-ink-700">New poll</span>
+        <span className="font-semibold text-ink-700">{translate("New poll")}</span>
         <button
           type="button"
           onClick={onCancel}
           className="ml-auto px-2 py-0.5 text-ink-500 rounded-full hover:bg-ink-50 transition"
-          aria-label="Cancel poll"
+          aria-label={translate("Cancel poll")}
         >×</button>
       </div>
 
@@ -160,7 +161,7 @@ export function PollComposer({ onSubmitted, onCancel, conversationId }: Props) {
         ref={questionRef}
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
-        placeholder="Ask the room a question…"
+        placeholder={translate("Ask the room a question…")}
         maxLength={280}
         className="w-full px-2 py-2 text-[14px] font-semibold text-ink-900 placeholder-ink-300 bg-transparent border-b border-ink-50 focus:border-sky2-200 outline-none transition"
         onKeyDown={(e) => {
@@ -195,7 +196,7 @@ export function PollComposer({ onSubmitted, onCancel, conversationId }: Props) {
                 type="button"
                 onClick={() => removeOption(i)}
                 className="opacity-0 group-hover:opacity-100 transition w-5 h-5 rounded-full text-ink-400 hover:bg-ink-50 hover:text-coral-deep grid place-items-center"
-                aria-label="Remove option"
+                aria-label={translate("Remove option")}
               >×</button>
             )}
           </div>
@@ -206,8 +207,7 @@ export function PollComposer({ onSubmitted, onCancel, conversationId }: Props) {
             onClick={addOption}
             className="self-start ml-2 mt-0.5 text-[12px] text-skype-deep hover:underline tabular-nums"
           >
-            + 添加选项
-          </button>
+            {translate("+ 添加选项")}{' '}</button>
         )}
       </div>
 
@@ -223,7 +223,7 @@ export function PollComposer({ onSubmitted, onCancel, conversationId }: Props) {
                 ? 'bg-cloud text-ink-900 shadow-[0_1px_3px_rgba(15,23,42,0.10),0_0_0_1px_rgba(15,23,42,0.05)]'
                 : 'text-ink-400 hover:text-ink-700',
             )}
-          >单选</button>
+          >{translate("单选")}</button>
           <button
             type="button"
             onClick={() => setMode('multi')}
@@ -233,11 +233,11 @@ export function PollComposer({ onSubmitted, onCancel, conversationId }: Props) {
                 ? 'bg-cloud text-ink-900 shadow-[0_1px_3px_rgba(15,23,42,0.10),0_0_0_1px_rgba(15,23,42,0.05)]'
                 : 'text-ink-400 hover:text-ink-700',
             )}
-          >多选</button>
+          >{translate("多选")}</button>
         </div>
 
         <span className="text-ink-300">·</span>
-        <span>过期</span>
+        <span>{translate("过期")}</span>
         <div className="inline-flex flex-wrap gap-1">
           {(['none', '1h', '6h', '1d', '3d'] as ExpireChoice[]).map((c) => (
             <button
@@ -260,7 +260,7 @@ export function PollComposer({ onSubmitted, onCancel, conversationId }: Props) {
             type="button"
             onClick={onCancel}
             className="px-2.5 py-1 rounded-full text-ink-500 hover:bg-ink-50 transition"
-          >取消</button>
+          >{translate("取消")}</button>
           <button
             type="button"
             onClick={submit}
@@ -270,7 +270,7 @@ export function PollComposer({ onSubmitted, onCancel, conversationId }: Props) {
               canSubmit ? 'bg-skype-deep hover:brightness-105' : 'bg-ink-200 cursor-not-allowed',
             )}
           >
-            {submitting ? '发布中…' : '发起投票'}
+            {submitting ? translate("发布中…") : translate("发起投票")}
           </button>
         </div>
       </div>
