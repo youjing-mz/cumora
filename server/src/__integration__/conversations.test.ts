@@ -87,3 +87,83 @@ test('[integration] GET /search uses the same perspective-specific direct title'
 
   assert.equal(direct?.title, 'Ada')
 })
+
+test('[integration] admin-created users get pair DMs without joining existing private chats', async () => {
+  const companyId = 'personal'
+  const agentId = 'agent-atlas'
+  const existingDirectId = 'direct-owner-atlas'
+  const allHandsId = 'all-hands-personal'
+  await pool.query(
+    `INSERT INTO companies (id, name, slug, owner_user_id)
+     VALUES ($1, 'Personal', 'personal', $2)`,
+    [companyId, ME_USER_ID],
+  )
+  await seedUserMembership(ME_USER_ID, companyId, {
+    email: 'owner@test.local',
+    displayName: 'Owner',
+  })
+  await pool.query(`UPDATE users SET is_admin = TRUE WHERE id = $1`, [ME_USER_ID])
+  await pool.query(
+    `INSERT INTO participants
+       (id, company_id, kind, name, role, initial, avatar_bg, status)
+     VALUES ($1, $2, 'agent', 'Atlas', 'Researcher', 'A', '#abcdef', 'avail')`,
+    [agentId, companyId],
+  )
+  await pool.query(
+    `INSERT INTO conversations (id, kind, title, members, company_id)
+     VALUES ($1, 'direct', 'Atlas', $2::jsonb, $3),
+            ($4, 'group', 'Everyone', $5::jsonb, $3)`,
+    [
+      existingDirectId,
+      JSON.stringify([ME_USER_ID, agentId]),
+      companyId,
+      allHandsId,
+      JSON.stringify([ME_USER_ID, agentId]),
+    ],
+  )
+  await pool.query(
+    `UPDATE companies
+        SET all_hands_conversation_id = $2, all_hands_seeded_at = NOW()
+      WHERE id = $1`,
+    [companyId, allHandsId],
+  )
+
+  const res = await fetch(`${baseUrl}/api/admin/users`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-company-id': companyId },
+    body: JSON.stringify({
+      username: 'new.local.user',
+      displayName: 'New Local User',
+      password: 'long-enough-password',
+    }),
+  })
+  const created = await res.json() as { id?: string; error?: string }
+  assert.equal(res.status, 201, created.error)
+  assert.ok(created.id)
+
+  const { rows: existingDirect } = await pool.query<{ members: string[] }>(
+    `SELECT members FROM conversations WHERE id = $1`,
+    [existingDirectId],
+  )
+  assert.deepEqual(existingDirect[0]?.members, [ME_USER_ID, agentId])
+
+  const { rows: allHands } = await pool.query<{ members: string[] }>(
+    `SELECT members FROM conversations WHERE id = $1`,
+    [allHandsId],
+  )
+  assert.equal(allHands[0]?.members.includes(created.id), true)
+
+  const { rows: newUserDirects } = await pool.query<{ members: string[] }>(
+    `SELECT members FROM conversations
+      WHERE company_id = $1 AND kind = 'direct'
+        AND members @> to_jsonb(ARRAY[$2::text])
+      ORDER BY id`,
+    [companyId, created.id],
+  )
+  assert.equal(newUserDirects.length, 2)
+  assert.equal(newUserDirects.every((row) => row.members.length === 2), true)
+  assert.deepEqual(
+    new Set(newUserDirects.flatMap((row) => row.members).filter((id) => id !== created.id)),
+    new Set([ME_USER_ID, agentId]),
+  )
+})

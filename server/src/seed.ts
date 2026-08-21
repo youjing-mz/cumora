@@ -1,6 +1,7 @@
 import { pool } from './db/pool.js'
 import { env } from './env.js'
 import { gravatarUrlForEmail, hashPassword } from './auth.js'
+import { joinAllHands, seedMemberDms } from './onboardCompany.js'
 
 /** Create the env-backed local super admin once, then keep its password
  * stable across restarts. This is intentionally separate from the OAuth
@@ -52,11 +53,15 @@ async function ensurePasswordAdmin(): Promise<void> {
      ON CONFLICT (id, company_id) DO UPDATE SET name = EXCLUDED.name, avatar_url = EXCLUDED.avatar_url`,
     [userId, username, username.charAt(0).toUpperCase(), avatar],
   )
-  await pool.query(
-    `UPDATE conversations
-        SET members = members || jsonb_build_array($1::text)
-      WHERE company_id = 'personal' AND NOT (members ? $1)`, [userId],
-  )
+  // A workspace member belongs in the shared all-hands room and gets one
+  // proper 1:1 per teammate. Never append them to every conversation: doing
+  // that turns existing two-person DMs into malformed three-person `direct`
+  // rows. The later DM backfill then creates a valid 1:1 as well, so both rows
+  // render with the same counterpart name in the sidebar.
+  try { await joinAllHands({ companyId: 'personal', participantId: userId }) }
+  catch (e) { console.warn('[seed] password admin join all-hands failed', e) }
+  try { await seedMemberDms({ companyId: 'personal', memberId: userId }) }
+  catch (e) { console.warn('[seed] password admin DM seed failed', e) }
 }
 
 /**

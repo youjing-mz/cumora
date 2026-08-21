@@ -30,6 +30,7 @@ import {
   loadLlmRuntimeConfig, updateLlmRuntimeConfig, toPublicLlmRuntimeConfig,
   type LlmRuntimeConfig,
 } from '../llm-config.js'
+import { joinAllHands, seedMemberDms } from '../onboardCompany.js'
 
 export const adminRouter = Router()
 
@@ -244,12 +245,6 @@ adminRouter.post('/users', safe(async (req, res) => {
        VALUES ($1, 'human', $2, NULL, $3, '#6B7BE6', $4, 'avail', 'personal')`,
       [userId, displayName, displayName.charAt(0).toUpperCase(), gravatarUrlForEmail(email)],
     )
-    await client.query(
-      `UPDATE conversations
-          SET members = COALESCE(members, '[]'::jsonb) || jsonb_build_array($1::text)
-        WHERE company_id = 'personal' AND NOT (COALESCE(members, '[]'::jsonb) ? $1)`,
-      [userId],
-    )
     await client.query('COMMIT')
   } catch (e) {
     await client.query('ROLLBACK').catch(() => {})
@@ -258,6 +253,14 @@ adminRouter.post('/users', safe(async (req, res) => {
   } finally {
     client.release()
   }
+
+  // Mirror the normal invitation onboarding path. A new member joins the
+  // single shared all-hands group and receives real two-person DMs; they must
+  // not be injected into pre-existing private chats or arbitrary groups.
+  try { await joinAllHands({ companyId: 'personal', participantId: userId }) }
+  catch (e) { console.warn('[admin] local user join all-hands failed', e) }
+  try { await seedMemberDms({ companyId: 'personal', memberId: userId }) }
+  catch (e) { console.warn('[admin] local user DM seed failed', e) }
 
   const { rows } = await pool.query<UserRowDb>(
     `SELECT u.id, u.email, u.username, u.display_name, u.avatar_url, u.tier, u.is_admin, u.sub2api_user_id,

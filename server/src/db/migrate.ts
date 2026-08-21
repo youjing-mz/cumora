@@ -555,6 +555,35 @@ UPDATE agent_tasks         SET company_id = 'personal' WHERE company_id IS NULL;
 UPDATE agent_runs          SET company_id = 'personal' WHERE company_id IS NULL;
 UPDATE agent_events        SET company_id = 'personal' WHERE company_id IS NULL;
 
+-- Repair direct chats polluted by the short-lived local-user onboarding bug.
+-- That path appended each new Personal-workspace user to EVERY conversation,
+-- including two-person DMs. Appends preserve JSON array order, so the first
+-- two entries are the original pair and every later entry is contamination.
+-- Keeping the original pair makes the repair non-destructive: messages and
+-- every conversation-linked artifact stay on the same conversation id.
+UPDATE conversations c
+   SET members = (
+    SELECT jsonb_agg(member.value ORDER BY member.ord) AS members
+      FROM jsonb_array_elements(c.members) WITH ORDINALITY AS member(value, ord)
+     WHERE member.ord <= 2
+  )
+ WHERE c.kind = 'direct'
+   AND jsonb_typeof(c.members) = 'array'
+   AND jsonb_array_length(c.members) > 2;
+
+-- Encode the core model invariant at the database boundary. A direct chat is
+-- exactly one pair; membership changes belong in a group conversation. The
+-- repair above makes legacy rows valid before the constraint is installed.
+DO $$ BEGIN
+  ALTER TABLE conversations
+    ADD CONSTRAINT conversations_direct_has_two_members
+    CHECK (kind <> 'direct' OR (
+      jsonb_typeof(members) = 'array' AND jsonb_array_length(members) = 2
+    ));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
 -- Backfill per-agent data with the agent's REAL company instead of the
 -- 'personal' placeholder above. The original null-backfill predates the
 -- multi-tenant migration and set every agent-scoped row to 'personal',
