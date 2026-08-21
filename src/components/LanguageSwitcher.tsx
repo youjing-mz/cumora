@@ -1,11 +1,11 @@
 import { useI18n, useLocale, type Locale } from '@/i18n'
 
-export function LanguageSwitcher({ className = '' }: { className?: string }) {
+export function LanguageSwitcher({ className = '', compact = false }: { className?: string; compact?: boolean }) {
   const { locale, t } = useI18n()
   const setLocale = useLocale((state) => state.setLocale)
   return (
     <label className={`inline-flex items-center gap-2 text-[11px] text-ink-400 ${className}`}>
-      <span>{t('language')}</span>
+      <span className={compact ? 'sr-only' : undefined}>{t('language')}</span>
       <select
         aria-label={t('language')}
         value={locale}

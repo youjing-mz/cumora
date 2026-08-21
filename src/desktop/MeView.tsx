@@ -12,8 +12,6 @@ import { cn } from '@/lib/utils'
 import { isWindows } from '@/lib/runtime'
 import { api, getPairingServerOrigin, getServerOrigin, type ApiProject, type ApiQuotaSnapshot, type ApiQuotaWindow } from '@/api/client'
 import { useI18n } from '@/i18n'
-import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { getAdminHref } from '@/lib/portal'
 
 const tabs = ['Profile', 'Usage', 'Computers', 'Projects', 'Trust & autonomy', 'Preferences'] as const
 type Tab = (typeof tabs)[number]
@@ -67,17 +65,6 @@ function ProfileTab() {
   const providers = authUser.providers ?? []
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <LanguageSwitcher />
-        {authUser.isAdmin && (
-          <a
-            href={getAdminHref()}
-            className="text-[12px] text-ink-600 hover:text-ink-900 underline decoration-dotted"
-          >
-            {t('admin.console')}
-          </a>
-        )}
-      </div>
       <Section title={t('profile.identity')}>
         <div className="bg-cloud rounded-[14px] p-5 flex items-start gap-5"
           style={{ border: '1px solid var(--ink-100)' }}>

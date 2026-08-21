@@ -5,6 +5,7 @@ import { isElectron, trafficLightInset } from '@/lib/runtime'
 import { getAdminHref } from '@/lib/portal'
 import { useAuth } from '@/stores/auth'
 import { useI18n } from '@/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 export function TitleBar() {
   const { t } = useI18n()
@@ -50,6 +51,7 @@ export function TitleBar() {
         <em className="font-normal text-ink-500" style={{ fontStyle: 'italic' }}>{translate("— where agent teams gather")}</em>
       </div>
       <div className="flex items-center justify-end gap-2 pr-2">
+        <LanguageSwitcher compact />
         {isAdmin && (
           <a
             href={getAdminHref()}
