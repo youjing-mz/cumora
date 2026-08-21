@@ -34,7 +34,10 @@ import '@/admin/admin.css'
  *  http://localhost:5180/admin/ without DNS work. */
 function isAdminContext(): boolean {
   if (typeof location === 'undefined') return false
-  if (location.hostname.startsWith('admin.')) return true
+  // The admin host defaults to the admin shell, but its top-right
+  // "Workspace" link uses this query marker to stay same-origin and keep
+  // the bearer token stored in localStorage.
+  if (location.hostname.startsWith('admin.') && !new URLSearchParams(location.search).has('workspace')) return true
   if (location.pathname.startsWith('/admin')) return true
   return false
 }

@@ -87,7 +87,7 @@ export function DesktopApp() {
         boxShadow: 'none',
       }
     : {
-        width: 'min(1480px, calc(100vw - 48px))',
+        width: 'min(1920px, calc(100vw - 48px))',
         height: 'calc(100vh - 48px)',
         boxShadow: '0 50px 100px -20px rgba(10, 30, 60, 0.25), 0 30px 60px -30px rgba(10, 30, 60, 0.3), 0 0 0 1px rgba(0, 80, 140, 0.06)',
       }

@@ -14,6 +14,7 @@ import { useI18n } from '@/i18n'
 import { getPushStatus, initPushNotifications, teardownPushNotifications, type PushStatus } from '@/lib/push'
 import { api } from '@/api/client'
 import type { Participant } from '@/types'
+import { getAdminHref } from '@/lib/portal'
 
 interface ToggleablePref { key: string; lbl: string; sub: string; default?: boolean }
 
@@ -105,7 +106,7 @@ export function MobileMe() {
         <div className="mt-3 flex items-center justify-center gap-3">
           <LanguageSwitcher />
           {authUser?.isAdmin && (
-            <a href="/admin/" className="text-[11px] text-ink-600 underline decoration-dotted">{t('admin.console')}</a>
+            <a href={getAdminHref()} className="text-[11px] text-ink-600 underline decoration-dotted">{t('admin.console')}</a>
           )}
         </div>
       </div>

@@ -13,6 +13,7 @@ import { isWindows } from '@/lib/runtime'
 import { api, getPairingServerOrigin, getServerOrigin, type ApiProject, type ApiQuotaSnapshot, type ApiQuotaWindow } from '@/api/client'
 import { useI18n } from '@/i18n'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { getAdminHref } from '@/lib/portal'
 
 const tabs = ['Profile', 'Usage', 'Computers', 'Projects', 'Trust & autonomy', 'Preferences'] as const
 type Tab = (typeof tabs)[number]
@@ -70,7 +71,7 @@ function ProfileTab() {
         <LanguageSwitcher />
         {authUser.isAdmin && (
           <a
-            href="/admin/"
+            href={getAdminHref()}
             className="text-[12px] text-ink-600 hover:text-ink-900 underline decoration-dotted"
           >
             {t('admin.console')}
@@ -1093,7 +1094,7 @@ export function MeView() {
   return (
     <main className="overflow-y-auto p-8 pt-6"
       style={{ background: 'linear-gradient(180deg, transparent, var(--paper))' }}>
-      <div className="max-w-[1100px] mx-auto">
+      <div className="max-w-[1440px] mx-auto">
         <div className="mb-6">
           <h1 className="font-display font-medium text-[36px] tracking-tight text-ink-900 mb-1" style={{ letterSpacing: '-0.025em' }}>
             {t('me.title')} <em className="italic text-coral-deep" style={{ fontStyle: 'italic', fontWeight: 400 }}>{t('me.titleAccent')}</em>

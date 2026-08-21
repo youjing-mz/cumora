@@ -2,8 +2,13 @@ import { text as translate } from '@/i18n'
 import { CloudLogo } from '@/components/Avatar'
 import { CompanySwitcher } from '@/components/CompanySwitcher'
 import { isElectron, trafficLightInset } from '@/lib/runtime'
+import { getAdminHref } from '@/lib/portal'
+import { useAuth } from '@/stores/auth'
+import { useI18n } from '@/i18n'
 
 export function TitleBar() {
+  const { t } = useI18n()
+  const isAdmin = useAuth((s) => s.user?.isAdmin === true)
   // In Electron with hidden titleBarStyle on mac, native traffic lights land in this strip.
   // Reserve space on the left for them, and make the bar a draggable region.
   const dragStyle = isElectron
@@ -44,7 +49,15 @@ export function TitleBar() {
         <span>{translate("Cumora")}</span>
         <em className="font-normal text-ink-500" style={{ fontStyle: 'italic' }}>{translate("— where agent teams gather")}</em>
       </div>
-      <div className="flex items-center justify-end pr-2">
+      <div className="flex items-center justify-end gap-2 pr-2">
+        {isAdmin && (
+          <a
+            href={getAdminHref()}
+            className="rounded-md px-2 py-1 text-[12px] font-medium text-ink-600 hover:bg-cloud hover:text-ink-900 transition"
+          >
+            {t('admin.console')}
+          </a>
+        )}
         <CompanySwitcher />
       </div>
     </header>

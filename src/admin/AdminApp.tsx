@@ -25,6 +25,7 @@ import { UsersPage } from './UsersPage'
 import { WaitlistPage } from './WaitlistPage'
 import { SettingsPage } from './SettingsPage'
 import { ObservabilityPage } from './ObservabilityPage'
+import { getWorkspaceHref } from '@/lib/portal'
 
 type Route = 'users' | 'waitlist' | 'settings' | 'observability'
 
@@ -117,6 +118,7 @@ export function AdminApp() {
           <span>{t('admin.title')}</span>
         </div>
         <div className="admin-topbar-spacer" />
+        <a className="admin-context-link" href={getWorkspaceHref()}>{t('admin.workspace')}</a>
         <LanguageSwitcher className="admin-language-switcher" />
       </header>
       {navOpen && <div className="admin-nav-scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
@@ -139,6 +141,10 @@ export function AdminApp() {
         </div>
       </aside>
       <main className="admin-main">
+        <div className="admin-main-toolbar">
+          <a className="admin-context-link" href={getWorkspaceHref()}>{t('admin.workspace')}</a>
+          <LanguageSwitcher className="admin-language-switcher" />
+        </div>
         {route === 'users'         && <UsersPage stats={stats} />}
         {route === 'waitlist'      && <WaitlistPage onChanged={() => {
           // Refresh stats so the sidebar badge clears immediately.
