@@ -17,14 +17,19 @@
 import { Router, type Request, type Response, type NextFunction } from 'express'
 import { randomUUID } from 'node:crypto'
 import { pool } from '../db/pool.js'
-import { gravatarUrlForEmail, hashPassword, type AuthedRequest } from '../auth.js'
+import { audit, gravatarUrlForEmail, hashPassword, type AuthedRequest } from '../auth.js'
 import {
   requireAdmin, HttpError,
   getSettings, setSetting, type AppSettings,
   listWaitlist, approveWaitlist, rejectWaitlist,
   changeUserTier,
   suspendUser, unsuspendUser,
+  deleteUserAccount,
 } from '../admin.js'
+import {
+  loadLlmRuntimeConfig, updateLlmRuntimeConfig, toPublicLlmRuntimeConfig,
+  type LlmRuntimeConfig,
+} from '../llm-config.js'
 
 export const adminRouter = Router()
 
@@ -93,6 +98,46 @@ adminRouter.put('/settings', safe(async (req, res) => {
   if (updates.length === 0) throw new HttpError(400, 'no settings to update')
   for (const [k, v] of updates) await setSetting(k, v, uid)
   res.json(await getSettings())
+}))
+
+/* Runtime LLM settings. The API key is write-only: GET returns only whether
+ * one exists, never the secret itself. Empty values remove a DB override and
+ * restore the corresponding environment default. */
+adminRouter.get('/settings/llm', safe(async (req, res) => {
+  await requireAdmin(req)
+  res.json(toPublicLlmRuntimeConfig(await loadLlmRuntimeConfig()))
+}))
+
+adminRouter.put('/settings/llm', safe(async (req, res) => {
+  const adminId = await requireAdmin(req)
+  const body = (req.body ?? {}) as Record<string, unknown>
+  const updates: Partial<{ [K in keyof LlmRuntimeConfig]: string | null }> = {}
+  const fields: Array<keyof LlmRuntimeConfig> = [
+    'apiKey', 'apiUrl', 'model', 'supportModel', 'compactionModel', 'imageModel',
+  ]
+  for (const field of fields) {
+    if (body[field] !== undefined && body[field] !== null && typeof body[field] !== 'string') {
+      throw new HttpError(400, field + ' must be a string or null')
+    }
+    if (body[field] !== undefined) updates[field] = body[field] as string | null
+  }
+  if (typeof updates.apiUrl === 'string' && updates.apiUrl.trim()) {
+    try {
+      const parsed = new URL(updates.apiUrl.trim())
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('scheme')
+    } catch {
+      throw new HttpError(400, 'apiUrl must be an http(s) URL')
+    }
+  }
+  for (const [key, value] of Object.entries(updates)) {
+    if (typeof value === 'string' && value.length > 4096) {
+      throw new HttpError(400, key + ' is too long')
+    }
+  }
+  const next = await updateLlmRuntimeConfig(updates)
+  await audit({ kind: 'admin_llm_settings_updated', userId: adminId, detail: { fields: Object.keys(updates) } })
+  console.log('[admin] ' + adminId + ' updated runtime LLM settings: ' + Object.keys(updates).join(', '))
+  res.json(toPublicLlmRuntimeConfig(next))
 }))
 
 /* ============== Users ============== */
@@ -219,7 +264,7 @@ adminRouter.post('/users', safe(async (req, res) => {
             u.created_at, u.last_login_at,
             u.suspended_at, u.suspension_reason, u.suspended_by,
             (SELECT COUNT(*)::int FROM company_members cm WHERE cm.user_id = u.id) AS company_count
-       FROM users u WHERE u.id = $1`,
+       FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL`,
     [userId],
   )
   res.status(201).json(rowToUser(rows[0]))
@@ -233,7 +278,7 @@ adminRouter.get('/users', safe(async (req, res) => {
   const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50))
   const offset = Math.max(0, Number(req.query.offset) || 0)
 
-  const where: string[] = []
+  const where: string[] = ['u.deleted_at IS NULL']
   const params: unknown[] = []
   if (q) {
     params.push(`%${q.toLowerCase()}%`)
@@ -279,7 +324,7 @@ adminRouter.get('/users/:id', safe(async (req, res) => {
             u.created_at, u.last_login_at,
             u.suspended_at, u.suspension_reason, u.suspended_by,
             (SELECT COUNT(*)::int FROM company_members cm WHERE cm.user_id = u.id) AS company_count
-       FROM users u WHERE u.id = $1`,
+       FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL`,
     [id],
   )
   if (!rows[0]) throw new HttpError(404, 'user not found')
@@ -303,6 +348,12 @@ adminRouter.get('/users/:id', safe(async (req, res) => {
       createdAt: c.created_at, agentCount: Number(c.agent_count),
     })),
   })
+}))
+
+adminRouter.delete('/users/:id', safe(async (req, res) => {
+  const adminId = await requireAdmin(req)
+  await deleteUserAccount(String(req.params.id), adminId)
+  res.json({ ok: true })
 }))
 
 /** Patch tier, admin bit, and/or suspension state. Returns the refreshed
@@ -331,7 +382,7 @@ adminRouter.patch('/users/:id', safe(async (req, res) => {
       throw new HttpError(409, 'cannot demote yourself')
     }
     const r = await pool.query(
-      `UPDATE users SET is_admin = $2 WHERE id = $1`,
+      `UPDATE users SET is_admin = $2 WHERE id = $1 AND deleted_at IS NULL`,
       [id, body.isAdmin],
     )
     if ((r.rowCount ?? 0) === 0) throw new HttpError(404, 'user not found')
@@ -355,7 +406,7 @@ adminRouter.patch('/users/:id', safe(async (req, res) => {
             u.created_at, u.last_login_at,
             u.suspended_at, u.suspension_reason, u.suspended_by,
             (SELECT COUNT(*)::int FROM company_members cm WHERE cm.user_id = u.id) AS company_count
-       FROM users u WHERE u.id = $1`,
+       FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL`,
     [id],
   )
   if (!rows[0]) throw new HttpError(404, 'user not found')
@@ -408,7 +459,8 @@ adminRouter.get('/stats', safe(async (req, res) => {
               COUNT(*) FILTER (WHERE tier = 'free')::text AS free,
               COUNT(*) FILTER (WHERE tier = 'pro')::text AS pro,
               COUNT(*) FILTER (WHERE tier = 'max')::text AS max
-         FROM users`,
+         FROM users
+        WHERE deleted_at IS NULL`,
     ),
     pool.query<{ pending: string; approved: string; rejected: string }>(
       `SELECT COUNT(*) FILTER (WHERE status = 'pending')::text  AS pending,

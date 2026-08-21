@@ -34,7 +34,11 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV ?? 'development',
   DATABASE_URL: required('DATABASE_URL', `postgres://${process.env.USER ?? 'postgres'}@localhost:5432/cumora`),
   REDIS_URL: required('REDIS_URL', 'redis://localhost:6379'),
-  OPENAI_API_KEY: required('OPENAI_API_KEY'),
+  /** Optional bootstrap key. Operators can also set/rotate it at runtime
+   *  from the admin console; the effective value is loaded after migrations. */
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? '',
+  /** Optional OpenAI-compatible API base URL. Empty means the SDK default. */
+  OPENAI_API_URL: (process.env.OPENAI_API_URL ?? '').replace(/\/+$/, ''),
   /**
    * "Brain" model — the agent's main reasoning loop and convene speech.
    * Default model used when an agent's `participants.model` is NULL.

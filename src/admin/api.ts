@@ -104,6 +104,15 @@ export interface AdminSettings {
   signups_paused: boolean
 }
 
+export interface AdminLlmSettings {
+  apiKeySet: boolean
+  apiUrl: string
+  model: string
+  supportModel: string
+  compactionModel: string
+  imageModel: string
+}
+
 export interface AdminStats {
   users: { total: number; admins: number; tiers: { free: number; pro: number; max: number } }
   waitlist: { pending: number; approved: number; rejected: number }
@@ -296,6 +305,9 @@ export const adminApi = {
   settings: () => http<AdminSettings>('/settings'),
   setSettings: (patch: Partial<AdminSettings>) =>
     http<AdminSettings>('/settings', { method: 'PUT', body: JSON.stringify(patch) }),
+  llmSettings: () => http<AdminLlmSettings>('/settings/llm'),
+  setLlmSettings: (patch: Partial<AdminLlmSettings> & { apiKey?: string | null }) =>
+    http<AdminLlmSettings>('/settings/llm', { method: 'PUT', body: JSON.stringify(patch) }),
 
   listUsers: (params: { q?: string; tier?: Tier | ''; limit?: number; offset?: number } = {}) => {
     const qs = new URLSearchParams()
@@ -320,6 +332,8 @@ export const adminApi = {
     body: JSON.stringify(input),
   }),
   getUser: (id: string) => http<AdminUserDetail>(`/users/${id}`),
+  deleteUser: (id: string) =>
+    http<{ ok: true }>(`/users/${id}`, { method: 'DELETE' }),
   patchUser: (
     id: string,
     patch: { tier?: Tier; isAdmin?: boolean; suspended?: boolean; suspensionReason?: string | null },

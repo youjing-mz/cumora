@@ -34,9 +34,13 @@ import { startTrialSweepWorker } from './trial-sweep.js'
 import { seedAdmins } from './admin.js'
 import { notifyAlert } from './alerting.js'
 import { startShippingMaintenance } from './shipping-maintenance.js'
+import { loadLlmRuntimeConfig } from './llm-config.js'
 
 async function main() {
   await ensureSchemaWithBootRetry()
+  // Apply persisted admin LLM overrides before any background worker can
+  // issue a model call. Missing rows fall back to process environment values.
+  await loadLlmRuntimeConfig()
   await seedIfEmpty()
   // Promote CUMORA_ADMIN_EMAILS members to is_admin on every boot —
   // idempotent, only flips FALSE→TRUE. Demotion goes through the panel.

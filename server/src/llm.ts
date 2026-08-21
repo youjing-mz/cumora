@@ -27,6 +27,7 @@ import OpenAI from 'openai'
 import { pool } from './db/pool.js'
 import { env } from './env.js'
 import { sub2apiConfigured, sub2apiOpenAIBaseURL } from './sub2api.js'
+import { loadLlmRuntimeConfig } from './llm-config.js'
 
 interface CachedClient {
   client: OpenAI
@@ -90,7 +91,7 @@ export async function getLlmClient(tenant: string | null): Promise<OpenAI> {
       // Tenant exists but owner hasn't been provisioned in sub2api yet.
       // Cache the legacy fallback briefly so we don't re-query on every
       // hop, but with a short TTL so the next backfill picks up quickly.
-      const c = legacyClient()
+      const c = await legacyClient()
       cache.set(tenant, { client: c, key: 'legacy', mintedAt: Date.now() })
       return c
     }
@@ -114,12 +115,21 @@ export function invalidateLlmClient(tenant: string): void {
   cache.delete(tenant)
 }
 
-let _legacy: OpenAI | null = null
-function legacyClient(): OpenAI {
-  if (!_legacy) _legacy = new OpenAI({
-    apiKey: env.OPENAI_API_KEY,
-    maxRetries: SDK_MAX_RETRIES,
-    timeout: SDK_TIMEOUT_MS,
-  })
-  return _legacy
+let _legacy: { client: OpenAI; fingerprint: string } | null = null
+async function legacyClient(): Promise<OpenAI> {
+  await loadLlmRuntimeConfig()
+  const fingerprint = env.OPENAI_API_KEY + '\u0000' + env.OPENAI_API_URL
+  if (!_legacy || _legacy.fingerprint !== fingerprint) {
+    if (!env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured; set it in .env or the admin console')
+    _legacy = {
+      client: new OpenAI({
+        apiKey: env.OPENAI_API_KEY,
+        ...(env.OPENAI_API_URL ? { baseURL: env.OPENAI_API_URL } : {}),
+        maxRetries: SDK_MAX_RETRIES,
+        timeout: SDK_TIMEOUT_MS,
+      }),
+      fingerprint,
+    }
+  }
+  return _legacy.client
 }

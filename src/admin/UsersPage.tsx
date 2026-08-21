@@ -92,6 +92,22 @@ export function UsersPage({ stats }: { stats: AdminStats | null }) {
     }
   }
 
+  const onDelete = async (u: AdminUser): Promise<void> => {
+    if (u.id === meId) {
+      alert("You can't delete yourself.")
+      return
+    }
+    if (!window.confirm('Delete ' + u.name + ' (' + u.email + ')? This revokes sessions and permanently scrubs account PII.')) return
+    try {
+      await adminApi.deleteUser(u.id)
+      setItems((rows) => rows.filter((r) => r.id !== u.id))
+      setTotal((n) => Math.max(0, n - 1))
+      setExpandedId(null)
+    } catch (e) {
+      alert('delete failed: ' + (e instanceof Error ? e.message : e))
+    }
+  }
+
   return (
     <div className="admin-page">
       <header className="admin-page-head">
@@ -138,6 +154,8 @@ export function UsersPage({ stats }: { stats: AdminStats | null }) {
             onTierChange={(t) => onTierChange(u, t)}
             onAdminToggle={() => onAdminToggle(u)}
             onSuspendToggle={() => onSuspendToggle(u)}
+            onDelete={() => void onDelete(u)}
+            deleteLabel={t('admin.deleteAccount')}
             isMe={u.id === meId}
           />
         ))}
@@ -220,13 +238,15 @@ function CreateUserModal({ onClose, onCreated }: {
   )
 }
 
-function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onSuspendToggle, isMe }: {
+function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onSuspendToggle, onDelete, deleteLabel, isMe }: {
   u: AdminUser
   expanded: boolean
   onToggleExpand: () => void
   onTierChange: (t: Tier) => void
   onAdminToggle: () => void
   onSuspendToggle: () => Promise<AdminUser | null>
+  onDelete: () => void
+  deleteLabel: string
   isMe: boolean
 }) {
   const [detail, setDetail] = useState<AdminUserDetail | null>(null)
@@ -319,6 +339,14 @@ function UserRow({ u, expanded, onToggleExpand, onTierChange, onAdminToggle, onS
                   title={isMe && !detail.suspended ? "You can't suspend yourself" : ''}
                 >
                   {detail.suspended ? 'Unsuspend' : translate("Suspend account")}
+                </button>
+                <button
+                  className="btn-ghost admin-btn-danger"
+                  onClick={onDelete}
+                  disabled={isMe}
+                  title={isMe ? "You can't delete yourself" : ''}
+                >
+                  {deleteLabel}
                 </button>
               </div>
               <div className="admin-detail-companies">

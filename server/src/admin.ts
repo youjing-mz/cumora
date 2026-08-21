@@ -77,6 +77,48 @@ export async function requireAdmin(req: AuthedRequest): Promise<string> {
   return uid
 }
 
+/** Soft-delete another account from the admin console. The operator cannot
+ *  delete themselves or the last remaining admin, which would otherwise make
+ *  the instance impossible to administer. */
+export async function deleteUserAccount(userId: string, adminId: string): Promise<void> {
+  if (userId === adminId) throw new HttpError(409, 'cannot delete yourself')
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { rows: pre } = await client.query<{ email: string; is_admin: boolean }>(
+      'SELECT email, is_admin FROM users WHERE id = $1 AND deleted_at IS NULL FOR UPDATE',
+      [userId],
+    )
+    if (!pre[0]) throw new HttpError(404, 'user not found')
+    if (pre[0].is_admin) {
+      const { rows: admins } = await client.query<{ n: string }>(
+        'SELECT COUNT(*)::text AS n FROM users WHERE is_admin = TRUE AND deleted_at IS NULL',
+      )
+      if (Number(admins[0]?.n ?? 0) <= 1) throw new HttpError(409, 'cannot delete the last admin')
+    }
+    const email = pre[0].email
+    await client.query(
+      'UPDATE users SET deleted_at = NOW(), email = $2, display_name = $3, ' +
+      'password_hash = NULL, avatar_url = NULL, email_verified_at = NULL WHERE id = $1',
+      [userId, 'deleted+' + userId + '@cumora.invalid', 'Deleted user'],
+    )
+    await client.query('DELETE FROM sessions WHERE user_id = $1', [userId])
+    await client.query('DELETE FROM ws_tickets WHERE user_id = $1', [userId])
+    await client.query('DELETE FROM user_identities WHERE user_id = $1', [userId])
+    await client.query(
+      'UPDATE participants SET departed_at = NOW() WHERE id = $1 AND kind = $2 AND departed_at IS NULL',
+      [userId, 'human'],
+    )
+    await client.query('COMMIT')
+    await audit({ kind: 'account_deleted', userId, detail: { email, deletedByAdmin: adminId } })
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {})
+    throw e
+  } finally {
+    client.release()
+  }
+}
+
 /* ============== Settings k/v ============== */
 
 export interface AppSettings {
