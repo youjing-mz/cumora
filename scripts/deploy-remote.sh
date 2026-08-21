@@ -5,10 +5,16 @@ set -euo pipefail
 # that exact branch on the prepared Ubuntu host. The remote working tree is
 # deliberately kept clean so a deploy can never overwrite uncommitted work.
 
-REMOTE_HOST="${REMOTE_HOST:?Set REMOTE_HOST to the deployment host before running this script}"
+ADMIN_ENV_FILE="${ADMIN_ENV_FILE:-.env.local}"
+
+# Prefer an explicitly exported value, but allow the operator-only env file
+# to carry the host so deployments can be run without extra shell setup.
+if [[ -z "${REMOTE_HOST:-}" && -f "$ADMIN_ENV_FILE" ]]; then
+  REMOTE_HOST="$(sed -n 's/^REMOTE_HOST=//p' "$ADMIN_ENV_FILE" | head -n 1)"
+fi
+REMOTE_HOST="${REMOTE_HOST:?Set REMOTE_HOST or add it to $ADMIN_ENV_FILE before running this script}"
 REMOTE_DIR="${REMOTE_DIR:-/home/ubuntu/cumora}"
 BRANCH="${1:-$(git branch --show-current)}"
-ADMIN_ENV_FILE="${ADMIN_ENV_FILE:-.env.local}"
 
 if [[ -z "$BRANCH" || "$BRANCH" == "HEAD" || ! "$BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]]; then
   echo "Invalid branch: $BRANCH" >&2
