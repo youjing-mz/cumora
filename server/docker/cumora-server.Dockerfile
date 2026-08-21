@@ -54,6 +54,9 @@ ENV VITE_CUMORA_API_BASE=${VITE_CUMORA_API_BASE}
 ENV VITE_PUBLIC_POSTHOG_KEY=${VITE_PUBLIC_POSTHOG_KEY}
 ENV VITE_PUBLIC_POSTHOG_HOST=${VITE_PUBLIC_POSTHOG_HOST}
 COPY package.json package-lock.json ./
+COPY .cumora ./.cumora
+COPY scripts/compile-project-contract.ts ./scripts/compile-project-contract.ts
+COPY server/src/autonomy/contract.ts ./server/src/autonomy/contract.ts
 # --ignore-scripts: electron-icon-builder transitively pulls
 # phantomjs-prebuilt, whose postinstall extracts a bz2 tarball — but
 # the slim base image has no `bzip2` binary, so the install dies with
@@ -98,6 +101,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json ./
 COPY server ./server
+# Git-managed Cumora Vision / Operating Contract. The API only snapshots an
+# activated version; these files remain the canonical source in every image.
+COPY .cumora ./.cumora
 # Keep `bin/cumora` available for any in-process CLI calls the server
 # itself might make (e.g. from the test endpoints).
 COPY bin ./bin

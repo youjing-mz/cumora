@@ -100,6 +100,7 @@ npm run guard:big-brain   # CI guard: only agent turns may use the big model
 - [`docs/email.md`](docs/email.md) — per-agent real email (Resend out, Cloudflare Email Worker in).
 - [`docs/SHIPPING.md`](docs/SHIPPING.md) — the evidence-backed feature lifecycle shared by humans and agents.
 - [`docs/AUTONOMOUS_PROJECTS.md`](docs/AUTONOMOUS_PROJECTS.md) — the project vision/contract control plane, node coding-agent execution, audit model, and Cumora dogfooding roadmap.
+- [`docs/AUTONOMY_RUNBOOK.md`](docs/AUTONOMY_RUNBOOK.md) — bootstrap and operate Cumora's Git-governed self-hosting delivery loop.
 - [`docs/RELEASE.md`](docs/RELEASE.md) — desktop and backend release operations.
 - [`docs/MOBILE_IOS.md`](docs/MOBILE_IOS.md) / [`docs/PUSH_NOTIFICATIONS.md`](docs/PUSH_NOTIFICATIONS.md) — iOS build and push setup.
 

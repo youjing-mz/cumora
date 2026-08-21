@@ -35,6 +35,7 @@ import { seedAdmins } from './admin.js'
 import { notifyAlert } from './alerting.js'
 import { startShippingMaintenance } from './shipping-maintenance.js'
 import { loadLlmRuntimeConfig } from './llm-config.js'
+import { autonomyGithubWebhook } from './api/autonomy-github-webhook.js'
 
 async function main() {
   await ensureSchemaWithBootRetry()
@@ -112,6 +113,10 @@ async function main() {
   // parses, body-parser flips req._body=true so the generic parser below
   // becomes a no-op for these requests.
   app.use('/webhooks/email', inboundEmailRouter)
+  // Signed GitHub merge events continue an approved autonomous Work Item into
+  // production deployment. Mount before the generic JSON parser so HMAC sees
+  // the exact bytes GitHub signed.
+  app.use('/webhooks/github/autonomy', autonomyGithubWebhook)
 
   // Bumped from 256kb to 32mb because the upload endpoint takes base64-encoded
   // file bodies up to MAX_UPLOAD_BYTES (25MB raw → ~34MB base64). R2-mode

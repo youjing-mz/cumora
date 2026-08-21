@@ -1,0 +1,23 @@
+apiVersion: cumora.ai/v1alpha1
+kind: ProjectContractTests
+
+tests:
+  - name: implementation may modify ordinary source files
+    action: code.modify
+    expect: allow
+
+  - name: an Agent cannot merge master
+    action: git.merge_master
+    expect: require_approval
+
+  - name: production follows an approved protected-branch merge
+    action: deploy.production
+    expect: allow
+
+  - name: destructive migrations are denied
+    action: database.destructive_migration
+    expect: deny
+
+  - name: unknown actions stop for a decision
+    action: secret.export
+    expect: stop_and_request_decision

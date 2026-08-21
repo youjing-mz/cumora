@@ -31,6 +31,8 @@ import {
 } from '../agents/computer/registry.js'
 import { companyTier } from '../tier.js'
 import { createShippingRouter } from './shipping-router.js'
+import { createAutonomyRouter } from './autonomy-router.js'
+import { intakeProjectMessage } from '../autonomy/coordinator.js'
 
 /** Re-export so older imports (server/index.ts, agents/cli.ts) keep working
  *  after the storage abstraction moved this constant. */
@@ -3668,6 +3670,31 @@ api.post('/conversations/:id/messages', async (req, res) => {
   })
   logDelivery('ws.published')
 
+  // A bound project conversation is the human intake edge for the autonomous
+  // project loop. The message remains the durable user-visible source; this
+  // creates an idempotent Work Item keyed by message id and pins the currently
+  // active Git governance snapshot. Intake failure must not roll back a message
+  // people have already seen, but it is returned to the sender and logged so it
+  // cannot masquerade as accepted autonomous work.
+  let autonomyIntake: { workItemId: string; runId: string; created: boolean } | null = null
+  let autonomyError: string | null = null
+  try {
+    autonomyIntake = await intakeProjectMessage({
+      companyId: tenant,
+      conversationId: id,
+      messageId,
+      authorId: me,
+      body,
+    })
+  } catch (error) {
+    autonomyError = error instanceof Error ? error.message : String(error)
+    console.error('[autonomy] project-message intake failed', {
+      conversationId: id,
+      messageId,
+      error: error instanceof Error ? error.message : String(error),
+    })
+  }
+
   // Fan out APNs to recipients who aren't currently looking at the app
   // (NotificationToasts handles those). Fire-and-forget — push delivery
   // must never block the HTTP response. The push module soft-disables
@@ -3707,6 +3734,8 @@ api.post('/conversations/:id/messages', async (req, res) => {
     sequence: persistedSequence,
     quotedMessageId: resolvedQuotedId ?? undefined,
     quoted: quotedSummary ?? undefined,
+    autonomy: autonomyIntake ?? undefined,
+    autonomyError: autonomyError ?? undefined,
   })
 })
 
@@ -6315,6 +6344,7 @@ api.post('/push/unregister', async (req, res) => {
 // tenant/role gates as the rest of this file; it never trusts company ids from
 // request bodies or URLs.
 api.use('/shipping', createShippingRouter({ pool, requireCompany, requireCompanyRole }))
+api.use('/autonomy', createAutonomyRouter({ requireCompany, requireCompanyRole }))
 
 // Global error handler — must come after all routes. HttpError → status code.
 api.use(errorHandler)

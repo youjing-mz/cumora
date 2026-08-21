@@ -9,6 +9,8 @@
 !package-lock.json
 !server/**
 !bin/**
+!.cumora/**
+!scripts/compile-project-contract.ts
 # Frontend sources needed to build the SPA bundle inside the image.
 !src/**
 !public/**

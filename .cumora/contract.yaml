@@ -1,0 +1,127 @@
+apiVersion: cumora.ai/v1alpha1
+kind: ProjectOperatingContract
+
+metadata:
+  project: cumora
+  version: 1
+  owners:
+    - project_owner
+
+repository:
+  url: git@github.com:youjing-mz/cumora.git
+  defaultBranch: master
+  branchPrefix: codex/
+  writablePaths:
+    - src/**
+    - server/**
+    - agent-cli/**
+    - workers/**
+    - scripts/**
+    - docs/**
+    - .cumora/**
+    - package.json
+    - package-lock.json
+    - README.md
+  protectedPaths:
+    - .env*
+    - server/k8s/**
+    - migrations/destructive/**
+
+intake:
+  conversationMode: bound_conversation
+  deduplicationWindowHours: 168
+
+actions:
+  code.modify:
+    effect: allow
+    reason: Implementation requires changes inside the declared writable paths.
+  git.push_feature_branch:
+    effect: allow
+    reason: Reviewable feature branches are required for human merge approval.
+  git.merge_master:
+    effect: require_approval
+    approvalRole: project_owner
+    requiresEvidence:
+      - root_cause
+      - diff_summary
+      - required_checks
+      - independent_verification
+      - staging_smoke
+      - pull_request
+    reason: Humans retain the final protected-branch decision.
+  deploy.staging:
+    effect: allow
+    requiresEvidence:
+      - required_checks
+    reason: Staging is the autonomous acceptance environment.
+  deploy.production:
+    effect: allow
+    requiresEvidence:
+      - merge_commit
+      - staging_smoke
+      - rollback_plan
+    reason: The protected-branch merge approval authorizes the contracted production release; deployment still requires evidence and readback.
+  project.vision.activate:
+    effect: require_approval
+    approvalRole: project_owner
+    reason: An Agent may propose vision changes but cannot activate them.
+  project.contract.activate:
+    effect: require_approval
+    approvalRole: project_owner
+    reason: A run cannot grant itself new authority.
+  database.destructive_migration:
+    effect: deny
+    reason: Autonomous destructive migrations are outside the first-phase scope.
+    remediation: Propose a contract change and a human-operated migration plan.
+
+checks:
+  root_typecheck:
+    command: npm run typecheck
+    timeoutMinutes: 15
+  server_typecheck:
+    command: npm run server:typecheck
+    timeoutMinutes: 15
+  unit_tests:
+    command: npm test
+    timeoutMinutes: 30
+  production_build:
+    command: npm run build
+    timeoutMinutes: 30
+
+verification:
+  independent: true
+  requiredBeforeMerge:
+    - root_typecheck
+    - server_typecheck
+    - unit_tests
+    - production_build
+  requiredEvidence:
+    - root_cause
+    - diff_summary
+    - required_checks
+    - independent_verification
+    - staging_smoke
+    - rollback_plan
+    - merge_commit
+    - pull_request
+    - production_deployment
+    - production_readback
+
+budgets:
+  maxChangedFiles: 30
+  maxAttempts: 3
+  maxRuntimeMinutes: 120
+  maxModelCostUsd: 20
+
+runtime:
+  runner: codex
+  leaseMinutes: 10
+  unknownAction: stop_and_request_decision
+
+discovery:
+  enabled: true
+  sources:
+    - ci_failure
+    - shipping_readback
+    - friction
+  wipLimit: 1

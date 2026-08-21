@@ -33,7 +33,9 @@ const SKIP = /(__tests__|\.test\.ts$|\.d\.ts$)/
 // lists is the explicit, reviewed gate for adding/moving a big-brain site.
 const ALLOW = {
   // realTaskModel() + the OPENAI_MODEL (big) env live in the policy module.
-  policy: ['server/src/agents/model-policy.ts'],
+  // llm-config persists the same value but never invokes a model; call sites
+  // remain subject to the rules below.
+  policy: ['server/src/agents/model-policy.ts', 'server/src/llm-config.ts'],
   // The BYOA big-brain engine spawn (adapter.run) lives ONLY in the daemon,
   // where it is gated by the local triage (handler='big').
   adapterRun: ['server/src/agents/computer/daemon.ts'],

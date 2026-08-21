@@ -1743,6 +1743,152 @@ CREATE TABLE IF NOT EXISTS shipping_events (
 CREATE INDEX IF NOT EXISTS idx_shipping_events_feature
   ON shipping_events(feature_id, created_at ASC);
 
+-- ============== Autonomous project control plane ======================
+-- Git owns the editable Vision / Operating Contract. These rows are
+-- immutable activation snapshots so every run can prove exactly which Git
+-- policy it used even after the repository moves on.
+CREATE TABLE IF NOT EXISTS project_governance_versions (
+  id                TEXT PRIMARY KEY,
+  company_id        TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  project_id        TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  kind              TEXT NOT NULL,
+  version           INTEGER NOT NULL,
+  content           JSONB NOT NULL,
+  content_hash      TEXT NOT NULL,
+  effective_hash    TEXT NOT NULL,
+  source_path       TEXT NOT NULL,
+  source_revision   TEXT,
+  status            TEXT NOT NULL DEFAULT 'active',
+  proposed_by       TEXT,
+  approved_by       TEXT,
+  activated_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  CONSTRAINT project_governance_kind_check CHECK (kind IN ('vision','contract')),
+  CONSTRAINT project_governance_status_check CHECK (status IN ('proposed','active','superseded','rejected')),
+  UNIQUE(project_id, kind, content_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_project_governance_active
+  ON project_governance_versions(project_id, kind, status, version DESC);
+
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS autonomy_mode TEXT NOT NULL DEFAULT 'observe';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS autonomy_conversation_id TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS autonomy_computer_id TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS active_vision_version_id TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS active_contract_version_id TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS autonomy_paused_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS autonomy_pause_reason TEXT;
+
+CREATE TABLE IF NOT EXISTS autonomy_work_items (
+  id                TEXT PRIMARY KEY,
+  company_id        TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  project_id        TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  source_type       TEXT NOT NULL,
+  source_key        TEXT,
+  source_message_id TEXT REFERENCES messages(id) ON DELETE SET NULL,
+  goal              TEXT NOT NULL,
+  status            TEXT NOT NULL DEFAULT 'queued',
+  priority          TEXT NOT NULL DEFAULT 'medium',
+  risk_level        TEXT NOT NULL DEFAULT 'medium',
+  shipping_feature_id TEXT REFERENCES shipping_features(id) ON DELETE SET NULL,
+  created_by        TEXT NOT NULL,
+  assigned_computer_id TEXT,
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  completed_at      TIMESTAMP WITH TIME ZONE,
+  CONSTRAINT autonomy_work_item_source_check CHECK (source_type IN ('message','manual','sensor','readback')),
+  CONSTRAINT autonomy_work_item_status_check CHECK
+    (status IN ('queued','running','verifying','awaiting_merge','approved_for_merge','merged','releasing','watching','completed','blocked','failed','cancelled')),
+  CONSTRAINT autonomy_work_item_priority_check CHECK (priority IN ('critical','high','medium','low')),
+  CONSTRAINT autonomy_work_item_risk_check CHECK (risk_level IN ('critical','high','medium','low'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_autonomy_work_items_source
+  ON autonomy_work_items(company_id, project_id, source_key) WHERE source_key IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_autonomy_work_items_queue
+  ON autonomy_work_items(company_id, status, priority, created_at ASC);
+
+CREATE TABLE IF NOT EXISTS autonomy_runs (
+  id                TEXT PRIMARY KEY,
+  company_id        TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  project_id        TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  work_item_id      TEXT NOT NULL REFERENCES autonomy_work_items(id) ON DELETE CASCADE,
+  job_type          TEXT NOT NULL DEFAULT 'implementation',
+  status            TEXT NOT NULL DEFAULT 'queued',
+  attempt           INTEGER NOT NULL DEFAULT 1,
+  vision_version_id TEXT NOT NULL REFERENCES project_governance_versions(id),
+  contract_version_id TEXT NOT NULL REFERENCES project_governance_versions(id),
+  contract_hash     TEXT NOT NULL,
+  job_envelope      JSONB NOT NULL,
+  assigned_computer_id TEXT,
+  lease_token       TEXT,
+  lease_expires_at  TIMESTAMP WITH TIME ZONE,
+  result            JSONB,
+  error             TEXT,
+  started_at        TIMESTAMP WITH TIME ZONE,
+  completed_at      TIMESTAMP WITH TIME ZONE,
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  CONSTRAINT autonomy_run_job_type_check CHECK (job_type IN ('implementation','deployment','readback','verification')),
+  CONSTRAINT autonomy_run_status_check CHECK
+    (status IN ('queued','leased','running','awaiting_evidence','blocked','completed','failed','cancelled')),
+  UNIQUE(work_item_id, job_type, attempt)
+);
+CREATE INDEX IF NOT EXISTS idx_autonomy_runs_claim
+  ON autonomy_runs(company_id, status, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_autonomy_runs_lease
+  ON autonomy_runs(status, lease_expires_at) WHERE status IN ('leased','running');
+
+CREATE TABLE IF NOT EXISTS autonomy_evidence (
+  id                TEXT PRIMARY KEY,
+  company_id        TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  work_item_id      TEXT NOT NULL REFERENCES autonomy_work_items(id) ON DELETE CASCADE,
+  run_id            TEXT NOT NULL REFERENCES autonomy_runs(id) ON DELETE CASCADE,
+  kind              TEXT NOT NULL,
+  status            TEXT NOT NULL DEFAULT 'passed',
+  producer_id       TEXT,
+  payload           JSONB NOT NULL DEFAULT '{}'::jsonb,
+  content_hash      TEXT NOT NULL,
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  CONSTRAINT autonomy_evidence_status_check CHECK (status IN ('passed','failed','informational'))
+);
+CREATE INDEX IF NOT EXISTS idx_autonomy_evidence_run ON autonomy_evidence(run_id, created_at ASC);
+
+CREATE TABLE IF NOT EXISTS autonomy_approvals (
+  id                TEXT PRIMARY KEY,
+  company_id        TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  project_id        TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  work_item_id      TEXT REFERENCES autonomy_work_items(id) ON DELETE CASCADE,
+  run_id            TEXT REFERENCES autonomy_runs(id) ON DELETE CASCADE,
+  action            TEXT NOT NULL,
+  required_role     TEXT NOT NULL,
+  status            TEXT NOT NULL DEFAULT 'pending',
+  reason            TEXT NOT NULL,
+  context           JSONB NOT NULL DEFAULT '{}'::jsonb,
+  requested_by      TEXT,
+  decided_by        TEXT,
+  decision_note     TEXT,
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  decided_at        TIMESTAMP WITH TIME ZONE,
+  CONSTRAINT autonomy_approval_status_check CHECK (status IN ('pending','approved','rejected','cancelled'))
+);
+CREATE INDEX IF NOT EXISTS idx_autonomy_approvals_pending
+  ON autonomy_approvals(company_id, status, created_at ASC);
+
+-- Append-only control-plane ledger. Mutable projection rows above make queue
+-- reads cheap; this table is the replay and audit source.
+CREATE TABLE IF NOT EXISTS autonomy_events (
+  id                TEXT PRIMARY KEY,
+  company_id        TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  project_id        TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  work_item_id      TEXT REFERENCES autonomy_work_items(id) ON DELETE CASCADE,
+  run_id            TEXT REFERENCES autonomy_runs(id) ON DELETE CASCADE,
+  actor_id          TEXT,
+  kind              TEXT NOT NULL,
+  data              JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_autonomy_events_work_item
+  ON autonomy_events(work_item_id, created_at ASC);
+
 -- Back-fill: one managed Cumora Cloud computer per existing PAID company. The
 -- id is deterministic ('cloud-' || company_id) so this is idempotent and
 -- so other code can resolve it without a lookup. New companies get theirs
