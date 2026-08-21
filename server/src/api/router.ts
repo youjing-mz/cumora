@@ -1055,6 +1055,7 @@ api.get('/auth/me', safe(async (req, res) => {
     // box that will always fail. Add other capabilities here as needed.
     serverCapabilities: {
       invitationEmail: !!env.EMAIL_DOMAIN,
+      agentServerUrl: env.AGENT_SERVER_URL,
     },
   })
 }))

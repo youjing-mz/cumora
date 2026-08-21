@@ -14,6 +14,7 @@ const SERVER_URL_KEY = 'cumora.serverUrl'
 const DEV_API_TARGET = import.meta.env.DEV
   ? (import.meta.env.VITE_CUMORA_DEV_API_TARGET as string | undefined)?.replace(/\/+$/, '')
   : undefined
+const FALLBACK_PAIRING_SERVER_ORIGIN = 'https://api.cumora.ai'
 
 /** Resolve the API base. Three layers, highest priority first:
  *    1. localStorage['cumora.serverUrl'] — runtime override, settable
@@ -53,7 +54,11 @@ export function getServerOrigin(): string {
  * In Vite dev the browser uses a relative proxy, so SERVER_ORIGIN is empty;
  * the daemon still needs the API target rather than the renderer origin. */
 export function getPairingServerOrigin(): string {
-  return SERVER_ORIGIN || DEV_API_TARGET || ''
+  // The server's .env is authoritative for commands copied out of the UI.
+  // This matters when the SPA is served behind a same-origin proxy or when
+  // VITE_CUMORA_API_BASE was not baked into a packaged build.
+  const configured = useAuth.getState().serverCapabilities?.agentServerUrl
+  return configured || SERVER_ORIGIN || DEV_API_TARGET || FALLBACK_PAIRING_SERVER_ORIGIN
 }
 
 /** Persist a new server origin override and clear the existing session.
@@ -542,6 +547,8 @@ export interface ServerCapabilities {
    *  Driven by EMAIL_DOMAIN being set on the server. The invite modal
    *  hides the "Email this invite" checkbox when false. */
   invitationEmail: boolean
+  /** Explicit API origin to embed in commands run by an external BYOA daemon. */
+  agentServerUrl: string
 }
 
 export type ApiInvitationStatus = 'active' | 'revoked' | 'expired' | 'consumed'

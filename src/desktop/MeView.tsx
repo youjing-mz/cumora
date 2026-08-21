@@ -823,7 +823,7 @@ function ComputersTab() {
   }
 
   const origin = getPairingServerOrigin()
-  const serverFlag = origin ? ` --server ${origin}` : ''
+  const serverFlag = ` --server ${origin}`
   const pairCommand = code ? `npx cumora@latest agent computer --pair ${code}${serverFlag}${engine === 'codex' ? ' --engine codex' : ''}${asService ? ' --install-service' : ''}` : ''
   const list = Object.values(byId).sort((a, b) =>
     (a.kind === 'cloud' ? 0 : 1) - (b.kind === 'cloud' ? 0 : 1) || a.name.localeCompare(b.name))

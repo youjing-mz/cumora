@@ -266,6 +266,13 @@ export const env = {
    *  start. Defaults to http://localhost:5181 for local dev. In prod
    *  set CUMORA_PUBLIC_ORIGIN=https://api.cumora.ai. */
   PUBLIC_ORIGIN: (process.env.CUMORA_PUBLIC_ORIGIN ?? 'http://localhost:5181').replace(/\/+$/, ''),
+  /** Origin embedded in copied BYOA pairing commands. The command runs
+   *  outside the browser, so it must know the real central API origin even
+   *  when the SPA is served through a same-origin proxy. Defaults to the
+   *  public origin used by the rest of the server. */
+  AGENT_SERVER_URL: (process.env.CUMORA_AGENT_SERVER_URL
+    ?? process.env.CUMORA_PUBLIC_ORIGIN
+    ?? 'http://localhost:5181').replace(/\/+$/, ''),
   /** Default URL the server 302s to after a successful OAuth callback,
    *  with `#token=...&companyId=...` appended. Used when the client
    *  didn't pass `?return=` at flow start. For dev (Vite) point at

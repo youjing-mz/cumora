@@ -39,7 +39,7 @@ export function Onboarding() {
   const origin = getPairingServerOrigin()
   const engineFlag = engine === 'codex' ? ' --engine codex' : ''
   const serviceFlag = asService ? ' --install-service' : ''
-  const cmd = code ? `npx cumora@latest agent computer --pair ${code}${origin ? ` --server ${origin}` : ''}${engineFlag}${serviceFlag}` : ''
+  const cmd = code ? `npx cumora@latest agent computer --pair ${code} --server ${origin}${engineFlag}${serviceFlag}` : ''
 
   async function getCode() {
     setErr(null); setBusy(true)

@@ -61,7 +61,7 @@ export function AgentEditor({ agent, onClose }: Props) {
   const selectedComputerOffline = isByoa && selectedComputer.status !== 'online'
   const origin = getPairingServerOrigin()
   const repairCommand = repairCode
-    ? `npx cumora@latest agent computer --pair ${repairCode}${origin ? ` --server ${origin}` : ''}`
+    ? `npx cumora@latest agent computer --pair ${repairCode} --server ${origin}`
     : ''
 
   useEffect(() => { void useComputers.getState().refresh() }, [])

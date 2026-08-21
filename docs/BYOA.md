@@ -397,6 +397,13 @@ npx cumora@latest agent computer --pair <code> [--server <url>]
 
 ---
 
+The central server exposes its configured CUMORA_AGENT_SERVER_URL to the
+authenticated UI, so every copied pairing or re-pair command includes an
+explicit --server URL. It defaults to CUMORA_PUBLIC_ORIGIN. If the machine
+running the server also has Codex or Claude Code installed, pair that machine
+as a separate local/VPS Computer; it will use the local engine while the
+built-in Cumora Cloud Computer remains the managed server-side engine.
+
 ## Boundaries
 
 - **Cost / rate limits are the operator's** (their Claude Code / Codex / Grok Build
