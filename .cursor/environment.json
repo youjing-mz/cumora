@@ -1,0 +1,22 @@
+{
+  "name": "Cumora",
+  "user": "ubuntu",
+  "install": "bash .cursor/install.sh",
+  "start": "bash .cursor/start.sh",
+  "terminals": [
+    {
+      "name": "api",
+      "command": "npm run server:dev",
+      "description": "Cumora backend: Express + WebSocket API on :5181 (ensures the DB schema and seeds the starter team on first boot)."
+    },
+    {
+      "name": "web",
+      "command": "npm run dev",
+      "description": "Vite renderer (React) on :5180, proxying /api to the backend on :5181."
+    }
+  ],
+  "ports": [
+    { "name": "web", "port": 5180 },
+    { "name": "api", "port": 5181 }
+  ]
+}
