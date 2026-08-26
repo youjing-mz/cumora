@@ -275,7 +275,7 @@ Bram · Engineering owner
 - [04-personas-and-prompt-assembly.md](./04-personas-and-prompt-assembly.md)：Persona 身份与 Prompt。
 - [07-autonomy-control-plane-and-codex-loop.md](./07-autonomy-control-plane-and-codex-loop.md)：典型 Loop Task 的控制面与 Worker 时序。
 - [08-agent-architecture-iteration-plan.md](./08-agent-architecture-iteration-plan.md)：从当前实现演进到四层模型的计划。
-- [09-autonomy-view.md](./09-autonomy-view.md)：Autonomy 视图与写操作（中英双语 / bilingual）。
+- [09-autonomy-view.md](./09-autonomy-view.md)：Autonomy 视图与写操作（支持独立 [英文版](./09-autonomy-view.en.md)）。
 - [docs/BYOA.md](../BYOA.md)：Persona 的 Engine/Host 运行模型。
 - [docs/AUTONOMOUS_PROJECTS.md](../AUTONOMOUS_PROJECTS.md)：自治项目状态机、政策和证据模型。
 - [docs/AUTONOMY_RUNBOOK.md](../AUTONOMY_RUNBOOK.md)：自举 Loop 的操作手册。

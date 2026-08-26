@@ -272,8 +272,8 @@ environment
 > Computer/Host、Worker 保持在各自的界面（Autonomy 视图只做投影，不重实现 pairing）。
 > 关键实现：[src/components/AutonomyWorkspace.tsx](../../src/components/AutonomyWorkspace.tsx)、
 > [src/stores/autonomy.ts](../../src/stores/autonomy.ts)、[src/api/client.ts](../../src/api/client.ts)。
-> 所有文案经 i18n（en+zh）。视图说明见双语文档
-> [09-autonomy-view.md](./09-autonomy-view.md)。
+> 所有文案经 i18n（en+zh）。视图说明见文档
+> [09-autonomy-view.md](./09-autonomy-view.md)（及 [英文版](./09-autonomy-view.en.md)）。
 >
 > 视图已从只读投影升级为可操作：owner/admin 可在视图内**指派 Persona**、**提交评审**、
 > **批准/驳回 merge 审批**（分别对接 assignments / reviews / approval decision 端点），
