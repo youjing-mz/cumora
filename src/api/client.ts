@@ -211,6 +211,106 @@ export interface ApiProject {
   conversationCount: number
 }
 
+export interface ApiAutonomyWorkItem {
+  id: string
+  goal: string
+  status: string
+  priority: string
+  riskLevel: string
+  shippingFeatureId: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ApiAutonomyAssignment {
+  runId: string
+  workItemId: string
+  responsibility: string
+  personaAgentId: string | null
+  personaName: string | null
+  workerId: string | null
+  computerId: string | null
+  engine: string | null
+  producerId: string | null
+  visibility: string
+  assignedBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ApiAutonomyApproval {
+  id: string
+  workItemId: string | null
+  action: string
+  requiredRole: string
+  status: string
+  reason: string
+  context: unknown
+  createdAt: string
+  decidedAt: string | null
+}
+
+export interface ApiAutonomyPlan {
+  id: string
+  workItemId: string
+  revision: number
+  status: string
+  problem: string
+  desiredOutcome: string
+  acceptanceCriteria: string[]
+  risk: string
+  requiredCapabilities: string[]
+  responsibilities: Array<{ role: string; preferredPersona?: string | null; when?: string }>
+  approvalNeeds: string[]
+  contentHash: string
+  createdAt: string
+}
+
+export interface ApiAutonomyReview {
+  id: string
+  workItemId: string
+  runId: string
+  kind: string
+  status: string
+  producerId: string | null
+  producerName: string | null
+  payload: unknown
+  createdAt: string
+}
+
+export interface ApiAutonomyEvent {
+  id: string
+  workItemId: string | null
+  runId: string | null
+  actorId: string | null
+  kind: string
+  data: Record<string, unknown>
+  createdAt: string
+}
+
+export interface ApiAutonomyProjectSnapshot {
+  project: {
+    id: string
+    name: string
+    autonomyMode: string
+    conversationId: string | null
+    computerId: string | null
+    pausedAt: string | null
+    pauseReason: string | null
+    visionVersion: number | null
+    visionHash: string | null
+    contractVersion: number | null
+    contractHash: string | null
+    contractRevision: string | null
+  }
+  workItems: ApiAutonomyWorkItem[]
+  approvals: ApiAutonomyApproval[]
+  events: ApiAutonomyEvent[]
+  assignments: ApiAutonomyAssignment[]
+  plans: ApiAutonomyPlan[]
+  reviews: ApiAutonomyReview[]
+}
+
 export interface ApiParticipant {
   id: string
   kind: 'agent' | 'human'
@@ -820,6 +920,8 @@ export const api = {
   listCompanies: () =>
     http<Array<{ id: string; name: string; slug: string; createdAt: string; role: string }>>('/companies'),
   listProjects: () => http<ApiProject[]>('/projects'),
+  getAutonomyProject: (projectId: string) =>
+    http<ApiAutonomyProjectSnapshot>(`/autonomy/projects/${encodeURIComponent(projectId)}`),
   getShippingOverview: () => http<ShippingOverview>('/shipping/overview'),
   getShippingFeature: (id: string) => http<ShippingFeatureDetail>(`/shipping/features/${encodeURIComponent(id)}`),
   createShippingFeature: (input: {
