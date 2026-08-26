@@ -10,8 +10,10 @@ import {
   decideApproval,
   heartbeatRun,
   parseResponsibility,
+  preflightRun,
   projectAutonomySnapshot,
   recordMergedWorkItem,
+  setComputerCapabilities,
   syncGitGovernance,
 } from '../autonomy/coordinator.js'
 
@@ -172,6 +174,35 @@ export function createAutonomyRouter(deps: RouterDeps): Router {
       const job = await claimNextRun(resolved)
       if (!job) { res.status(204).end(); return }
       res.json(job)
+    } catch (error) { handleError(res, error) }
+  })
+
+  // Register a Computer's scheduling capabilities + concurrency cap (Phase 3).
+  router.post('/computers/:computerId/capabilities', async (req, res) => {
+    try {
+      const { companyId, userId } = await deps.requireCompanyRole(req)
+      if (!Array.isArray(req.body?.capabilities)) throw new AutonomyError(400, 'capabilities array required')
+      const result = await setComputerCapabilities({
+        companyId,
+        computerId: req.params.computerId,
+        actorId: userId,
+        capabilities: req.body.capabilities,
+        maxConcurrentJobs: typeof req.body?.maxConcurrentJobs === 'number' ? req.body.maxConcurrentJobs : null,
+      })
+      res.json(result)
+    } catch (error) { handleError(res, error) }
+  })
+
+  // Fencing preflight — the node calls this before any external side effect.
+  router.post('/jobs/:runId/preflight', async (req, res) => {
+    try {
+      const resolved = await device(req)
+      const result = await preflightRun({
+        ...resolved,
+        runId: req.params.runId,
+        leaseToken: requiredText(req.body?.leaseToken, 'leaseToken', 100),
+      })
+      res.json({ ok: true, ...result })
     } catch (error) { handleError(res, error) }
   })
 
