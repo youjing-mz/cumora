@@ -102,6 +102,27 @@ Use different Agent identities and preferably fresh isolated model sessions for
 builder and verifier. The control plane rejects
 `independent_verification` when its producer is the builder.
 
+### Declare node capabilities (Phase 3)
+
+The scheduler only hands a node Jobs whose `requiredCapabilities` it covers.
+Declare them (owner/admin) so a node without, say, `staging:deploy` never
+claims a Job that needs it:
+
+```http
+POST /api/autonomy/computers/<computer-id>/capabilities
+
+{
+  "capabilities": ["repo:read","repo:write","codex","staging:deploy","production:deploy","production:read"],
+  "maxConcurrentJobs": 1
+}
+```
+
+A node with **no** declared capabilities is treated as unconstrained (legacy
+behavior). `maxConcurrentJobs` caps how many leases it holds at once. Before any
+external side effect (push, PR, deploy, readback) the worker calls
+`POST /api/autonomy/jobs/<run-id>/preflight`; an expired or superseded attempt
+is refused there, so a stale worker can't push or deploy after losing its lease.
+
 The worker never receives merge permission. It can push the contracted feature
 branch and create a pull request; protected-branch policy remains in GitHub and
 the Cumora Approval Request.

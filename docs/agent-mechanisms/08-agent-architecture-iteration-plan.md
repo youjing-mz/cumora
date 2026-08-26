@@ -166,6 +166,18 @@ Planner 可以参考 Persona role 和项目历史，但 Policy Engine必须验�
 
 ## 6. Phase 3：Worker capability、身份与 fencing
 
+> 状态：**已实现（当前实现）**。`computers.capabilities` / `max_concurrent_jobs`、
+> Job Envelope 的 `requiredCapabilities`、能力+并发门控的 claim、attempt-scoped
+> fencing（`autonomy_runs.leased_by_computer_id` + 过期即 attempt+1）、副作用前的
+> `POST /api/autonomy/jobs/:runId/preflight`（worker 在 push/deploy 前调用）、以及
+> `POST /api/autonomy/computers/:computerId/capabilities` 均已落地并有测试。
+> 关键实现：[server/src/autonomy/capabilities.ts](../../server/src/autonomy/capabilities.ts)、
+> [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)、
+> [server/src/autonomy/worker.ts](../../server/src/autonomy/worker.ts)。
+> 测试：[server/src/__tests__/autonomy-capabilities.test.ts](../../server/src/__tests__/autonomy-capabilities.test.ts)、
+> [server/src/__integration__/autonomy-scheduler.test.ts](../../server/src/__integration__/autonomy-scheduler.test.ts)（capability mismatch、并发 claim、lease 过期、fencing、并发上限）。
+> 尚未做：把 Evidence producer 完全从 worker 凭据推导、独立 verifier 的服务端签发身份（归入 P4）。
+
 ### 目标
 
 把目前通过 `assigned_computer_id` 和环境变量隐式表达的能力，升级为服务端可验证的调度条件。
@@ -316,9 +328,9 @@ P1 Run assignments                                  ✅ 已完成
   ↓
 P2 Planner + Persona role selection                 ✅ 已完成
   ↓
-P3 Capability scheduler + authenticated worker identity + fencing   ← 下一步
+P3 Capability scheduler + authenticated worker identity + fencing   ✅ 已完成
   ↓
-P4 Persona-mediated review
+P4 Persona-mediated review                          ← 下一步
   ↓
 P5 UI projections
   ↓
