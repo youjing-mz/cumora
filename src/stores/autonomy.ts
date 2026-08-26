@@ -15,10 +15,15 @@ interface AutonomyState {
   selectedWorkItemId: string | null
   loading: boolean
   error: string | null
+  /** Set after a write action fails, so the detail panel can surface it. */
+  actionError: string | null
   loadProjects: () => Promise<void>
   selectProject: (projectId: string) => Promise<void>
   refresh: () => Promise<void>
   selectWorkItem: (workItemId: string | null) => void
+  decideApproval: (approvalId: string, decision: 'approved' | 'rejected', note?: string) => Promise<void>
+  assignResponsibility: (runId: string, responsibility: string, personaAgentId: string) => Promise<void>
+  submitReview: (runId: string, input: { personaAgentId: string; responsibility: string; verdict: 'passed' | 'failed'; summary: string }) => Promise<void>
 }
 
 async function loadSnapshot(
@@ -50,6 +55,7 @@ export const useAutonomy = create<AutonomyState>((set, get) => ({
   selectedWorkItemId: null,
   loading: false,
   error: null,
+  actionError: null,
   async loadProjects() {
     try {
       const projects = await api.listProjects()
@@ -71,6 +77,32 @@ export const useAutonomy = create<AutonomyState>((set, get) => ({
     if (projectId) await loadSnapshot(set, projectId, get().selectedWorkItemId)
   },
   selectWorkItem(workItemId) {
-    set({ selectedWorkItemId: workItemId })
+    set({ selectedWorkItemId: workItemId, actionError: null })
+  },
+  async decideApproval(approvalId, decision, note) {
+    await runAction(set, () => api.decideAutonomyApproval(approvalId, { decision, note }))
+    await get().refresh()
+  },
+  async assignResponsibility(runId, responsibility, personaAgentId) {
+    const projectId = get().selectedProjectId
+    if (!projectId) return
+    await runAction(set, () => api.assignAutonomyResponsibility(projectId, runId, { responsibility, personaAgentId }))
+    await get().refresh()
+  },
+  async submitReview(runId, input) {
+    await runAction(set, () => api.submitAutonomyReview(runId, { ...input, submission: 'review_evidence' }))
+    await get().refresh()
   },
 }))
+
+/** Run a write action, capturing any error into `actionError` and rethrowing so
+ *  callers can keep a form open on failure. */
+async function runAction(set: (partial: Partial<AutonomyState>) => void, fn: () => Promise<unknown>): Promise<void> {
+  set({ actionError: null })
+  try {
+    await fn()
+  } catch (error) {
+    set({ actionError: error instanceof Error ? error.message : String(error) })
+    throw error
+  }
+}

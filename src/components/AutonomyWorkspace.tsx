@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '@/i18n'
 import { useAutonomy } from '@/stores/autonomy'
+import { useAuth } from '@/stores/auth'
 import { useParticipants } from '@/stores/participants'
 import { Avatar } from '@/components/Avatar'
 import { ILayers, IRefresh } from '@/components/icons'
@@ -18,6 +19,13 @@ function humanize(value: string): string {
   return value.replace(/[_:]/g, ' ')
 }
 
+/** Responsibilities a human can bind to a run. */
+const RESPONSIBILITIES = [
+  'planner', 'researcher', 'builder_owner', 'design_reviewer',
+  'independent_verifier', 'deployment_operator', 'readback_operator',
+] as const
+const REVIEW_RESPONSIBILITIES = new Set(['planner', 'researcher', 'design_reviewer', 'independent_verifier'])
+
 type Tone = 'neutral' | 'good' | 'bad' | 'warn' | 'blue'
 
 function Pill({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: Tone }) {
@@ -33,6 +41,26 @@ function statusTone(status: string): Tone {
   if (status === 'failed' || status === 'blocked' || status === 'cancelled') return 'bad'
   if (status === 'awaiting_merge' || status === 'verifying' || status === 'watching') return 'warn'
   return 'blue'
+}
+
+function fieldClass() {
+  return 'w-full rounded-lg border border-ink-100 bg-white px-2.5 py-1.5 text-[12px] text-ink-900 outline-none transition focus:border-skype'
+}
+
+function Button({ children, onClick, disabled, tone = 'default' }: {
+  children: React.ReactNode; onClick?: () => void; disabled?: boolean; tone?: 'default' | 'primary' | 'danger' | 'success'
+}) {
+  const tones = {
+    default: 'border-ink-100 bg-white text-ink-700 hover:bg-sky2-50',
+    primary: 'border-skype bg-skype text-white hover:bg-skype-deep',
+    danger: 'border-coral/30 bg-coral-soft/30 text-coral-deep hover:bg-coral-soft/60',
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+  }
+  return <button type="button" onClick={onClick} disabled={disabled} className={cn('rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-45', tones[tone])}>{children}</button>
+}
+
+function runAction(promise: Promise<unknown>, onSuccess?: () => void) {
+  void promise.then(onSuccess).catch(() => { /* actionError is rendered by the store */ })
 }
 
 export function AutonomyWorkspace() {
@@ -131,7 +159,7 @@ function Centered({ title }: { title: string }) {
   )
 }
 
-function Section({ eyebrow, title, hint, children }: { eyebrow: string; title: string; hint?: string; children: React.ReactNode }) {
+function Section({ eyebrow, title, hint, children }: { eyebrow: string; title: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="mt-4 rounded-2xl border border-ink-100 bg-white p-4 shadow-soft md:p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -165,6 +193,10 @@ function PersonaRow({ personaAgentId, personaName, responsibility }: {
 
 function WorkItemDetail({ workItem, snapshot }: { workItem: ApiAutonomyWorkItem; snapshot: ApiAutonomyProjectSnapshot }) {
   const { t } = useI18n()
+  const role = useAuth((s) => s.companies.find((c) => c.id === s.activeCompanyId)?.role)
+  const canManage = role === 'owner' || role === 'admin'
+  const actionError = useAutonomy((s) => s.actionError)
+
   const assignments = snapshot.assignments.filter((a) => a.workItemId === workItem.id)
   const personas = assignments.filter((a) => a.personaAgentId)
   const execution = assignments.filter((a) => a.workerId || a.computerId)
@@ -172,7 +204,11 @@ function WorkItemDetail({ workItem, snapshot }: { workItem: ApiAutonomyWorkItem;
   const approvals = snapshot.approvals.filter((a) => a.workItemId === workItem.id)
   const plan = snapshot.plans.find((p) => p.workItemId === workItem.id) as ApiAutonomyPlan | undefined
   const pendingApproval = approvals.find((a) => a.status === 'pending')
-  // Latest attempt per run from the append-only ledger.
+  const runId = assignments[0]?.runId
+    ?? snapshot.events.find((e) => e.workItemId === workItem.id && e.runId)?.runId
+    ?? null
+  const reviewers = personas.filter((a) => REVIEW_RESPONSIBILITIES.has(a.responsibility))
+
   const attemptByRun = new Map<string, number>()
   for (const event of snapshot.events) {
     if (event.kind === 'run.leased' && event.runId && typeof event.data?.attempt === 'number') {
@@ -197,6 +233,7 @@ function WorkItemDetail({ workItem, snapshot }: { workItem: ApiAutonomyWorkItem;
             ? <>{humanize(pendingApproval.action)} · {t('autonomy.waitingFor', { role: humanize(pendingApproval.requiredRole) })}</>
             : humanize(workItem.status)}
         </p>
+        {actionError && <div role="alert" className="mt-3 rounded-xl border border-coral/20 bg-coral-soft/20 px-3 py-2 text-[11px] text-coral-deep">{actionError}</div>}
       </header>
 
       <Section eyebrow="01" title={t('autonomy.responsiblePersonas')} hint={t('autonomy.responsiblePersonasHint')}>
@@ -205,6 +242,7 @@ function WorkItemDetail({ workItem, snapshot }: { workItem: ApiAutonomyWorkItem;
           : <div className="grid gap-2 md:grid-cols-2">{personas.map((a) => (
               <PersonaRow key={`${a.runId}-${a.responsibility}`} personaAgentId={a.personaAgentId as string} personaName={a.personaName} responsibility={a.responsibility} />
             ))}</div>}
+        {canManage && runId && <AssignForm runId={runId} />}
       </Section>
 
       <Section eyebrow="02" title={t('autonomy.execution')} hint={t('autonomy.executionHint')}>
@@ -217,15 +255,85 @@ function WorkItemDetail({ workItem, snapshot }: { workItem: ApiAutonomyWorkItem;
         {reviews.length === 0
           ? <p className="text-[11px] text-ink-400">{t('autonomy.noVerification')}</p>
           : <div className="space-y-2">{reviews.map((r) => <ReviewRow key={r.id} review={r} />)}</div>}
+        {canManage && runId && reviewers.length > 0 && <ReviewForm runId={runId} reviewers={reviewers} />}
       </Section>
 
       <Section eyebrow="04" title={t('autonomy.approval')} hint={t('autonomy.approvalHint')}>
         {approvals.length === 0
           ? <p className="text-[11px] text-ink-400">{t('autonomy.noApproval')}</p>
-          : <div className="space-y-2">{approvals.map((a) => <ApprovalRow key={a.id} approval={a} />)}</div>}
+          : <div className="space-y-2">{approvals.map((a) => <ApprovalRow key={a.id} approval={a} canManage={canManage} />)}</div>}
       </Section>
 
       {plan && <PlanSection plan={plan} />}
+    </div>
+  )
+}
+
+function AssignForm({ runId }: { runId: string }) {
+  const { t } = useI18n()
+  const assign = useAutonomy((s) => s.assignResponsibility)
+  const byId = useParticipants((s) => s.byId)
+  const agents = useMemo(() => Object.values(byId).filter((p) => p.kind === 'agent' && !p.departedAt), [byId])
+  const [responsibility, setResponsibility] = useState<string>('builder_owner')
+  const [personaAgentId, setPersonaAgentId] = useState<string>('')
+  const submit = () => {
+    if (!personaAgentId) return
+    runAction(assign(runId, responsibility, personaAgentId), () => setPersonaAgentId(''))
+  }
+  return (
+    <div className="mt-3 flex flex-wrap items-end gap-2 rounded-xl border border-sky2-200 bg-sky2-50/50 p-3">
+      <label className="text-[10px] font-bold uppercase tracking-wide text-ink-400">
+        {t('autonomy.responsibility')}
+        <select className={cn(fieldClass(), 'mt-1 md:w-44')} value={responsibility} onChange={(e) => setResponsibility(e.target.value)}>
+          {RESPONSIBILITIES.map((r) => <option key={r} value={r}>{humanize(r)}</option>)}
+        </select>
+      </label>
+      <label className="text-[10px] font-bold uppercase tracking-wide text-ink-400">
+        {t('autonomy.persona')}
+        <select className={cn(fieldClass(), 'mt-1 md:w-44')} value={personaAgentId} onChange={(e) => setPersonaAgentId(e.target.value)}>
+          <option value="">{t('autonomy.selectPersona')}</option>
+          {agents.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      </label>
+      <Button tone="primary" disabled={!personaAgentId} onClick={submit}>{t('autonomy.assign')}</Button>
+    </div>
+  )
+}
+
+function ReviewForm({ runId, reviewers }: { runId: string; reviewers: ApiAutonomyAssignment[] }) {
+  const { t } = useI18n()
+  const submitReview = useAutonomy((s) => s.submitReview)
+  const [reviewerKey, setReviewerKey] = useState<string>(`${reviewers[0].personaAgentId}:${reviewers[0].responsibility}`)
+  const [verdict, setVerdict] = useState<'passed' | 'failed'>('passed')
+  const [summary, setSummary] = useState('')
+  const submit = () => {
+    const [personaAgentId, responsibility] = reviewerKey.split(':')
+    if (!personaAgentId || !summary.trim()) return
+    runAction(submitReview(runId, { personaAgentId, responsibility, verdict, summary: summary.trim() }), () => setSummary(''))
+  }
+  return (
+    <div className="mt-3 rounded-xl border border-sky2-200 bg-sky2-50/50 p-3">
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="text-[10px] font-bold uppercase tracking-wide text-ink-400">
+          {t('autonomy.reviewer')}
+          <select className={cn(fieldClass(), 'mt-1 md:w-52')} value={reviewerKey} onChange={(e) => setReviewerKey(e.target.value)}>
+            {reviewers.map((a) => (
+              <option key={`${a.personaAgentId}:${a.responsibility}`} value={`${a.personaAgentId}:${a.responsibility}`}>
+                {a.personaName ?? a.personaAgentId} · {humanize(a.responsibility)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[10px] font-bold uppercase tracking-wide text-ink-400">
+          {t('autonomy.verdict')}
+          <select className={cn(fieldClass(), 'mt-1 md:w-32')} value={verdict} onChange={(e) => setVerdict(e.target.value as 'passed' | 'failed')}>
+            <option value="passed">{t('autonomy.passed')}</option>
+            <option value="failed">{t('autonomy.failed')}</option>
+          </select>
+        </label>
+      </div>
+      <input className={cn(fieldClass(), 'mt-2')} value={summary} onChange={(e) => setSummary(e.target.value)} placeholder={t('autonomy.reviewSummaryPlaceholder')} />
+      <div className="mt-2 flex justify-end"><Button tone="primary" disabled={!summary.trim()} onClick={submit}>{t('autonomy.submitReview')}</Button></div>
     </div>
   )
 }
@@ -261,20 +369,32 @@ function ReviewRow({ review }: { review: ApiAutonomyReview }) {
   )
 }
 
-function ApprovalRow({ approval }: { approval: ApiAutonomyApproval }) {
+function ApprovalRow({ approval, canManage }: { approval: ApiAutonomyApproval; canManage: boolean }) {
   const { t } = useI18n()
+  const decide = useAutonomy((s) => s.decideApproval)
+  const [note, setNote] = useState('')
   const tone: Tone = approval.status === 'approved' ? 'good' : approval.status === 'rejected' ? 'bad' : approval.status === 'pending' ? 'warn' : 'neutral'
+  const decidable = canManage && approval.status === 'pending'
   return (
-    <div className="flex items-center justify-between gap-2 rounded-xl border border-ink-100 bg-[#FAFCFD] px-3 py-2.5">
-      <div className="min-w-0">
-        <div className="truncate text-[12px] font-semibold text-ink-800">{humanize(approval.action)}</div>
-        <div className="text-[10px] text-ink-400">
-          {approval.status === 'pending'
-            ? t('autonomy.waitingFor', { role: humanize(approval.requiredRole) })
-            : approval.reason}
+    <div className="rounded-xl border border-ink-100 bg-[#FAFCFD] px-3 py-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate text-[12px] font-semibold text-ink-800">{humanize(approval.action)}</div>
+          <div className="text-[10px] text-ink-400">
+            {approval.status === 'pending'
+              ? t('autonomy.waitingFor', { role: humanize(approval.requiredRole) })
+              : approval.reason}
+          </div>
         </div>
+        <Pill tone={tone}>{humanize(approval.status)}</Pill>
       </div>
-      <Pill tone={tone}>{humanize(approval.status)}</Pill>
+      {decidable && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <input className={cn(fieldClass(), 'flex-1')} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('autonomy.note')} />
+          <Button tone="success" onClick={() => runAction(decide(approval.id, 'approved', note.trim() || undefined))}>{t('autonomy.approve')}</Button>
+          <Button tone="danger" onClick={() => runAction(decide(approval.id, 'rejected', note.trim() || undefined))}>{t('autonomy.reject')}</Button>
+        </div>
+      )}
     </div>
   )
 }
