@@ -1923,6 +1923,37 @@ CREATE INDEX IF NOT EXISTS idx_autonomy_run_assignments_run
 CREATE INDEX IF NOT EXISTS idx_autonomy_run_assignments_work_item
   ON autonomy_run_assignments(work_item_id, created_at ASC);
 
+-- Phase 2 (four-layer architecture): the explicit Planner output. A Work Item
+-- gets a structured, policy-validated plan BEFORE any implementation Run, so
+-- Persona division-of-labor and required capabilities are an auditable
+-- decision rather than something implied in a prompt. The implementation Run
+-- references its plan via autonomy_runs.plan_id.
+CREATE TABLE IF NOT EXISTS autonomy_plans (
+  id                    TEXT PRIMARY KEY,
+  company_id            TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  project_id            TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  work_item_id          TEXT NOT NULL REFERENCES autonomy_work_items(id) ON DELETE CASCADE,
+  revision              INTEGER NOT NULL DEFAULT 1,
+  status                TEXT NOT NULL DEFAULT 'active',
+  problem               TEXT NOT NULL,
+  desired_outcome       TEXT NOT NULL,
+  acceptance_criteria   JSONB NOT NULL DEFAULT '[]'::jsonb,
+  risk                  TEXT NOT NULL DEFAULT 'medium',
+  required_capabilities JSONB NOT NULL DEFAULT '[]'::jsonb,
+  responsibilities      JSONB NOT NULL DEFAULT '[]'::jsonb,
+  approval_needs        JSONB NOT NULL DEFAULT '[]'::jsonb,
+  content_hash          TEXT NOT NULL,
+  created_by            TEXT NOT NULL,
+  created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  CONSTRAINT autonomy_plan_status_check CHECK (status IN ('active','blocked','superseded')),
+  CONSTRAINT autonomy_plan_risk_check CHECK (risk IN ('critical','high','medium','low')),
+  UNIQUE (work_item_id, revision)
+);
+CREATE INDEX IF NOT EXISTS idx_autonomy_plans_work_item
+  ON autonomy_plans(work_item_id, revision DESC);
+ALTER TABLE autonomy_runs
+  ADD COLUMN IF NOT EXISTS plan_id TEXT REFERENCES autonomy_plans(id) ON DELETE SET NULL;
+
 -- Back-fill: one managed Cumora Cloud computer per existing PAID company. The
 -- id is deterministic ('cloud-' || company_id) so this is idempotent and
 -- so other code can resolve it without a lookup. New companies get theirs

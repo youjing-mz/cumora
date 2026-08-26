@@ -145,6 +145,31 @@ Important recovery behavior:
 - The project owner can pause the project immediately; Git and production
   branch protections remain the final kill switches.
 
+## 5a. Local end-to-end test
+
+Before dogfooding against production infrastructure, run the whole loop
+locally with one command:
+
+```bash
+npm run test:e2e
+```
+
+This drives the entire four-layer loop against real infrastructure with no
+external dependencies: a real in-process HTTP API + real Postgres/Redis, and
+the **real node worker** executing in a **real local git repository** (bare
+remote + worktrees). The builder/verifier/staging/production/readback engines
+are deterministic local shell commands and the pull request is created through
+a local adapter, so no OpenAI and no GitHub are contacted. The runner
+auto-provisions an e2e database (`cumora_e2e_test` by default; override with
+`E2E_DATABASE_URL`) and enables pgvector if available.
+
+The suite ([server/src/__e2e__/autonomy-loop.e2e.test.ts](../server/src/__e2e__/autonomy-loop.e2e.test.ts))
+asserts the loop reaches a `git.merge_master` approval, records the Phase 1
+execution assignments (builder/deployment/readback bound to the worker
+computer), and completes through deployment and readback — a fast, hermetic
+proxy for the dogfood acceptance below. It is a test harness, not production
+acceptance: §6 still requires real Codex/GitHub/environment capabilities.
+
 ## 6. First dogfood acceptance
 
 Send `修复会话重复` in the bound Cumora project conversation. Acceptance is:
