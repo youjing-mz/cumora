@@ -188,8 +188,14 @@ test('[e2e] a goal runs the full four-layer loop from intake to production readb
     goal: 'Add a canonical regression marker',
   })
   assert.equal(created.response.status, 201)
-  const { workItemId, runId } = created.json
-  assert.ok(workItemId && runId)
+  const { workItemId, runId, planId } = created.json
+  assert.ok(workItemId && runId && planId)
+
+  // Phase 2: the goal produced an auditable plan the run references.
+  const runPlan = await pool.query<{ planId: string | null }>(
+    `SELECT plan_id AS "planId" FROM autonomy_runs WHERE id=$1`, [runId],
+  )
+  assert.equal(runPlan.rows[0]?.planId, planId)
 
   // Worker: claim the lease and execute the implementation job in a real
   // worktree, pushing the feature branch to the local remote and reporting
@@ -204,6 +210,8 @@ test('[e2e] a goal runs the full four-layer loop from intake to production readb
 
   let snapshot = await human(`/projects/${PROJECT_ID}`)
   assert.equal(snapshot.json.workItems[0].status, 'awaiting_merge')
+  const plan = snapshot.json.plans.find((p: any) => p.id === planId)
+  assert.ok(plan && plan.status === 'active')
   const approval = snapshot.json.approvals.find((a: any) => a.action === 'git.merge_master')
   assert.ok(approval && approval.status === 'pending')
 
