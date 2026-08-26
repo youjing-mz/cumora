@@ -8,6 +8,7 @@ export interface ClaimedJob {
   runId: string
   leaseToken: string
   leaseExpiresAt: string
+  attempt?: number
   envelope: JobEnvelope
 }
 
@@ -27,6 +28,8 @@ export interface WorkerConfig {
   githubToken?: string
   pullRequestAdapter?: (input: { envelope: JobEnvelope; branch: string; summary: string }) => Promise<{ url: string; number: number }>
   completionAdapter?: (job: ClaimedJob, body: Record<string, unknown>) => Promise<unknown>
+  /** Fencing preflight override (tests). Defaults to the server preflight API. */
+  preflightAdapter?: (job: ClaimedJob) => Promise<void>
 }
 
 interface CommandResult {
@@ -181,6 +184,13 @@ async function reportCompletion(config: WorkerConfig, job: ClaimedJob, body: Rec
   return api(config, `/jobs/${job.runId}/complete`, { leaseToken: job.leaseToken, ...body })
 }
 
+/** Assert this attempt still holds the lease before an external side effect.
+ *  Throws (aborting the side effect) when the lease is stale/expired. */
+async function preflight(config: WorkerConfig, job: ClaimedJob): Promise<void> {
+  if (config.preflightAdapter) { await config.preflightAdapter(job); return }
+  await api(config, `/jobs/${job.runId}/preflight`, { leaseToken: job.leaseToken })
+}
+
 async function executeOperationalJob(config: WorkerConfig, job: ClaimedJob): Promise<unknown> {
   const command = job.envelope.jobType === 'deployment' ? config.productionCommand : config.readbackCommand
   const evidenceKind = job.envelope.jobType === 'deployment' ? 'production_deployment' : 'production_readback'
@@ -190,6 +200,8 @@ async function executeOperationalJob(config: WorkerConfig, job: ClaimedJob): Pro
       void api(config, `/jobs/${job.runId}/heartbeat`, { leaseToken: job.leaseToken })
         .catch((error) => console.warn('[autonomy-worker] heartbeat failed', error instanceof Error ? error.message : error))
     }, 60_000)
+    // Fencing: don't deploy / read production under a stale lease.
+    await preflight(config, job)
     const result = await runShell(command, config.repositoryRoot, 30 * 60_000)
     if (result.exitCode !== 0) throw new Error(`${job.envelope.jobType} command failed: ${result.stderr || result.stdout}`)
     return reportCompletion(config, job, {
@@ -284,6 +296,8 @@ export async function executeClaimedJob(config: WorkerConfig, job: ClaimedJob): 
     )
     if (commit.exitCode !== 0) throw new Error(`git commit failed: ${commit.stderr || commit.stdout}`)
     if (!config.pushBranch) throw new Error('feature-branch push capability is not configured')
+    // Fencing: refuse to push/PR if this attempt lost the lease meanwhile.
+    await preflight(config, job)
     const push = await runShell(`git push --set-upstream origin ${JSON.stringify(envelope.branch)}`, worktree, 180_000)
     if (push.exitCode !== 0) throw new Error(`feature branch push failed: ${push.stderr || push.stdout}`)
     const pr = await createPullRequest({ envelope, config, branch: envelope.branch, summary: builder.stdout })
