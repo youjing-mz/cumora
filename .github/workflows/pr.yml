@@ -215,3 +215,56 @@ jobs:
           PGPASSWORD=cumora psql -h localhost -U cumora -d cumora_test -c "CREATE EXTENSION IF NOT EXISTS vector"
       - name: Run integration suite
         run: npm run test:integration
+
+  e2e-test:
+    name: E2E tests (autonomy loop)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Same service containers as the integration job. The e2e suite drives the
+    # full autonomy loop through a real worker executing against a real LOCAL
+    # git repository (no GitHub, no OpenAI), so it only needs Postgres + Redis.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: cumora
+          POSTGRES_PASSWORD: cumora
+          POSTGRES_DB: cumora_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cumora -d cumora_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The e2e runner auto-provisions the DB locally; in CI it already exists.
+      E2E_DATABASE_URL: postgres://cumora:cumora@localhost:5432/cumora_test
+      DATABASE_URL: postgres://cumora:cumora@localhost:5432/cumora_test
+      REDIS_URL: redis://localhost:6379
+      RESEND_API_KEY: ''
+      EMAIL_DOMAIN: cumora.local
+      EMAIL_INBOUND_HMAC_SECRET: ci-test-secret
+      AUTH_SECRET: ci-test-auth-secret
+      OPENAI_API_KEY: ci-test-openai-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - name: Enable pgvector extension
+        run: |
+          PGPASSWORD=cumora psql -h localhost -U cumora -d cumora_test -c "CREATE EXTENSION IF NOT EXISTS vector"
+      - name: Run autonomy e2e loop
+        run: npm run test:e2e

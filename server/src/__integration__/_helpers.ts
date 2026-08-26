@@ -32,6 +32,7 @@ export function ensureSchemaOnce(): Promise<void> {
  *  keeps the intent visible + lets us spot-check leakage. */
 const TABLES_TO_WIPE: readonly string[] = [
   'autonomy_run_assignments',
+  'autonomy_plans',
   'autonomy_events',
   'autonomy_approvals',
   'autonomy_evidence',

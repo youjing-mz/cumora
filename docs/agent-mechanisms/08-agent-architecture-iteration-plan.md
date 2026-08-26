@@ -125,6 +125,15 @@ created_at
 
 ## 5. Phase 2：显式 Planner 与角色选择
 
+> 状态：**已实现（当前实现）**。表 `autonomy_plans`（每个 Work Item 一个受策略校验的
+> 计划修订）、`autonomy_runs.plan_id`、确定性且无 LLM 的默认 planner
+> ([server/src/autonomy/planner.ts](../../server/src/autonomy/planner.ts))、把 plan
+> `responsibilities` 落成 Phase 1 assignment、以及“越权/未知 action → Decision Request”
+> 分支均已落地并有测试覆盖。snapshot 现返回 `plans`。
+> 测试：[server/src/__tests__/autonomy-planner.test.ts](../../server/src/__tests__/autonomy-planner.test.ts)、
+> [server/src/__integration__/autonomy-planner.test.ts](../../server/src/__integration__/autonomy-planner.test.ts)、
+> 以及端到端 [server/src/__e2e__/autonomy-loop.e2e.test.ts](../../server/src/__e2e__/autonomy-loop.e2e.test.ts)（`npm run test:e2e`）。
+
 ### 目标
 
 当前 message/manual intake 可以直接生成 implementation Run。此阶段增加独立 Planning Attempt，使 Persona 分工成为可审计决策，而不是隐含在 prompt 中。
@@ -156,6 +165,18 @@ Planner 可以参考 Persona role 和项目历史，但 Policy Engine必须验�
 - 修改 Planner prompt 不会改变已创建 Run 的 Contract 或 Envelope。
 
 ## 6. Phase 3：Worker capability、身份与 fencing
+
+> 状态：**已实现（当前实现）**。`computers.capabilities` / `max_concurrent_jobs`、
+> Job Envelope 的 `requiredCapabilities`、能力+并发门控的 claim、attempt-scoped
+> fencing（`autonomy_runs.leased_by_computer_id` + 过期即 attempt+1）、副作用前的
+> `POST /api/autonomy/jobs/:runId/preflight`（worker 在 push/deploy 前调用）、以及
+> `POST /api/autonomy/computers/:computerId/capabilities` 均已落地并有测试。
+> 关键实现：[server/src/autonomy/capabilities.ts](../../server/src/autonomy/capabilities.ts)、
+> [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)、
+> [server/src/autonomy/worker.ts](../../server/src/autonomy/worker.ts)。
+> 测试：[server/src/__tests__/autonomy-capabilities.test.ts](../../server/src/__tests__/autonomy-capabilities.test.ts)、
+> [server/src/__integration__/autonomy-scheduler.test.ts](../../server/src/__integration__/autonomy-scheduler.test.ts)（capability mismatch、并发 claim、lease 过期、fencing、并发上限）。
+> 尚未做：把 Evidence producer 完全从 worker 凭据推导、独立 verifier 的服务端签发身份（归入 P4）。
 
 ### 目标
 
@@ -209,6 +230,19 @@ environment
 - retry 创建新 Attempt，并保留前一次错误和 Evidence。
 
 ## 7. Phase 4：Persona-mediated review 与沟通
+
+> 状态：**已实现（当前实现）**。`POST /api/autonomy/runs/:runId/reviews` 让持有 review
+> assignment 的 Persona 提交结构化 `review_evidence` 或 `decision_request`；Evidence 的
+> producer 由服务端从 assignment 校验（不接受自报字符串），independent verifier 与
+> builder owner 独立性在提交时强制；design review 只作为证据、不改变 Run/Contract 状态；
+> 被指派的 independent verifier Persona 可用服务端可信身份满足 merge gate；snapshot 新增
+> `reviews` 投影（区分 Persona 判断与 Worker 执行）。
+> 关键实现：[server/src/autonomy/reviews.ts](../../server/src/autonomy/reviews.ts)、
+> [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)。
+> 测试：[server/src/__tests__/autonomy-reviews.test.ts](../../server/src/__tests__/autonomy-reviews.test.ts)、
+> [server/src/__integration__/autonomy-reviews.test.ts](../../server/src/__integration__/autonomy-reviews.test.ts)。
+> 说明：本阶段交付 Control Plane 侧的结构化 review 通道；由 agent turn loop 通过
+> `cumora` 命令自动产出 review 属后续接线工作。
 
 ### 目标
 
@@ -305,13 +339,13 @@ P0 术语收敛                                          ✅ 已完成
   ↓
 P1 Run assignments                                  ✅ 已完成
   ↓
-P2 Planner + Persona role selection                 ← 下一步
+P2 Planner + Persona role selection                 ✅ 已完成
   ↓
-P3 Capability scheduler + authenticated worker identity + fencing
+P3 Capability scheduler + authenticated worker identity + fencing   ✅ 已完成
   ↓
-P4 Persona-mediated review
+P4 Persona-mediated review                          ✅ 已完成
   ↓
-P5 UI projections
+P5 UI projections                                   ← 下一步
   ↓
 P6 Dogfood and migration hardening
 ```

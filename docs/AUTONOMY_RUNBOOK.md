@@ -102,6 +102,27 @@ Use different Agent identities and preferably fresh isolated model sessions for
 builder and verifier. The control plane rejects
 `independent_verification` when its producer is the builder.
 
+### Declare node capabilities (Phase 3)
+
+The scheduler only hands a node Jobs whose `requiredCapabilities` it covers.
+Declare them (owner/admin) so a node without, say, `staging:deploy` never
+claims a Job that needs it:
+
+```http
+POST /api/autonomy/computers/<computer-id>/capabilities
+
+{
+  "capabilities": ["repo:read","repo:write","codex","staging:deploy","production:deploy","production:read"],
+  "maxConcurrentJobs": 1
+}
+```
+
+A node with **no** declared capabilities is treated as unconstrained (legacy
+behavior). `maxConcurrentJobs` caps how many leases it holds at once. Before any
+external side effect (push, PR, deploy, readback) the worker calls
+`POST /api/autonomy/jobs/<run-id>/preflight`; an expired or superseded attempt
+is refused there, so a stale worker can't push or deploy after losing its lease.
+
 The worker never receives merge permission. It can push the contracted feature
 branch and create a pull request; protected-branch policy remains in GitHub and
 the Cumora Approval Request.
@@ -131,8 +152,25 @@ GET /api/autonomy/projects/<project-id>
 ```
 
 The snapshot returns project governance hashes, Work Items, pending/decided
-approvals and the most recent append-only events. Shipping contains the
-corresponding evidence squares and production release/readback record.
+approvals, Run assignments, plans, the most recent append-only events, and
+Persona `reviews`. Shipping contains the corresponding evidence squares and
+production release/readback record.
+
+A Persona that holds a review assignment on a Run submits a structured result
+(Phase 4) instead of relying on chat:
+
+```http
+POST /api/autonomy/runs/<run-id>/reviews
+
+{ "personaAgentId": "iris", "responsibility": "design_reviewer",
+  "submission": "review_evidence", "verdict": "passed", "summary": "…" }
+```
+
+The producer is the Persona, verified server-side against the Run's
+assignments; a design review is evidence only and never changes Run state,
+while an assigned `independent_verifier` Persona can satisfy the merge gate.
+Use `"submission":"decision_request"` to open an Approval (e.g. a goal
+clarification) instead of asserting a verdict.
 
 Important recovery behavior:
 
@@ -144,6 +182,31 @@ Important recovery behavior:
   deployment or verification succeeded.
 - The project owner can pause the project immediately; Git and production
   branch protections remain the final kill switches.
+
+## 5a. Local end-to-end test
+
+Before dogfooding against production infrastructure, run the whole loop
+locally with one command:
+
+```bash
+npm run test:e2e
+```
+
+This drives the entire four-layer loop against real infrastructure with no
+external dependencies: a real in-process HTTP API + real Postgres/Redis, and
+the **real node worker** executing in a **real local git repository** (bare
+remote + worktrees). The builder/verifier/staging/production/readback engines
+are deterministic local shell commands and the pull request is created through
+a local adapter, so no OpenAI and no GitHub are contacted. The runner
+auto-provisions an e2e database (`cumora_e2e_test` by default; override with
+`E2E_DATABASE_URL`) and enables pgvector if available.
+
+The suite ([server/src/__e2e__/autonomy-loop.e2e.test.ts](../server/src/__e2e__/autonomy-loop.e2e.test.ts))
+asserts the loop reaches a `git.merge_master` approval, records the Phase 1
+execution assignments (builder/deployment/readback bound to the worker
+computer), and completes through deployment and readback — a fast, hermetic
+proxy for the dogfood acceptance below. It is a test harness, not production
+acceptance: §6 still requires real Codex/GitHub/environment capabilities.
 
 ## 6. First dogfood acceptance
 

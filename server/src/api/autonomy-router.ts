@@ -10,8 +10,12 @@ import {
   decideApproval,
   heartbeatRun,
   parseResponsibility,
+  parseReviewResponsibility,
+  preflightRun,
   projectAutonomySnapshot,
   recordMergedWorkItem,
+  setComputerCapabilities,
+  submitPersonaReview,
   syncGitGovernance,
 } from '../autonomy/coordinator.js'
 
@@ -132,6 +136,30 @@ export function createAutonomyRouter(deps: RouterDeps): Router {
     } catch (error) { handleError(res, error) }
   })
 
+  // Persona-mediated review (Phase 4): an assigned reviewer Persona submits a
+  // structured review evidence or a decision request. The producer identity is
+  // the Persona, verified server-side against the Run's assignments.
+  router.post('/runs/:runId/reviews', async (req, res) => {
+    try {
+      const { companyId, userId } = await deps.requireCompany(req)
+      const submission = req.body?.submission === 'decision_request' ? 'decision_request' : 'review_evidence'
+      const result = await submitPersonaReview({
+        companyId,
+        runId: req.params.runId,
+        actorId: userId,
+        personaAgentId: requiredText(req.body?.personaAgentId, 'personaAgentId', 200),
+        responsibility: parseReviewResponsibility(req.body?.responsibility),
+        submission,
+        verdict: req.body?.verdict === 'failed' ? 'failed' : 'passed',
+        summary: requiredText(req.body?.summary, 'summary'),
+        detail: req.body?.detail && typeof req.body.detail === 'object' ? req.body.detail : undefined,
+        decisionAction: typeof req.body?.decisionAction === 'string' ? req.body.decisionAction : undefined,
+        decisionRole: typeof req.body?.decisionRole === 'string' ? req.body.decisionRole : undefined,
+      })
+      res.status(201).json(result)
+    } catch (error) { handleError(res, error) }
+  })
+
   router.post('/approvals/:approvalId/decision', async (req, res) => {
     try {
       const { companyId, userId, role } = await deps.requireCompanyRole(req)
@@ -172,6 +200,35 @@ export function createAutonomyRouter(deps: RouterDeps): Router {
       const job = await claimNextRun(resolved)
       if (!job) { res.status(204).end(); return }
       res.json(job)
+    } catch (error) { handleError(res, error) }
+  })
+
+  // Register a Computer's scheduling capabilities + concurrency cap (Phase 3).
+  router.post('/computers/:computerId/capabilities', async (req, res) => {
+    try {
+      const { companyId, userId } = await deps.requireCompanyRole(req)
+      if (!Array.isArray(req.body?.capabilities)) throw new AutonomyError(400, 'capabilities array required')
+      const result = await setComputerCapabilities({
+        companyId,
+        computerId: req.params.computerId,
+        actorId: userId,
+        capabilities: req.body.capabilities,
+        maxConcurrentJobs: typeof req.body?.maxConcurrentJobs === 'number' ? req.body.maxConcurrentJobs : null,
+      })
+      res.json(result)
+    } catch (error) { handleError(res, error) }
+  })
+
+  // Fencing preflight — the node calls this before any external side effect.
+  router.post('/jobs/:runId/preflight', async (req, res) => {
+    try {
+      const resolved = await device(req)
+      const result = await preflightRun({
+        ...resolved,
+        runId: req.params.runId,
+        leaseToken: requiredText(req.body?.leaseToken, 'leaseToken', 100),
+      })
+      res.json({ ok: true, ...result })
     } catch (error) { handleError(res, error) }
   })
 

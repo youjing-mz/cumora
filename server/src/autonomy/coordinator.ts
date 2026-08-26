@@ -15,8 +15,33 @@ import {
   isRunResponsibility,
   type RunResponsibility,
 } from './responsibilities.js'
+import {
+  buildDefaultPlan,
+  type Planner,
+  planContentHash,
+  validatePlanPolicy,
+} from './planner.js'
+import { isUnconstrained, normalizeCapabilities } from './capabilities.js'
+import {
+  isReviewResponsibility,
+  REVIEW_EVIDENCE_KINDS,
+  type ReviewResponsibility,
+  reviewEvidenceKind,
+  requiresIndependence,
+} from './reviews.js'
 
 type Json = Record<string, unknown>
+
+/** Result of a Work Item intake. `runId` is null when the plan was blocked by
+ *  policy — a Decision Request is opened instead of scheduling a Run. */
+export interface WorkItemIntakeResult {
+  workItemId: string
+  runId: string | null
+  created: boolean
+  planId?: string
+  blocked?: boolean
+  decisionRequestId?: string
+}
 
 export class AutonomyError extends Error {
   constructor(public readonly status: number, message: string) {
@@ -33,6 +58,12 @@ function id(prefix: string): string {
 export function parseResponsibility(value: unknown): RunResponsibility {
   if (isRunResponsibility(value)) return value
   throw new AutonomyError(400, `unknown responsibility: ${String(value)}`)
+}
+
+/** Validate a client-supplied review responsibility (a reviewer role). */
+export function parseReviewResponsibility(value: unknown): ReviewResponsibility {
+  if (isReviewResponsibility(value)) return value
+  throw new AutonomyError(400, `unknown review responsibility: ${String(value)}`)
 }
 
 interface UpsertAssignmentInput {
@@ -280,7 +311,10 @@ export async function createWorkItem(input: {
   sourceMessageId?: string | null
   priority?: 'critical' | 'high' | 'medium' | 'low'
   riskLevel?: 'critical' | 'high' | 'medium' | 'low'
-}): Promise<{ workItemId: string; runId: string; created: boolean }> {
+  /** Pluggable planner (defaults to the deterministic, model-free planner).
+   *  Injected in tests to exercise policy-blocked plans and Persona binding. */
+  planner?: Planner
+}): Promise<WorkItemIntakeResult> {
   const goal = input.goal.trim()
   if (!goal) throw new AutonomyError(400, 'goal required')
   const governance = await activeGovernance(input.projectId, input.companyId)
@@ -290,7 +324,15 @@ export async function createWorkItem(input: {
 
   const workItemId = id('awi')
   const runId = id('arun')
+  const planId = id('aplan')
   const shippingFeatureId = id('sf')
+  // Planner step: produce the structured plan and validate it against the
+  // contract BEFORE scheduling work. Changing the planner never mutates an
+  // already-created Run's Envelope — the plan is a separate, versioned record.
+  const plan = (input.planner ?? buildDefaultPlan)({ goal, contract: governance.contractContent })
+  const policy = validatePlanPolicy(plan, governance.contractContent)
+  // The plan's required capabilities become the Job Envelope's scheduling
+  // condition (Phase 3): only a Worker that has them may claim this Run.
   const envelope = compileJobEnvelope({
     governance: {
       vision: governance.visionContent.markdown ?? '',
@@ -300,27 +342,31 @@ export async function createWorkItem(input: {
     workItemId,
     runId,
     goal,
+    requiredCapabilities: plan.requiredCapabilities,
   })
+
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
     if (input.sourceKey) {
-      const existing = await client.query<{ workItemId: string; runId: string }>(
+      const existing = await client.query<{ workItemId: string; runId: string | null }>(
         `SELECT w.id AS "workItemId", r.id AS "runId"
            FROM autonomy_work_items w
-           JOIN autonomy_runs r ON r.work_item_id=w.id AND r.attempt=1 AND r.job_type='implementation'
+           LEFT JOIN autonomy_runs r ON r.work_item_id=w.id AND r.attempt=1 AND r.job_type='implementation'
           WHERE w.company_id=$1 AND w.project_id=$2 AND w.source_key=$3`,
         [input.companyId, input.projectId, input.sourceKey],
       )
       if (existing.rows[0]) {
+        // Retrying the same source reuses the Work Item and its plan — no
+        // duplicate Planner Attempt.
         await client.query('COMMIT')
         return { ...existing.rows[0], created: false }
       }
     }
-    const duplicateGoal = await client.query<{ workItemId: string; runId: string }>(
+    const duplicateGoal = await client.query<{ workItemId: string; runId: string | null }>(
       `SELECT w.id AS "workItemId",r.id AS "runId"
          FROM autonomy_work_items w
-         JOIN autonomy_runs r ON r.work_item_id=w.id AND r.job_type='implementation' AND r.attempt=1
+         LEFT JOIN autonomy_runs r ON r.work_item_id=w.id AND r.job_type='implementation' AND r.attempt=1
         WHERE w.company_id=$1 AND w.project_id=$2
           AND LOWER(BTRIM(w.goal))=LOWER(BTRIM($3))
           AND w.status NOT IN ('completed','failed','cancelled')
@@ -333,13 +379,63 @@ export async function createWorkItem(input: {
       return { ...duplicateGoal.rows[0], created: false }
     }
 
+    const insertPlan = async (status: 'active' | 'blocked') => {
+      await client.query(
+        `INSERT INTO autonomy_plans
+           (id,company_id,project_id,work_item_id,revision,status,problem,desired_outcome,
+            acceptance_criteria,risk,required_capabilities,responsibilities,approval_needs,
+            content_hash,created_by)
+         VALUES ($1,$2,$3,$4,1,$5,$6,$7,$8::jsonb,$9,$10::jsonb,$11::jsonb,$12::jsonb,$13,$14)`,
+        [planId, input.companyId, input.projectId, workItemId, status, plan.problem,
+          plan.desiredOutcome, JSON.stringify(plan.acceptanceCriteria), plan.risk,
+          JSON.stringify(plan.requiredCapabilities), JSON.stringify(plan.responsibilities),
+          JSON.stringify(plan.approvalNeeds), planContentHash(plan), input.createdBy],
+      )
+      await appendEvent({
+        companyId: input.companyId, projectId: input.projectId, workItemId, actorId: input.createdBy,
+        kind: 'plan.created', data: { planId, status, risk: plan.risk, approvalNeeds: plan.approvalNeeds },
+      }, client as never)
+    }
+
+    // Policy-blocked plan → open a Decision Request instead of scheduling work.
+    if (!policy.ok) {
+      const decisionRequestId = id('aap')
+      await client.query(
+        `INSERT INTO autonomy_work_items
+           (id,company_id,project_id,source_type,source_key,source_message_id,goal,status,
+            priority,risk_level,created_by,assigned_computer_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'blocked',$8,$9,$10,$11)`,
+        [workItemId, input.companyId, input.projectId, input.sourceType, input.sourceKey ?? null,
+          input.sourceMessageId ?? null, goal, input.priority ?? 'medium', input.riskLevel ?? 'medium',
+          input.createdBy, governance.autonomyComputerId],
+      )
+      await insertPlan('blocked')
+      await client.query(
+        `INSERT INTO autonomy_approvals
+           (id,company_id,project_id,work_item_id,run_id,action,required_role,status,reason,context,requested_by)
+         VALUES ($1,$2,$3,$4,NULL,$5,$6,'pending',$7,$8::jsonb,$9)`,
+        [decisionRequestId, input.companyId, input.projectId, workItemId,
+          policy.violation.action, policy.violation.approvalRole ?? 'project_owner',
+          policy.violation.reason,
+          JSON.stringify({ kind: 'decision_request', decision: policy.violation.decision, planId, plan }),
+          input.createdBy],
+      )
+      await appendEvent({
+        companyId: input.companyId, projectId: input.projectId, workItemId, actorId: input.createdBy,
+        kind: 'decision_request.opened',
+        data: { decisionRequestId, action: policy.violation.action, decision: policy.violation.decision },
+      }, client as never)
+      await client.query('COMMIT')
+      return { workItemId, runId: null, created: true, planId, blocked: true, decisionRequestId }
+    }
+
     await client.query(
       `INSERT INTO shipping_features
          (id,company_id,project_id,title,problem,desired_outcome,contract_summary,status,
           priority,risk_level,builder_ids,created_by,updated_by)
        VALUES ($1,$2,$3,$4,$4,$5,$6,'building',$7,$8,'[]'::jsonb,$9,$9)`,
       [shippingFeatureId, input.companyId, input.projectId, goal.slice(0, 160),
-        `The goal is satisfied with contract-required evidence and is ready for protected-branch review.`,
+        plan.desiredOutcome,
         `Git governance ${governance.contractHash}; run ${runId}`,
         input.priority ?? 'medium', input.riskLevel ?? 'medium', input.createdBy],
     )
@@ -352,14 +448,50 @@ export async function createWorkItem(input: {
         input.sourceMessageId ?? null, goal, input.priority ?? 'medium', input.riskLevel ?? 'medium',
         shippingFeatureId, input.createdBy, governance.autonomyComputerId],
     )
+    await insertPlan('active')
     await client.query(
       `INSERT INTO autonomy_runs
          (id,company_id,project_id,work_item_id,job_type,status,attempt,vision_version_id,
-          contract_version_id,contract_hash,job_envelope,assigned_computer_id)
-       VALUES ($1,$2,$3,$4,'implementation','queued',1,$5,$6,$7,$8::jsonb,$9)`,
+          contract_version_id,contract_hash,job_envelope,assigned_computer_id,plan_id)
+       VALUES ($1,$2,$3,$4,'implementation','queued',1,$5,$6,$7,$8::jsonb,$9,$10)`,
       [runId, input.companyId, input.projectId, workItemId, governance.visionVersionId,
-        governance.contractVersionId, governance.contractHash, JSON.stringify(envelope), governance.autonomyComputerId],
+        governance.contractVersionId, governance.contractHash, JSON.stringify(envelope),
+        governance.autonomyComputerId, planId],
     )
+    // Turn plan responsibilities with a resolvable Persona into Phase 1
+    // assignments. Never fabricate: an unknown/off-boarded preferredPersona is
+    // left unbound (a human can bind it later). Preserve builder≠verifier.
+    for (const responsibility of plan.responsibilities) {
+      if (!responsibility.preferredPersona) continue
+      const persona = await client.query(
+        `SELECT 1 FROM participants
+          WHERE id=$1 AND company_id=$2 AND kind='agent' AND departed_at IS NULL`,
+        [responsibility.preferredPersona, input.companyId],
+      )
+      if (!persona.rows[0]) continue
+      if (responsibility.role === 'builder_owner' || responsibility.role === 'independent_verifier') {
+        const other: RunResponsibility =
+          responsibility.role === 'builder_owner' ? 'independent_verifier' : 'builder_owner'
+        const conflict = await client.query(
+          `SELECT 1 FROM autonomy_run_assignments
+            WHERE run_id=$1 AND responsibility=$2 AND persona_agent_id=$3`,
+          [runId, other, responsibility.preferredPersona],
+        )
+        if (conflict.rows[0]) continue
+      }
+      const assignment = await upsertAssignment(client as never, {
+        companyId: input.companyId, projectId: input.projectId, workItemId, runId,
+        responsibility: responsibility.role, personaAgentId: responsibility.preferredPersona,
+        visibility: 'visible', assignedBy: input.createdBy,
+      })
+      await appendEvent({
+        companyId: input.companyId, projectId: input.projectId, workItemId, runId,
+        actorId: input.createdBy,
+        kind: assignment.created ? 'run.assignment.created' : 'run.assignment.changed',
+        data: { assignmentId: assignment.id, responsibility: responsibility.role,
+          personaAgentId: responsibility.preferredPersona, source: 'planner' },
+      }, client as never)
+    }
     const shippingEvidenceKinds = envelope.requiredEvidence.filter((kind) =>
       ['required_checks', 'independent_verification', 'staging_smoke'].includes(kind),
     )
@@ -380,16 +512,17 @@ export async function createWorkItem(input: {
       runId,
       actorId: input.createdBy,
       kind: 'work_item.created',
-      data: { goal, sourceType: input.sourceType, sourceKey: input.sourceKey, contractHash: governance.contractHash },
+      data: { goal, sourceType: input.sourceType, sourceKey: input.sourceKey, contractHash: governance.contractHash, planId },
     }, client as never)
     await client.query('COMMIT')
-    return { workItemId, runId, created: true }
+    return { workItemId, runId, created: true, planId }
   } catch (error) {
     await client.query('ROLLBACK')
     if ((error as { code?: string }).code === '23505' && input.sourceKey) {
-      const { rows } = await pool.query<{ workItemId: string; runId: string }>(
+      const { rows } = await pool.query<{ workItemId: string; runId: string | null }>(
         `SELECT w.id AS "workItemId", r.id AS "runId"
-           FROM autonomy_work_items w JOIN autonomy_runs r ON r.work_item_id=w.id
+           FROM autonomy_work_items w
+           LEFT JOIN autonomy_runs r ON r.work_item_id=w.id
           WHERE w.company_id=$1 AND w.project_id=$2 AND w.source_key=$3 LIMIT 1`,
         [input.companyId, input.projectId, input.sourceKey],
       )
@@ -407,7 +540,7 @@ export async function intakeProjectMessage(input: {
   messageId: string
   authorId: string
   body: string
-}): Promise<{ workItemId: string; runId: string; created: boolean } | null> {
+}): Promise<WorkItemIntakeResult | null> {
   const { rows } = await pool.query<{ projectId: string }>(
     `SELECT p.id AS "projectId"
        FROM conversations c
@@ -433,16 +566,47 @@ export async function intakeProjectMessage(input: {
 export async function claimNextRun(input: {
   companyId: string
   computerId: string
-}): Promise<{ runId: string; leaseToken: string; leaseExpiresAt: string; envelope: JobEnvelope } | null> {
+}): Promise<{ runId: string; leaseToken: string; leaseExpiresAt: string; attempt: number; envelope: JobEnvelope } | null> {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
+    // A lease that expired returns to the queue as a NEW attempt so its fencing
+    // is attempt-scoped; prior evidence/errors stay on the run for the retry.
     await client.query(
       `UPDATE autonomy_runs
-          SET status='queued', lease_token=NULL, lease_expires_at=NULL, updated_at=NOW()
+          SET status='queued', lease_token=NULL, lease_expires_at=NULL,
+              leased_by_computer_id=NULL, attempt=attempt+1, updated_at=NOW()
         WHERE company_id=$1 AND status IN ('leased','running') AND lease_expires_at < NOW()`,
       [input.companyId],
     )
+
+    // The claiming Computer's server-side scheduling attributes.
+    const computer = await client.query<{
+      capabilities: string[] | null; maxConcurrentJobs: number | null
+    }>(
+      `SELECT capabilities, max_concurrent_jobs AS "maxConcurrentJobs"
+         FROM computers WHERE id=$1 AND company_id=$2 AND revoked_at IS NULL`,
+      [input.computerId, input.companyId],
+    )
+    const capabilities = normalizeCapabilities(computer.rows[0]?.capabilities)
+    const maxConcurrent = computer.rows[0]?.maxConcurrentJobs ?? null
+
+    // Concurrency cap: never hold more than the node's declared parallelism.
+    if (maxConcurrent !== null) {
+      const { rows: active } = await client.query<{ count: number }>(
+        `SELECT COUNT(*)::int AS count FROM autonomy_runs
+          WHERE company_id=$1 AND leased_by_computer_id=$2 AND status IN ('leased','running')`,
+        [input.companyId, input.computerId],
+      )
+      if ((active[0]?.count ?? 0) >= maxConcurrent) {
+        await client.query('COMMIT')
+        return null
+      }
+    }
+
+    // Capability gate: a declared node may only claim Jobs whose
+    // requiredCapabilities it fully covers. An undeclared node is unconstrained.
+    const gateCapabilities = isUnconstrained(capabilities)
     const { rows } = await client.query<{
       id: string
       envelope: JobEnvelope
@@ -461,10 +625,13 @@ export async function claimNextRun(input: {
          JOIN project_governance_versions g ON g.id=r.contract_version_id
         WHERE r.company_id=$1 AND r.status='queued'
           AND (r.assigned_computer_id IS NULL OR r.assigned_computer_id=$2)
+          AND ($3::boolean
+               OR COALESCE(r.job_envelope->'requiredCapabilities','[]'::jsonb)='[]'::jsonb
+               OR $4::jsonb @> COALESCE(r.job_envelope->'requiredCapabilities','[]'::jsonb))
         ORDER BY r.created_at ASC
         FOR UPDATE OF r SKIP LOCKED
         LIMIT 1`,
-      [input.companyId, input.computerId],
+      [input.companyId, input.computerId, gateCapabilities, JSON.stringify(capabilities)],
     )
     const row = rows[0]
     if (!row) {
@@ -472,13 +639,13 @@ export async function claimNextRun(input: {
       return null
     }
     const leaseToken = randomUUID()
-    const leased = await client.query<{ leaseExpiresAt: string }>(
+    const leased = await client.query<{ leaseExpiresAt: string; attempt: number }>(
       `UPDATE autonomy_runs
-          SET status='leased', lease_token=$1,
+          SET status='leased', lease_token=$1, leased_by_computer_id=$4,
               lease_expires_at=NOW()+($2::int*INTERVAL '1 minute'), updated_at=NOW()
         WHERE id=$3
-        RETURNING lease_expires_at AS "leaseExpiresAt"`,
-      [leaseToken, row.leaseMinutes, row.id],
+        RETURNING lease_expires_at AS "leaseExpiresAt", attempt`,
+      [leaseToken, row.leaseMinutes, row.id, input.computerId],
     )
     await client.query(
       `UPDATE autonomy_work_items SET status='running',updated_at=NOW() WHERE id=$1`,
@@ -491,7 +658,11 @@ export async function claimNextRun(input: {
       runId: row.id,
       actorId: input.computerId,
       kind: 'run.leased',
-      data: { computerId: input.computerId, leaseExpiresAt: leased.rows[0]?.leaseExpiresAt },
+      data: {
+        computerId: input.computerId,
+        attempt: leased.rows[0]?.attempt,
+        leaseExpiresAt: leased.rows[0]?.leaseExpiresAt,
+      },
     }, client as never)
     // Bind the execution identity server-side. The claiming device — not any
     // self-reported string in a later /complete body — is the Run's executor.
@@ -532,6 +703,7 @@ export async function claimNextRun(input: {
       runId: row.id,
       leaseToken,
       leaseExpiresAt: leased.rows[0]?.leaseExpiresAt,
+      attempt: leased.rows[0]?.attempt,
       envelope: row.envelope,
     }
   } catch (error) {
@@ -557,12 +729,64 @@ export async function heartbeatRun(input: {
             ), updated_at=NOW()
       WHERE r.id=$1 AND r.company_id=$2 AND r.lease_token=$3
         AND (r.assigned_computer_id IS NULL OR r.assigned_computer_id=$4)
+        AND (r.leased_by_computer_id IS NULL OR r.leased_by_computer_id=$4)
         AND r.lease_expires_at > NOW()
       RETURNING r.lease_expires_at AS "leaseExpiresAt"`,
     [input.runId, input.companyId, input.leaseToken, input.computerId],
   )
   if (!rows[0]) throw new AutonomyError(409, 'run lease is stale or belongs to another worker')
   return rows[0].leaseExpiresAt
+}
+
+/**
+ * Fencing preflight (Phase 3). A Worker calls this immediately before any
+ * external side effect (push, PR, deploy, readback). Unlike heartbeat it does
+ * NOT extend the lease — it only asserts this exact attempt still holds it, so
+ * an expired or superseded attempt is refused before it can act on the world.
+ */
+export async function preflightRun(input: {
+  companyId: string
+  computerId: string
+  runId: string
+  leaseToken: string
+}): Promise<{ attempt: number; leaseExpiresAt: string }> {
+  const { rows } = await pool.query<{ attempt: number; leaseExpiresAt: string }>(
+    `SELECT attempt, lease_expires_at AS "leaseExpiresAt"
+       FROM autonomy_runs
+      WHERE id=$1 AND company_id=$2 AND lease_token=$3
+        AND (leased_by_computer_id IS NULL OR leased_by_computer_id=$4)
+        AND status IN ('leased','running') AND lease_expires_at > NOW()`,
+    [input.runId, input.companyId, input.leaseToken, input.computerId],
+  )
+  if (!rows[0]) throw new AutonomyError(409, 'lease is stale, expired, or held by another worker')
+  return rows[0]
+}
+
+/**
+ * Register or update a Computer's server-verifiable scheduling attributes
+ * (Phase 3): the capability allow-set and optional concurrency cap. Owner/admin
+ * action. An empty capability set makes the node unconstrained again.
+ */
+export async function setComputerCapabilities(input: {
+  companyId: string
+  computerId: string
+  actorId: string
+  capabilities: string[]
+  maxConcurrentJobs?: number | null
+}): Promise<{ capabilities: string[]; maxConcurrentJobs: number | null }> {
+  const capabilities = normalizeCapabilities(input.capabilities)
+  const maxConcurrentJobs = input.maxConcurrentJobs != null && input.maxConcurrentJobs > 0
+    ? Math.floor(input.maxConcurrentJobs)
+    : null
+  const { rows } = await pool.query<{ id: string }>(
+    `UPDATE computers
+        SET capabilities=$1::jsonb, max_concurrent_jobs=$2
+      WHERE id=$3 AND company_id=$4 AND revoked_at IS NULL
+      RETURNING id`,
+    [JSON.stringify(capabilities), maxConcurrentJobs, input.computerId, input.companyId],
+  )
+  if (!rows[0]) throw new AutonomyError(404, 'computer is unknown or revoked')
+  return { capabilities, maxConcurrentJobs }
 }
 
 export interface SubmittedEvidence {
@@ -600,6 +824,7 @@ export async function completeImplementationRun(input: {
          JOIN project_governance_versions g ON g.id=r.contract_version_id
         WHERE r.id=$1 AND r.company_id=$2 AND r.lease_token=$3
           AND (r.assigned_computer_id IS NULL OR r.assigned_computer_id=$4)
+          AND (r.leased_by_computer_id IS NULL OR r.leased_by_computer_id=$4)
           AND r.status IN ('leased','running','awaiting_evidence') AND r.lease_expires_at > NOW()
         FOR UPDATE OF r,w`,
       [input.runId, input.companyId, input.leaseToken, input.computerId],
@@ -760,6 +985,8 @@ async function createFollowupRun(
     requiredEvidence: input.jobType === 'deployment'
       ? ['merge_commit', 'staging_smoke', 'rollback_plan', 'production_deployment']
       : ['production_readback'],
+    // Operational jobs need environment access the implementation didn't.
+    requiredCapabilities: input.jobType === 'deployment' ? ['production:deploy'] : ['production:read'],
   }
   await client.query(
     `INSERT INTO autonomy_runs
@@ -903,6 +1130,7 @@ export async function completeOperationalRun(input: {
          FROM autonomy_runs r JOIN autonomy_work_items w ON w.id=r.work_item_id
         WHERE r.id=$1 AND r.company_id=$2 AND r.lease_token=$3
           AND (r.assigned_computer_id IS NULL OR r.assigned_computer_id=$4)
+          AND (r.leased_by_computer_id IS NULL OR r.leased_by_computer_id=$4)
           AND r.job_type IN ('deployment','readback')
           AND r.status IN ('leased','running','awaiting_evidence') AND r.lease_expires_at > NOW()
         FOR UPDATE OF r,w`,
@@ -1207,6 +1435,136 @@ export async function assignRunResponsibility(input: {
   }
 }
 
+/**
+ * Persona-mediated review (Phase 4). A Persona that holds a review assignment
+ * on the Run submits a structured result:
+ *  - `review_evidence`: recorded as content-hashed Evidence whose producer is
+ *    the Persona (server-verified from the assignment — the caller cannot
+ *    override it). An assigned independent verifier can thereby satisfy the
+ *    merge gate; a design review is just evidence and never mutates the
+ *    contract or code state.
+ *  - `decision_request`: opens a pending Approval (e.g. Nova escalating a goal
+ *    conflict) without changing Run status — a failed/uncertain Persona turn
+ *    escalates instead of losing the Run.
+ *
+ * Guards: the Persona must be an active agent in the company AND actually hold
+ * the claimed review responsibility on the Run; an independent verifier cannot
+ * be the Run's builder owner or its execution identity.
+ */
+export async function submitPersonaReview(input: {
+  companyId: string
+  runId: string
+  actorId: string
+  personaAgentId: string
+  responsibility: ReviewResponsibility
+  submission: 'review_evidence' | 'decision_request'
+  verdict?: 'passed' | 'failed'
+  summary: string
+  detail?: Json
+  decisionAction?: string
+  decisionRole?: string
+}): Promise<{ evidenceId?: string; decisionRequestId?: string }> {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { rows: runs } = await client.query<{ projectId: string; workItemId: string }>(
+      `SELECT project_id AS "projectId", work_item_id AS "workItemId"
+         FROM autonomy_runs WHERE id=$1 AND company_id=$2 FOR UPDATE`,
+      [input.runId, input.companyId],
+    )
+    const run = runs[0]
+    if (!run) throw new AutonomyError(404, 'run not found')
+
+    const persona = await client.query(
+      `SELECT 1 FROM participants
+        WHERE id=$1 AND company_id=$2 AND kind='agent' AND departed_at IS NULL`,
+      [input.personaAgentId, input.companyId],
+    )
+    if (!persona.rows[0]) {
+      throw new AutonomyError(400, 'persona is unknown, not an agent, off-boarded, or in another company')
+    }
+
+    // The Persona must actually hold this review responsibility on the Run —
+    // server-verified identity, not a self-reported string.
+    const assignment = await client.query(
+      `SELECT 1 FROM autonomy_run_assignments
+        WHERE run_id=$1 AND responsibility=$2 AND persona_agent_id=$3`,
+      [input.runId, input.responsibility, input.personaAgentId],
+    )
+    if (!assignment.rows[0]) {
+      throw new AutonomyError(403, `persona is not assigned ${input.responsibility} on this run`)
+    }
+
+    // Independence: an independent verifier cannot be the builder owner Persona
+    // nor the Run's execution identity.
+    if (requiresIndependence(input.responsibility)) {
+      const { rows: builderRows } = await client.query<{
+        personaAgentId: string | null; workerId: string | null; computerId: string | null
+      }>(
+        `SELECT persona_agent_id AS "personaAgentId", worker_id AS "workerId", computer_id AS "computerId"
+           FROM autonomy_run_assignments WHERE run_id=$1 AND responsibility='builder_owner'`,
+        [input.runId],
+      )
+      const builder = builderRows[0]
+      const builderIdentities = new Set<string>()
+      for (const identity of [builder?.personaAgentId, builder?.workerId, builder?.computerId]) {
+        if (identity) builderIdentities.add(identity)
+      }
+      if (builderIdentities.has(input.personaAgentId)) {
+        throw new AutonomyError(409, 'builder owner cannot provide independent verification')
+      }
+    }
+
+    if (input.submission === 'decision_request') {
+      const decisionRequestId = id('aap')
+      await client.query(
+        `INSERT INTO autonomy_approvals
+           (id,company_id,project_id,work_item_id,run_id,action,required_role,status,reason,context,requested_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8,$9::jsonb,$10)`,
+        [decisionRequestId, input.companyId, run.projectId, run.workItemId, input.runId,
+          input.decisionAction ?? 'clarification', input.decisionRole ?? 'project_owner',
+          input.summary,
+          JSON.stringify({ kind: 'decision_request', persona: input.personaAgentId, responsibility: input.responsibility, detail: input.detail ?? null }),
+          input.actorId],
+      )
+      await appendEvent({
+        companyId: input.companyId, projectId: run.projectId, workItemId: run.workItemId, runId: input.runId,
+        actorId: input.personaAgentId, kind: 'decision_request.opened',
+        data: { decisionRequestId, persona: input.personaAgentId, responsibility: input.responsibility, action: input.decisionAction ?? 'clarification' },
+      }, client as never)
+      await client.query('COMMIT')
+      return { decisionRequestId }
+    }
+
+    // review_evidence — producer is the server-verified Persona, never a
+    // caller-supplied string. Recorded as Evidence; it does NOT change Run or
+    // Work Item status (a design review can't silently override code state).
+    const evidenceId = id('aev')
+    const kind = reviewEvidenceKind(input.responsibility)
+    const payload = { summary: input.summary, persona: input.personaAgentId, detail: input.detail ?? null }
+    const payloadText = canonicalJson(payload)
+    await client.query(
+      `INSERT INTO autonomy_evidence
+         (id,company_id,work_item_id,run_id,kind,status,producer_id,payload,content_hash)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)`,
+      [evidenceId, input.companyId, run.workItemId, input.runId, kind,
+        input.verdict ?? 'passed', input.personaAgentId, payloadText, sha256(payloadText)],
+    )
+    await appendEvent({
+      companyId: input.companyId, projectId: run.projectId, workItemId: run.workItemId, runId: input.runId,
+      actorId: input.personaAgentId, kind: 'review.submitted',
+      data: { evidenceId, kind, verdict: input.verdict ?? 'passed', persona: input.personaAgentId, responsibility: input.responsibility },
+    }, client as never)
+    await client.query('COMMIT')
+    return { evidenceId }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 export async function projectAutonomySnapshot(companyId: string, projectId: string): Promise<Json> {
   const { rows: projects } = await pool.query(
     `SELECT p.id,p.name,p.autonomy_mode AS "autonomyMode",
@@ -1221,7 +1579,7 @@ export async function projectAutonomySnapshot(companyId: string, projectId: stri
     [projectId, companyId],
   )
   if (!projects[0]) throw new AutonomyError(404, 'project not found')
-  const [workItems, approvals, events, assignments] = await Promise.all([
+  const [workItems, approvals, events, assignments, plans, reviews] = await Promise.all([
     pool.query(
       `SELECT id,goal,status,priority,risk_level AS "riskLevel",shipping_feature_id AS "shippingFeatureId",
               created_at AS "createdAt",updated_at AS "updatedAt"
@@ -1252,6 +1610,30 @@ export async function projectAutonomySnapshot(companyId: string, projectId: stri
         ORDER BY a.created_at ASC LIMIT 200`,
       [projectId, companyId],
     ),
+    pool.query(
+      `SELECT id,work_item_id AS "workItemId",revision,status,problem,
+              desired_outcome AS "desiredOutcome",acceptance_criteria AS "acceptanceCriteria",
+              risk,required_capabilities AS "requiredCapabilities",responsibilities,
+              approval_needs AS "approvalNeeds",content_hash AS "contentHash",
+              created_at AS "createdAt"
+         FROM autonomy_plans WHERE project_id=$1 AND company_id=$2
+        ORDER BY created_at DESC LIMIT 100`,
+      [projectId, companyId],
+    ),
+    // Persona reviews are Evidence rows whose kind is a review kind; join the
+    // producing Persona so the UI can say "Iris · design_review · PASS" and
+    // distinguish a Persona's judgment from a Worker's execution result.
+    pool.query(
+      `SELECT e.id,e.work_item_id AS "workItemId",e.run_id AS "runId",e.kind,e.status,
+              e.producer_id AS "producerId",pp.name AS "producerName",e.payload,
+              e.created_at AS "createdAt"
+         FROM autonomy_evidence e
+         JOIN autonomy_work_items w ON w.id=e.work_item_id
+         LEFT JOIN participants pp ON pp.id=e.producer_id AND pp.company_id=e.company_id
+        WHERE w.project_id=$1 AND e.company_id=$2 AND e.kind = ANY($3::text[])
+        ORDER BY e.created_at DESC LIMIT 200`,
+      [projectId, companyId, REVIEW_EVIDENCE_KINDS],
+    ),
   ])
   return {
     project: projects[0],
@@ -1259,5 +1641,7 @@ export async function projectAutonomySnapshot(companyId: string, projectId: stri
     approvals: approvals.rows,
     events: events.rows,
     assignments: assignments.rows,
+    plans: plans.rows,
+    reviews: reviews.rows,
   }
 }
