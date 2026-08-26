@@ -60,6 +60,7 @@ test('node worker creates an isolated branch, enforces checks and reports PR evi
     approvalActions: [{ action: 'git.merge_master', role: 'project_owner', reason: 'protected branch' }],
     checks: [{ id: 'regression', command: 'test -f src/regression.ts', timeoutMinutes: 1 }],
     requiredEvidence: ['root_cause', 'diff_summary', 'required_checks', 'independent_verification', 'staging_smoke', 'rollback_plan', 'pull_request'],
+    requiredCapabilities: ['repo:write'],
     budgets: { maxChangedFiles: 5, maxAttempts: 1, maxRuntimeMinutes: 2, maxModelCostUsd: 1 },
     stopAndAskWhen: ['outside policy'],
   }
@@ -85,6 +86,7 @@ test('node worker creates an isolated branch, enforces checks and reports PR evi
     pushBranch: true,
     pullRequestAdapter: async ({ branch }) => ({ url: `https://github.test/pull/${branch}`, number: 42 }),
     completionAdapter: async (_job, body) => { completions.push(body); return { status: 'awaiting_merge' } },
+    preflightAdapter: async () => { /* lease is valid in this unit test */ },
   }
 
   const result = await executeClaimedJob(config, job)

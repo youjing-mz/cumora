@@ -1523,6 +1523,14 @@ ALTER TABLE computers ADD COLUMN IF NOT EXISTS daemon_version TEXT;
 -- command, NULL = an old daemon that doesn't report it. Reported on pair +
 -- heartbeat; lets the app show run-mode-specific update instructions.
 ALTER TABLE computers ADD COLUMN IF NOT EXISTS daemon_supervised BOOLEAN;
+-- Phase 3 (four-layer architecture): server-verifiable scheduling attributes.
+-- capabilities is an explicit allow-set (e.g. repo:write, staging:deploy).
+-- NULL / empty means an undeclared (legacy) node, treated as unconstrained so
+-- existing pairings keep working; a declared set gates which jobs it may claim.
+-- max_concurrent_jobs caps how many autonomy leases a node may hold at once
+-- (NULL = unlimited).
+ALTER TABLE computers ADD COLUMN IF NOT EXISTS capabilities JSONB;
+ALTER TABLE computers ADD COLUMN IF NOT EXISTS max_concurrent_jobs INTEGER;
 
 -- An agent's host + engine choice. A NULL computer_id, or one pointing at
 -- a 'cloud' computer, means managed (current pod behavior). A 'local' /
@@ -1953,6 +1961,10 @@ CREATE INDEX IF NOT EXISTS idx_autonomy_plans_work_item
   ON autonomy_plans(work_item_id, revision DESC);
 ALTER TABLE autonomy_runs
   ADD COLUMN IF NOT EXISTS plan_id TEXT REFERENCES autonomy_plans(id) ON DELETE SET NULL;
+-- Phase 3: which computer currently holds the lease. Set on claim, cleared on
+-- release/expiry; heartbeat/complete/preflight require it to match so a stale
+-- attempt cannot act even if it still has the (rotated) lease token.
+ALTER TABLE autonomy_runs ADD COLUMN IF NOT EXISTS leased_by_computer_id TEXT;
 
 -- Back-fill: one managed Cumora Cloud computer per existing PAID company. The
 -- id is deterministic ('cloud-' || company_id) so this is idempotent and

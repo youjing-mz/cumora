@@ -21,6 +21,7 @@ import {
   planContentHash,
   validatePlanPolicy,
 } from './planner.js'
+import { isUnconstrained, normalizeCapabilities } from './capabilities.js'
 
 type Json = Record<string, unknown>
 
@@ -312,6 +313,13 @@ export async function createWorkItem(input: {
   const runId = id('arun')
   const planId = id('aplan')
   const shippingFeatureId = id('sf')
+  // Planner step: produce the structured plan and validate it against the
+  // contract BEFORE scheduling work. Changing the planner never mutates an
+  // already-created Run's Envelope — the plan is a separate, versioned record.
+  const plan = (input.planner ?? buildDefaultPlan)({ goal, contract: governance.contractContent })
+  const policy = validatePlanPolicy(plan, governance.contractContent)
+  // The plan's required capabilities become the Job Envelope's scheduling
+  // condition (Phase 3): only a Worker that has them may claim this Run.
   const envelope = compileJobEnvelope({
     governance: {
       vision: governance.visionContent.markdown ?? '',
@@ -321,12 +329,8 @@ export async function createWorkItem(input: {
     workItemId,
     runId,
     goal,
+    requiredCapabilities: plan.requiredCapabilities,
   })
-  // Planner step: produce the structured plan and validate it against the
-  // contract BEFORE scheduling work. Changing the planner never mutates an
-  // already-created Run's Envelope — the plan is a separate, versioned record.
-  const plan = (input.planner ?? buildDefaultPlan)({ goal, contract: governance.contractContent })
-  const policy = validatePlanPolicy(plan, governance.contractContent)
 
   const client = await pool.connect()
   try {
@@ -549,16 +553,47 @@ export async function intakeProjectMessage(input: {
 export async function claimNextRun(input: {
   companyId: string
   computerId: string
-}): Promise<{ runId: string; leaseToken: string; leaseExpiresAt: string; envelope: JobEnvelope } | null> {
+}): Promise<{ runId: string; leaseToken: string; leaseExpiresAt: string; attempt: number; envelope: JobEnvelope } | null> {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
+    // A lease that expired returns to the queue as a NEW attempt so its fencing
+    // is attempt-scoped; prior evidence/errors stay on the run for the retry.
     await client.query(
       `UPDATE autonomy_runs
-          SET status='queued', lease_token=NULL, lease_expires_at=NULL, updated_at=NOW()
+          SET status='queued', lease_token=NULL, lease_expires_at=NULL,
+              leased_by_computer_id=NULL, attempt=attempt+1, updated_at=NOW()
         WHERE company_id=$1 AND status IN ('leased','running') AND lease_expires_at < NOW()`,
       [input.companyId],
     )
+
+    // The claiming Computer's server-side scheduling attributes.
+    const computer = await client.query<{
+      capabilities: string[] | null; maxConcurrentJobs: number | null
+    }>(
+      `SELECT capabilities, max_concurrent_jobs AS "maxConcurrentJobs"
+         FROM computers WHERE id=$1 AND company_id=$2 AND revoked_at IS NULL`,
+      [input.computerId, input.companyId],
+    )
+    const capabilities = normalizeCapabilities(computer.rows[0]?.capabilities)
+    const maxConcurrent = computer.rows[0]?.maxConcurrentJobs ?? null
+
+    // Concurrency cap: never hold more than the node's declared parallelism.
+    if (maxConcurrent !== null) {
+      const { rows: active } = await client.query<{ count: number }>(
+        `SELECT COUNT(*)::int AS count FROM autonomy_runs
+          WHERE company_id=$1 AND leased_by_computer_id=$2 AND status IN ('leased','running')`,
+        [input.companyId, input.computerId],
+      )
+      if ((active[0]?.count ?? 0) >= maxConcurrent) {
+        await client.query('COMMIT')
+        return null
+      }
+    }
+
+    // Capability gate: a declared node may only claim Jobs whose
+    // requiredCapabilities it fully covers. An undeclared node is unconstrained.
+    const gateCapabilities = isUnconstrained(capabilities)
     const { rows } = await client.query<{
       id: string
       envelope: JobEnvelope
@@ -577,10 +612,13 @@ export async function claimNextRun(input: {
          JOIN project_governance_versions g ON g.id=r.contract_version_id
         WHERE r.company_id=$1 AND r.status='queued'
           AND (r.assigned_computer_id IS NULL OR r.assigned_computer_id=$2)
+          AND ($3::boolean
+               OR COALESCE(r.job_envelope->'requiredCapabilities','[]'::jsonb)='[]'::jsonb
+               OR $4::jsonb @> COALESCE(r.job_envelope->'requiredCapabilities','[]'::jsonb))
         ORDER BY r.created_at ASC
         FOR UPDATE OF r SKIP LOCKED
         LIMIT 1`,
-      [input.companyId, input.computerId],
+      [input.companyId, input.computerId, gateCapabilities, JSON.stringify(capabilities)],
     )
     const row = rows[0]
     if (!row) {
@@ -588,13 +626,13 @@ export async function claimNextRun(input: {
       return null
     }
     const leaseToken = randomUUID()
-    const leased = await client.query<{ leaseExpiresAt: string }>(
+    const leased = await client.query<{ leaseExpiresAt: string; attempt: number }>(
       `UPDATE autonomy_runs
-          SET status='leased', lease_token=$1,
+          SET status='leased', lease_token=$1, leased_by_computer_id=$4,
               lease_expires_at=NOW()+($2::int*INTERVAL '1 minute'), updated_at=NOW()
         WHERE id=$3
-        RETURNING lease_expires_at AS "leaseExpiresAt"`,
-      [leaseToken, row.leaseMinutes, row.id],
+        RETURNING lease_expires_at AS "leaseExpiresAt", attempt`,
+      [leaseToken, row.leaseMinutes, row.id, input.computerId],
     )
     await client.query(
       `UPDATE autonomy_work_items SET status='running',updated_at=NOW() WHERE id=$1`,
@@ -607,7 +645,11 @@ export async function claimNextRun(input: {
       runId: row.id,
       actorId: input.computerId,
       kind: 'run.leased',
-      data: { computerId: input.computerId, leaseExpiresAt: leased.rows[0]?.leaseExpiresAt },
+      data: {
+        computerId: input.computerId,
+        attempt: leased.rows[0]?.attempt,
+        leaseExpiresAt: leased.rows[0]?.leaseExpiresAt,
+      },
     }, client as never)
     // Bind the execution identity server-side. The claiming device — not any
     // self-reported string in a later /complete body — is the Run's executor.
@@ -648,6 +690,7 @@ export async function claimNextRun(input: {
       runId: row.id,
       leaseToken,
       leaseExpiresAt: leased.rows[0]?.leaseExpiresAt,
+      attempt: leased.rows[0]?.attempt,
       envelope: row.envelope,
     }
   } catch (error) {
@@ -673,12 +716,64 @@ export async function heartbeatRun(input: {
             ), updated_at=NOW()
       WHERE r.id=$1 AND r.company_id=$2 AND r.lease_token=$3
         AND (r.assigned_computer_id IS NULL OR r.assigned_computer_id=$4)
+        AND (r.leased_by_computer_id IS NULL OR r.leased_by_computer_id=$4)
         AND r.lease_expires_at > NOW()
       RETURNING r.lease_expires_at AS "leaseExpiresAt"`,
     [input.runId, input.companyId, input.leaseToken, input.computerId],
   )
   if (!rows[0]) throw new AutonomyError(409, 'run lease is stale or belongs to another worker')
   return rows[0].leaseExpiresAt
+}
+
+/**
+ * Fencing preflight (Phase 3). A Worker calls this immediately before any
+ * external side effect (push, PR, deploy, readback). Unlike heartbeat it does
+ * NOT extend the lease — it only asserts this exact attempt still holds it, so
+ * an expired or superseded attempt is refused before it can act on the world.
+ */
+export async function preflightRun(input: {
+  companyId: string
+  computerId: string
+  runId: string
+  leaseToken: string
+}): Promise<{ attempt: number; leaseExpiresAt: string }> {
+  const { rows } = await pool.query<{ attempt: number; leaseExpiresAt: string }>(
+    `SELECT attempt, lease_expires_at AS "leaseExpiresAt"
+       FROM autonomy_runs
+      WHERE id=$1 AND company_id=$2 AND lease_token=$3
+        AND (leased_by_computer_id IS NULL OR leased_by_computer_id=$4)
+        AND status IN ('leased','running') AND lease_expires_at > NOW()`,
+    [input.runId, input.companyId, input.leaseToken, input.computerId],
+  )
+  if (!rows[0]) throw new AutonomyError(409, 'lease is stale, expired, or held by another worker')
+  return rows[0]
+}
+
+/**
+ * Register or update a Computer's server-verifiable scheduling attributes
+ * (Phase 3): the capability allow-set and optional concurrency cap. Owner/admin
+ * action. An empty capability set makes the node unconstrained again.
+ */
+export async function setComputerCapabilities(input: {
+  companyId: string
+  computerId: string
+  actorId: string
+  capabilities: string[]
+  maxConcurrentJobs?: number | null
+}): Promise<{ capabilities: string[]; maxConcurrentJobs: number | null }> {
+  const capabilities = normalizeCapabilities(input.capabilities)
+  const maxConcurrentJobs = input.maxConcurrentJobs != null && input.maxConcurrentJobs > 0
+    ? Math.floor(input.maxConcurrentJobs)
+    : null
+  const { rows } = await pool.query<{ id: string }>(
+    `UPDATE computers
+        SET capabilities=$1::jsonb, max_concurrent_jobs=$2
+      WHERE id=$3 AND company_id=$4 AND revoked_at IS NULL
+      RETURNING id`,
+    [JSON.stringify(capabilities), maxConcurrentJobs, input.computerId, input.companyId],
+  )
+  if (!rows[0]) throw new AutonomyError(404, 'computer is unknown or revoked')
+  return { capabilities, maxConcurrentJobs }
 }
 
 export interface SubmittedEvidence {
@@ -716,6 +811,7 @@ export async function completeImplementationRun(input: {
          JOIN project_governance_versions g ON g.id=r.contract_version_id
         WHERE r.id=$1 AND r.company_id=$2 AND r.lease_token=$3
           AND (r.assigned_computer_id IS NULL OR r.assigned_computer_id=$4)
+          AND (r.leased_by_computer_id IS NULL OR r.leased_by_computer_id=$4)
           AND r.status IN ('leased','running','awaiting_evidence') AND r.lease_expires_at > NOW()
         FOR UPDATE OF r,w`,
       [input.runId, input.companyId, input.leaseToken, input.computerId],
@@ -876,6 +972,8 @@ async function createFollowupRun(
     requiredEvidence: input.jobType === 'deployment'
       ? ['merge_commit', 'staging_smoke', 'rollback_plan', 'production_deployment']
       : ['production_readback'],
+    // Operational jobs need environment access the implementation didn't.
+    requiredCapabilities: input.jobType === 'deployment' ? ['production:deploy'] : ['production:read'],
   }
   await client.query(
     `INSERT INTO autonomy_runs
@@ -1019,6 +1117,7 @@ export async function completeOperationalRun(input: {
          FROM autonomy_runs r JOIN autonomy_work_items w ON w.id=r.work_item_id
         WHERE r.id=$1 AND r.company_id=$2 AND r.lease_token=$3
           AND (r.assigned_computer_id IS NULL OR r.assigned_computer_id=$4)
+          AND (r.leased_by_computer_id IS NULL OR r.leased_by_computer_id=$4)
           AND r.job_type IN ('deployment','readback')
           AND r.status IN ('leased','running','awaiting_evidence') AND r.lease_expires_at > NOW()
         FOR UPDATE OF r,w`,

@@ -103,6 +103,8 @@ export interface JobEnvelope {
   approvalActions: Array<{ action: string; role: string; reason: string }>
   checks: Array<{ id: string; command: string; timeoutMinutes: number }>
   requiredEvidence: string[]
+  /** Capabilities a Worker must have to claim this Job (Phase 3). */
+  requiredCapabilities: string[]
   budgets: ProjectOperatingContract['budgets']
   stopAndAskWhen: string[]
 }
@@ -257,6 +259,7 @@ export function compileJobEnvelope(input: {
   runId: string
   goal: string
   jobType?: JobEnvelope['jobType']
+  requiredCapabilities?: string[]
 }): JobEnvelope {
   const { contract } = input.governance
   const allowedActions: string[] = []
@@ -290,6 +293,7 @@ export function compileJobEnvelope(input: {
     approvalActions,
     checks: contract.verification.requiredBeforeMerge.map((id) => ({ id, ...contract.checks[id] })),
     requiredEvidence: contract.verification.requiredEvidence,
+    requiredCapabilities: input.requiredCapabilities ?? [],
     budgets: contract.budgets,
     stopAndAskWhen: [
       'the requested change is materially ambiguous',
