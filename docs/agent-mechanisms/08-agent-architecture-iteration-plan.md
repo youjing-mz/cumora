@@ -271,9 +271,13 @@ environment
 > Verification / Approval / Plan 五段，一次点击即可回答“谁负责、谁在执行”。Persona、
 > Computer/Host、Worker 保持在各自的界面（Autonomy 视图只做投影，不重实现 pairing）。
 > 关键实现：[src/components/AutonomyWorkspace.tsx](../../src/components/AutonomyWorkspace.tsx)、
-> [src/stores/autonomy.ts](../../src/stores/autonomy.ts)、[src/api/client.ts](../../src/api/client.ts)
-> 的 `getAutonomyProject`。所有文案经 i18n（en+zh）。
-> 尚未做：assignment/审批的写操作 UI（当前为只读投影）、移动端视图。
+> [src/stores/autonomy.ts](../../src/stores/autonomy.ts)、[src/api/client.ts](../../src/api/client.ts)。
+> 所有文案经 i18n（en+zh）。视图说明见双语文档
+> [09-autonomy-view.md](./09-autonomy-view.md)。
+>
+> 视图已从只读投影升级为可操作：owner/admin 可在视图内**指派 Persona**、**提交评审**、
+> **批准/驳回 merge 审批**（分别对接 assignments / reviews / approval decision 端点），
+> 成功后刷新快照、失败显示错误。尚未做：移动端 Autonomy 视图。
 
 ### 目标
 

@@ -922,6 +922,18 @@ export const api = {
   listProjects: () => http<ApiProject[]>('/projects'),
   getAutonomyProject: (projectId: string) =>
     http<ApiAutonomyProjectSnapshot>(`/autonomy/projects/${encodeURIComponent(projectId)}`),
+  decideAutonomyApproval: (approvalId: string, input: { decision: 'approved' | 'rejected'; note?: string }) =>
+    http<{ workItemId: string | null; workItemStatus: string }>(
+      `/autonomy/approvals/${encodeURIComponent(approvalId)}/decision`,
+      { method: 'POST', body: JSON.stringify(input) }),
+  assignAutonomyResponsibility: (projectId: string, runId: string, input: { responsibility: string; personaAgentId?: string | null; computerId?: string | null }) =>
+    http<{ assignmentId: string; created: boolean }>(
+      `/autonomy/projects/${encodeURIComponent(projectId)}/runs/${encodeURIComponent(runId)}/assignments`,
+      { method: 'POST', body: JSON.stringify(input) }),
+  submitAutonomyReview: (runId: string, input: { personaAgentId: string; responsibility: string; submission: 'review_evidence' | 'decision_request'; verdict?: 'passed' | 'failed'; summary: string }) =>
+    http<{ evidenceId?: string; decisionRequestId?: string }>(
+      `/autonomy/runs/${encodeURIComponent(runId)}/reviews`,
+      { method: 'POST', body: JSON.stringify(input) }),
   getShippingOverview: () => http<ShippingOverview>('/shipping/overview'),
   getShippingFeature: (id: string) => http<ShippingFeatureDetail>(`/shipping/features/${encodeURIComponent(id)}`),
   createShippingFeature: (input: {
