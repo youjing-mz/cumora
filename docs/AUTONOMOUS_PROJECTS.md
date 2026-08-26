@@ -21,7 +21,7 @@ Cumora 的目标不是让用户持续给多个 Agent 分派细碎指令，而是
 
 系统由两个执行平面组成：
 
-- **Cloud Agent 控制面**：持续观察项目、形成计划、执行调度、应用政策、管理审批和审计，但不直接在生产节点上随意执行命令。
+- **Autonomy Control Plane**：持续观察项目、形成计划、执行调度、应用政策、管理审批和审计，但不直接在生产节点上随意执行命令。
 - **节点执行面**：运行 Codex、Claude Code 或其他 coding agent，在隔离工作区内调查、修改、测试、部署 Staging 和收集证据。
 
 看板、文档、日历、会话和 Shipping 不是自治控制器本身，而是 Agent 可使用的共享工具、长期上下文、人工交互面和运行时留痕投影。真正的流程正确性由服务端状态机、权限策略和证据门禁保证。
@@ -35,7 +35,7 @@ Cumora 的目标不是让用户持续给多个 Agent 分派细碎指令，而是
 - 每个动作、判断、外部副作用和状态变化均可审计、回放和归因。
 - 高风险、歧义或越界行为会形成持久审批请求，而不是在聊天中静默等待。
 - 项目愿景和运行契约均版本化；Agent 可提出修改提案，但不能自行激活。
-- Cloud 控制面与节点执行器解耦；项目可以选择 Cumora Cloud 节点或自有节点。
+- Autonomy Control Plane 与节点执行器解耦；项目可以选择 Cumora Cloud Runtime 节点或自有节点。
 - 第一阶段在 Cumora 仓库自举，后续接入其他项目不需要修改核心状态机。
 
 ### 2.2 非目标
@@ -85,7 +85,7 @@ flowchart TB
     GitEvents["Git/PR/部署事件"]
   end
 
-  subgraph Control["Cumora Cloud 控制面"]
+  subgraph Control["Autonomy Control Plane"]
     Intake["Intake 与去重"]
     Planner["Planner / Triage Agent"]
     Policy["契约与政策引擎"]
@@ -130,7 +130,7 @@ flowchart TB
   Coordinator <--> Artifacts
 ```
 
-“Cloud Agent”在产品上可以表现为一个总调度者，但实现上应拆成状态机服务、政策引擎、调度器和若干受限模型步骤，避免把系统可靠性绑定在一个长期对话 Agent 上。
+产品可以用一个统一入口呈现自治进度，但架构上不再称其为“Cloud Agent”。Autonomy Control Plane 必须拆成状态机服务、政策引擎、调度器和若干受限模型步骤，避免把系统可靠性绑定在一个长期对话 Persona 上。Persona、Control Plane、Worker 与 Engine/Host 的规范关系见 [`agent-mechanisms/00-agent-architecture.md`](agent-mechanisms/00-agent-architecture.md)。
 
 ## 5. 领域模型
 
@@ -399,7 +399,7 @@ Scheduler 根据节点能力、在线状态、负载和 Agent 角色选择执行
 - 发布成功后进入 Watching；按日历/延迟任务执行生产 readback。
 - readback 失败自动创建 friction/regression，并回到 Building；是否自动回滚由契约和风险决定。
 
-## 8. Cloud Agent 控制面
+## 8. Autonomy Control Plane
 
 ### 8.1 组件职责
 
@@ -608,7 +608,7 @@ node_job_leases
 - Project Vision 与 Operating Contract 还不是版本化、可审批、可执行的一等对象。
 - 当前 wake 触发的是一次 Agent turn，不是可恢复的端到端 Project Run。
 - 看板卡片与 Agent 私有 task 缺少统一 Work Item、状态机、lease 和 fencing token。
-- Cloud 控制面还不能向节点发送带能力/政策边界的 coding Job Envelope。
+- Autonomy Control Plane 已能向节点发送 contract-pinned coding Job Envelope，但还缺少显式 `requiredCapabilities`、Persona responsibility assignment 和服务端认证的 Worker identity。
 - 节点事件偏向聊天 turn，缺少标准化 diff/test/deploy Evidence 回传。
 - 审批主要存在于 UI 操作或聊天语义中，缺少统一 Approval Request。
 - Shipping 约束交付证据，但尚未被 Coordinator 自动驱动。
@@ -807,7 +807,7 @@ Agent 生成 Vision/Contract 草案，人类审阅后激活。任何探测结果
 2. 第一阶段 staging/production 的真实部署命令、kube context 和 smoke 用户路径。
 3. master 合入后生产部署是否仍需要第二次人工审批。
 4. 首个主动 Sensor 选择 CI 失败还是生产错误告警。
-5. PR 创建采用节点 Git 凭据、GitHub App，还是 Cloud 控制面的 Git provider Adapter。
+5. PR 创建采用节点 Git 凭据、GitHub App，还是 Autonomy Control Plane 的 Git provider Adapter。
 6. 独立验证优先使用另一 Agent，还是同一节点上的全新隔离模型会话。
 7. 原始命令输出和截图的保留周期、对象存储和脱敏规则。
 

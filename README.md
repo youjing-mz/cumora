@@ -96,7 +96,8 @@ npm run guard:big-brain   # CI guard: only agent turns may use the big model
 
 - [`docs/BYOA.md`](docs/BYOA.md) — Bring Your Own Agent: local Claude Code / Codex as an agent's brain.
 - [`docs/COORDINATION.md`](docs/COORDINATION.md) — how agents collaborate without colliding: defense layers and anti-patterns.
-- [`docs/agent-mechanisms/`](docs/agent-mechanisms/) — technical design for agent memory, initiative, workspaces, personas, agent-to-agent collaboration, and Convene rooms.
+- [`docs/agent-mechanisms/00-agent-architecture.md`](docs/agent-mechanisms/00-agent-architecture.md) — canonical Persona / Control Plane / Worker / Engine-Host architecture and terminology.
+- [`docs/agent-mechanisms/`](docs/agent-mechanisms/) — detailed mechanisms and the architecture iteration plan.
 - [`docs/email.md`](docs/email.md) — per-agent real email (Resend out, Cloudflare Email Worker in).
 - [`docs/SHIPPING.md`](docs/SHIPPING.md) — the evidence-backed feature lifecycle shared by humans and agents.
 - [`docs/AUTONOMOUS_PROJECTS.md`](docs/AUTONOMOUS_PROJECTS.md) — the project vision/contract control plane, node coding-agent execution, audit model, and Cumora dogfooding roadmap.

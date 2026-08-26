@@ -1,5 +1,7 @@
 # Persona、声音与系统提示词技术设计
 
+> 层级定位：本文只描述 Persona——谁在判断和表达。Control Plane、Worker 与 Engine/Host 的边界见 [00-agent-architecture.md](./00-agent-architecture.md)。
+
 ## 1. 目标
 
 让 Agent 不是一组匿名 prompt，而是稳定的工作身份：有名字、角色、声音、工具边界、模型配置和可编辑的系统提示词。Persona 的职责是定义“它是谁、如何表达、承担什么工作”；工作状态和长期经历分别由 turn、workspace、memory 负责。
@@ -40,6 +42,8 @@ memory / climate / retrieved files
 当前代码已经将全局规则、声音规则、Skype emoticon guide、CLI 能力、私有文件语义等放入基础 system prompt；turn 再加入 conversation context、memory、climate、skills index 和当前唤醒内容。Convene 使用同一个基础 prompt，再追加 live session 的短发言规则。
 
 Persona 文本是行为偏好，不应覆盖服务端安全规则、租户权限、模型 policy、freshness gate 或工具白名单。`system_prompt` 也不应被当作任意代码执行。
+
+Persona 也不等于 Worker。Bram 可以是某个 Run 的 engineering owner，实际代码执行者可以是 Codex Worker；审计需要分别记录 `persona_agent_id` 与 `worker_id`，不能只用一个模糊的 Agent 名称。
 
 ## 4. 创建与更新流程
 

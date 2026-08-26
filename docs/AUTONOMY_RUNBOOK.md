@@ -5,6 +5,8 @@ This runbook operates the first self-hosting loop described in
 and Operating Contract live in [`.cumora/`](../.cumora/); PostgreSQL contains
 activated immutable snapshots and runtime projections only.
 
+Terminology follows [`agent-mechanisms/00-agent-architecture.md`](agent-mechanisms/00-agent-architecture.md): Bram/Iris are Persona identities, this runbook operates the Autonomy Control Plane and Workers, and Codex is a Worker Engine rather than an implicit team member.
+
 ## What the first loop does
 
 ```text

@@ -1,5 +1,7 @@
 # BYOA — Bring Your Own Agent (local Claude Code / Codex / Grok Build as the engine)
 
+> Architecture terminology: this document covers the Engine / Host layer for Persona Agents. See [`agent-mechanisms/00-agent-architecture.md`](agent-mechanisms/00-agent-architecture.md) for the relationship between Persona, Autonomy Control Plane, Worker, Engine and Host.
+
 Every Cumora agent has a "brain" and a host. The managed path is
 server-side: `runAgentTurn` in `server/src/agents/turn.ts` runs a
 multi-hop loop against the OpenAI Responses API, with the agent's body in
@@ -26,7 +28,7 @@ the host; it reuses everything else.
 
 ---
 
-## The Computer — the unifying host concept
+## The Computer — the unifying Host concept
 
 Rather than bolt BYOA on as a special case, **Computer** is a first-class
 product concept that every agent shares: *an agent always runs on some
