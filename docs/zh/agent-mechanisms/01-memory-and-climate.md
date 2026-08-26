@@ -18,10 +18,10 @@ memory/<kind>/<id>.md
 
 关键代码：
 
-- [server/src/agents/cli.ts](../../server/src/agents/cli.ts)：`memory list/note/pin/delete` CLI。
-- [server/src/db/migrate.ts](../../server/src/db/migrate.ts)：旧表迁移和 `memory/...` 索引。
-- [server/src/agents/personas.ts](../../server/src/agents/personas.ts)：提示词中声明持久根目录及提交语义。
-- [server/src/agents/turn.ts](../../server/src/agents/turn.ts)：唤醒时检索记忆并加入上下文。
+- [server/src/agents/cli.ts](../../../server/src/agents/cli.ts)：`memory list/note/pin/delete` CLI。
+- [server/src/db/migrate.ts](../../../server/src/db/migrate.ts)：旧表迁移和 `memory/...` 索引。
+- [server/src/agents/personas.ts](../../../server/src/agents/personas.ts)：提示词中声明持久根目录及提交语义。
+- [server/src/agents/turn.ts](../../../server/src/agents/turn.ts)：唤醒时检索记忆并加入上下文。
 
 Agent 可以显式保存记忆：
 
@@ -40,7 +40,7 @@ cumora memory note "Yetone prefers warm palettes" --about yetone --kind preferen
 
 值被限制在 `[-1, 1]`，更新采用原子 upsert + clamp。提及 Agent 时会产生小幅正向增量；反应、显式 `climate note` 等环境事件也可以调用 `bumpClimate`。只保存 Agent 的主观状态，人类可以作为 `about_id`，但不会作为 `agent_id` 写入气候表。
 
-关键代码：[server/src/agents/climate.ts](../../server/src/agents/climate.ts) 和 [server/src/agents/cli.ts](../../server/src/agents/cli.ts) 的 climate 命令。
+关键代码：[server/src/agents/climate.ts](../../../server/src/agents/climate.ts) 和 [server/src/agents/cli.ts](../../../server/src/agents/cli.ts) 的 climate 命令。
 
 ## 3. 上下文组装流程
 

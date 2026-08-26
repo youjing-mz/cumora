@@ -60,7 +60,7 @@ Persona 拥有长期身份：`name`、`role`、`system_prompt`、`SOUL.md`、`ID
 
 Persona 不天然拥有仓库、生产或跨租户权限。它的风格不能覆盖 Operating Contract，Persona 文本也不能自行创建权限。
 
-当前实现：[server/src/onboardCompany.ts](../../server/src/onboardCompany.ts)、[server/src/agents/personas.ts](../../server/src/agents/personas.ts)。
+当前实现：[server/src/onboardCompany.ts](../../../server/src/onboardCompany.ts)、[server/src/agents/personas.ts](../../../server/src/agents/personas.ts)。
 
 ### 3.2 Control Plane：谁决定流程
 
@@ -77,7 +77,7 @@ Autonomy Control Plane 是确定性服务和少量受限模型步骤的组合，
 
 Planner/Triage 可以由模型辅助，也可以邀请 Nova、Atlas、Bram 或 Iris 贡献专业判断，但最终是否允许执行仍由 Contract 和状态机决定。
 
-当前实现：[server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)、[server/src/autonomy/contract.ts](../../server/src/autonomy/contract.ts)。
+当前实现：[server/src/autonomy/coordinator.ts](../../../server/src/autonomy/coordinator.ts)、[server/src/autonomy/contract.ts](../../../server/src/autonomy/contract.ts)。
 
 ### 3.3 Worker：谁实际执行这次任务
 
@@ -90,7 +90,7 @@ Worker 是一次 Attempt 的执行主体。典型 Worker：
 
 Worker 必须是短生命周期、可重试、受 lease 和 Envelope 约束的。它默认没有长期人格、关系气候或聊天身份，也不能仅凭自然语言声明完成。
 
-当前实现：[server/src/autonomy/worker.ts](../../server/src/autonomy/worker.ts)、[scripts/autonomy-worker.ts](../../scripts/autonomy-worker.ts)。
+当前实现：[server/src/autonomy/worker.ts](../../../server/src/autonomy/worker.ts)、[scripts/autonomy-worker.ts](../../../scripts/autonomy-worker.ts)。
 
 ### 3.4 Engine / Host：使用什么、运行在哪里
 
@@ -106,7 +106,7 @@ Persona Bram
 
 同一个 Persona 可以迁移 Host 或 Engine而保持名字、记忆和关系。一个 Host 也可以承载多个 Persona 或多个自治 Worker，但必须隔离 workspace、lease、凭据和成本账本。
 
-当前实现：[docs/BYOA.md](../BYOA.md)、[server/src/agents/computer/engine.ts](../../server/src/agents/computer/engine.ts)。
+当前实现：[docs/BYOA.md](../BYOA.md)、[server/src/agents/computer/engine.ts](../../../server/src/agents/computer/engine.ts)。
 
 ## 4. 两条执行链必须分开
 
@@ -179,7 +179,7 @@ autonomy_run_assignments                             -- 每个 (run_id, responsi
 
 同一个 assignment 可以只有 Persona，例如 Nova 负责澄清；也可以只有 Worker，例如生产 readback；代码实现通常同时具有 `persona_agent_id=bram` 与 Control Plane 在 claim 时绑定的执行者。执行绑定由 `job_type` 推导 responsibility 并写入签名设备身份；随后 owner/admin 通过 `POST /api/autonomy/projects/:projectId/runs/:runId/assignments` 命名可见责任 Persona，两次写入合并进同一行（`run.assignment.created` / `run.assignment.changed`）。
 
-当前实现：[server/src/autonomy/responsibilities.ts](../../server/src/autonomy/responsibilities.ts)、[server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)。
+当前实现：[server/src/autonomy/responsibilities.ts](../../../server/src/autonomy/responsibilities.ts)、[server/src/autonomy/coordinator.ts](../../../server/src/autonomy/coordinator.ts)。
 
 ## 6. 典型交互
 
@@ -275,7 +275,7 @@ Bram · Engineering owner
 - [04-personas-and-prompt-assembly.md](./04-personas-and-prompt-assembly.md)：Persona 身份与 Prompt。
 - [07-autonomy-control-plane-and-codex-loop.md](./07-autonomy-control-plane-and-codex-loop.md)：典型 Loop Task 的控制面与 Worker 时序。
 - [08-agent-architecture-iteration-plan.md](./08-agent-architecture-iteration-plan.md)：从当前实现演进到四层模型的计划。
-- [09-autonomy-view.md](./09-autonomy-view.md)：Autonomy 视图与写操作（支持独立 [英文版](./09-autonomy-view.en.md)）。
+- [09-autonomy-view.md](./09-autonomy-view.md)：Autonomy 视图与写操作。
 - [docs/BYOA.md](../BYOA.md)：Persona 的 Engine/Host 运行模型。
 - [docs/AUTONOMOUS_PROJECTS.md](../AUTONOMOUS_PROJECTS.md)：自治项目状态机、政策和证据模型。
 - [docs/AUTONOMY_RUNBOOK.md](../AUTONOMY_RUNBOOK.md)：自举 Loop 的操作手册。

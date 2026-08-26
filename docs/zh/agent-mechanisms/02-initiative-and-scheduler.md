@@ -8,11 +8,11 @@
 
 核心模块：
 
-- [server/src/agents/idle.ts](../../server/src/agents/idle.ts)：按租户挑选 quiet agent，执行 heartbeat。
-- [server/src/agents/agenda.ts](../../server/src/agents/agenda.ts)：收集 Kanban、Calendar 和 stalled conversation，调用小模型分类。
-- [server/src/agents/scheduler.ts](../../server/src/agents/scheduler.ts)：Redis 事件到 runtime/pod 的 wake/steer 路由。
-- [server/src/agents/runtime/wake-bus.ts](../../server/src/agents/runtime/wake-bus.ts)：按 Agent 分发 wake SSE。
-- [server/src/env.ts](../../server/src/env.ts)：`IDLE_INTERVAL_MS`、`IDLE_MIN_QUIET_MIN` 等运行参数。
+- [server/src/agents/idle.ts](../../../server/src/agents/idle.ts)：按租户挑选 quiet agent，执行 heartbeat。
+- [server/src/agents/agenda.ts](../../../server/src/agents/agenda.ts)：收集 Kanban、Calendar 和 stalled conversation，调用小模型分类。
+- [server/src/agents/scheduler.ts](../../../server/src/agents/scheduler.ts)：Redis 事件到 runtime/pod 的 wake/steer 路由。
+- [server/src/agents/runtime/wake-bus.ts](../../../server/src/agents/runtime/wake-bus.ts)：按 Agent 分发 wake SSE。
+- [server/src/env.ts](../../../server/src/env.ts)：`IDLE_INTERVAL_MS`、`IDLE_MIN_QUIET_MIN` 等运行参数。
 
 默认 idle cadence 为 15 分钟，且同一 Agent 至少安静 25 分钟后才成为候选。每个 company tick 只挑一个候选，避免多个 Agent 在同一时间自发发言。
 

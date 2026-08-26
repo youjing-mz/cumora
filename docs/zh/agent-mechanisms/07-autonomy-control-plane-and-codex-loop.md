@@ -129,9 +129,9 @@ Control Plane 侧的 `coordinator.ts`、policy/contract 层和调度 API 负责�
 
 当前实现的关键入口：
 
-- [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)：Work Item、Run、claim、heartbeat、completion、approval/follow-up。
-- [server/src/autonomy/contract.ts](../../server/src/autonomy/contract.ts)：治理加载、契约校验和 Job Envelope 编译。
-- [server/src/api/autonomy-router.ts](../../server/src/api/autonomy-router.ts)：人类/节点 API 边界。
+- [server/src/autonomy/coordinator.ts](../../../server/src/autonomy/coordinator.ts)：Work Item、Run、claim、heartbeat、completion、approval/follow-up。
+- [server/src/autonomy/contract.ts](../../../server/src/autonomy/contract.ts)：治理加载、契约校验和 Job Envelope 编译。
+- [server/src/api/autonomy-router.ts](../../../server/src/api/autonomy-router.ts)：人类/节点 API 边界。
 
 ## 5. Codex Worker 的职责边界
 
@@ -148,7 +148,7 @@ Control Plane 侧的 `coordinator.ts`、policy/contract 层和调度 API 负责�
 9. 执行 staging command，提交 commit、push feature branch 和创建 PR。
 10. 通过 `/complete` 回传结构化 evidence；失败保留 worktree，便于诊断。
 
-关键实现：[server/src/autonomy/worker.ts](../../server/src/autonomy/worker.ts)、[scripts/autonomy-worker.ts](../../scripts/autonomy-worker.ts)。
+关键实现：[server/src/autonomy/worker.ts](../../../server/src/autonomy/worker.ts)、[scripts/autonomy-worker.ts](../../../scripts/autonomy-worker.ts)。
 
 Worker 不是一个“永远在线的 Agent 群组”。它是可重启、可重复 claim、以 lease 为边界的节点执行循环。Node 断线时，Run 状态留在 Postgres；lease 过期后其他匹配节点可以重新 claim，旧 worker 的迟到 heartbeat/complete 会被拒绝。
 
@@ -354,9 +354,9 @@ Worker 检查 `git status`；没有 repository change 就失败。自然语言 s
 ## 13. 相关实现
 
 - [docs/AUTONOMOUS_PROJECTS.md](../AUTONOMOUS_PROJECTS.md)：自治项目总体设计与演进路线。
-- [server/src/autonomy/contract.ts](../../server/src/autonomy/contract.ts)：治理与 Job Envelope。
-- [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)：控制面状态机和证据门禁。
-- [server/src/autonomy/worker.ts](../../server/src/autonomy/worker.ts)：节点 worker、Codex builder/verifier 和外部副作用。
-- [server/src/api/autonomy-router.ts](../../server/src/api/autonomy-router.ts)：Control Plane/Worker API 边界。
-- [server/src/db/migrate.ts](../../server/src/db/migrate.ts)：自治项目表结构。
-- [server/src/__tests__/autonomy-worker.test.ts](../../server/src/__tests__/autonomy-worker.test.ts)：隔离 worktree、检查、验证和 PR evidence 测试。
+- [server/src/autonomy/contract.ts](../../../server/src/autonomy/contract.ts)：治理与 Job Envelope。
+- [server/src/autonomy/coordinator.ts](../../../server/src/autonomy/coordinator.ts)：控制面状态机和证据门禁。
+- [server/src/autonomy/worker.ts](../../../server/src/autonomy/worker.ts)：节点 worker、Codex builder/verifier 和外部副作用。
+- [server/src/api/autonomy-router.ts](../../../server/src/api/autonomy-router.ts)：Control Plane/Worker API 边界。
+- [server/src/db/migrate.ts](../../../server/src/db/migrate.ts)：自治项目表结构。
+- [server/src/__tests__/autonomy-worker.test.ts](../../../server/src/__tests__/autonomy-worker.test.ts)：隔离 worktree、检查、验证和 PR evidence 测试。

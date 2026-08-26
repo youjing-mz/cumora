@@ -1,13 +1,11 @@
 # Autonomy 视图
 
-> [English Version](./09-autonomy-view.en.md)
->
 > UI 文案通过 `src/i18n/index.ts` 的 `en` / `zh` catalog 国际化。
 
 关键实现：
-[src/components/AutonomyWorkspace.tsx](../../src/components/AutonomyWorkspace.tsx)、
-[src/stores/autonomy.ts](../../src/stores/autonomy.ts)、
-[src/api/client.ts](../../src/api/client.ts)（`getAutonomyProject` 及写操作方法）。
+[src/components/AutonomyWorkspace.tsx](../../../src/components/AutonomyWorkspace.tsx)、
+[src/stores/autonomy.ts](../../../src/stores/autonomy.ts)、
+[src/api/client.ts](../../../src/api/client.ts)（`getAutonomyProject` 及写操作方法）。
 
 ---
 

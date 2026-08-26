@@ -1,6 +1,6 @@
 /**
  * Phase 1 of the four-layer agent architecture (see
- * docs/agent-mechanisms/08-agent-architecture-iteration-plan.md).
+ * docs/en/agent-mechanisms/08-agent-architecture-iteration-plan.md).
  *
  * A Run records BOTH the visible responsibility (which Persona is
  * accountable) and the actual executor (which Worker / Computer / Engine

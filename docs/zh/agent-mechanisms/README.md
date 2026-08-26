@@ -13,7 +13,7 @@
 | [06-convene-rooms.md](./06-convene-rooms.md) | 临时决策会议、轮流发言与决策记录 | 已实现，当前为串行编排 |
 | [07-autonomy-control-plane-and-codex-loop.md](./07-autonomy-control-plane-and-codex-loop.md) | Autonomy Control Plane 调度 Codex Worker 的 Loop Task | 已有控制面、Job Envelope、lease 和 worker 骨架 |
 | [08-agent-architecture-iteration-plan.md](./08-agent-architecture-iteration-plan.md) | 四层架构迭代计划 | P0 文档收敛已形成，P1-P6 待实现 |
-| [09-autonomy-view.md](./09-autonomy-view.md) | Autonomy 视图与写操作（支持 [英文版](./09-autonomy-view.en.md)） | 已实现投影与写操作，文案全量 i18n |
+| [09-autonomy-view.md](./09-autonomy-view.md) | Autonomy 视图与写操作 | 已实现投影与写操作，文案全量 i18n |
 
 ## 总体架构
 

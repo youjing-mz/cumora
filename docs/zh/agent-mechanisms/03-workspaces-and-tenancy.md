@@ -33,7 +33,7 @@ Company
 
 ### 2.3 文档协作
 
-文档由 Yjs `Y.Doc` 驱动：[server/src/documents/rooms.ts](../../server/src/documents/rooms.ts) 为每个打开的 document 管理内存 room：
+文档由 Yjs `Y.Doc` 驱动：[server/src/documents/rooms.ts](../../../server/src/documents/rooms.ts) 为每个打开的 document 管理内存 room：
 
 1. 首次打开读取 snapshot + tail updates。
 2. 本地 Yjs update 追加到 `document_updates`。

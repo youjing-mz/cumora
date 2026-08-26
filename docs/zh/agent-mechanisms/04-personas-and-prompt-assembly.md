@@ -12,10 +12,10 @@
 
 实现位置：
 
-- [server/src/agents/personas.ts](../../server/src/agents/personas.ts)：Persona 解析、team roster、system prompt 基础规则。
-- [src/components/AgentEditor.tsx](../../src/components/AgentEditor.tsx)：编辑 UI。
-- [server/src/api/router.ts](../../server/src/api/router.ts)：Agent create/update/off-board/rehire 和初始 workspace 文件。
-- [server/src/agents/model-policy.ts](../../server/src/agents/model-policy.ts)：按用途限制模型选择。
+- [server/src/agents/personas.ts](../../../server/src/agents/personas.ts)：Persona 解析、team roster、system prompt 基础规则。
+- [src/components/AgentEditor.tsx](../../../src/components/AgentEditor.tsx)：编辑 UI。
+- [server/src/api/router.ts](../../../server/src/api/router.ts)：Agent create/update/off-board/rehire 和初始 workspace 文件。
+- [server/src/agents/model-policy.ts](../../../server/src/agents/model-policy.ts)：按用途限制模型选择。
 
 Persona 解析只返回 active agent；team roster 同时展示当前 human/agent 成员，已离职 Agent 不再进入其他 Agent 的提示词 roster。
 

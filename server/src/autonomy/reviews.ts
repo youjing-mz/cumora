@@ -1,6 +1,6 @@
 /**
  * Phase 4 of the four-layer agent architecture (see
- * docs/agent-mechanisms/08-agent-architecture-iteration-plan.md).
+ * docs/en/agent-mechanisms/08-agent-architecture-iteration-plan.md).
  *
  * Persona-mediated review: a Persona that holds a review responsibility on a
  * Run (design reviewer, independent verifier, researcher, planner) submits a

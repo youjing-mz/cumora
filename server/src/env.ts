@@ -428,7 +428,7 @@ export const env = {
   DISCORD_ALERT_WEBHOOK_URL: process.env.DISCORD_ALERT_WEBHOOK_URL ?? '',
   /** APNs (Apple Push Notification) credentials. All four must be set or
    *  push is soft-disabled (registration endpoints still accept tokens,
-   *  but the sender is a no-op). See docs/PUSH_NOTIFICATIONS.md for how
+   *  but the sender is a no-op). See docs/en/PUSH_NOTIFICATIONS.md for how
    *  to mint the .p8 in the Apple Developer Portal. */
   APNS_KEY_PATH: process.env.APNS_KEY_PATH ?? '',
   APNS_KEY_ID: process.env.APNS_KEY_ID ?? '',

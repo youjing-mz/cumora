@@ -6,7 +6,7 @@
 
 ## 2. 当前数据模型
 
-迁移在 [server/src/db/migrate.ts](../../server/src/db/migrate.ts) 中创建：
+迁移在 [server/src/db/migrate.ts](../../../server/src/db/migrate.ts) 中创建：
 
 - `convene_sessions`：`id`、`conversation_id`、`title`、`flair`、`started_by`、`started_at`、`ended_at`、`state`。
 - `convene_transcript`：`session_id`、`author_id`、`kind`、`body`、`sequence`、`decision`、`created_at`。
@@ -33,7 +33,7 @@ decision classification
 ended session
 ```
 
-API 入口位于 [server/src/api/router.ts](../../server/src/api/router.ts)；编排和 LLM 调用位于 [server/src/agents/convene.ts](../../server/src/agents/convene.ts)；前端实时展示位于 [src/desktop/ConveneView.tsx](../../src/desktop/ConveneView.tsx) 和移动端对应组件。
+API 入口位于 [server/src/api/router.ts](../../../server/src/api/router.ts)；编排和 LLM 调用位于 [server/src/agents/convene.ts](../../../server/src/agents/convene.ts)；前端实时展示位于 [src/desktop/ConveneView.tsx](../../../src/desktop/ConveneView.tsx) 和移动端对应组件。
 
 ## 4. 当前编排实现
 

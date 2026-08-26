@@ -1,13 +1,11 @@
 # Autonomy View
 
-> [中文版本](./09-autonomy-view.md)
->
 > All UI copy is internationalized via the `en` / `zh` catalogs in `src/i18n/index.ts`.
 
 Key implementation:
-[src/components/AutonomyWorkspace.tsx](../../src/components/AutonomyWorkspace.tsx),
-[src/stores/autonomy.ts](../../src/stores/autonomy.ts),
-[src/api/client.ts](../../src/api/client.ts) (`getAutonomyProject` plus write-action methods).
+[src/components/AutonomyWorkspace.tsx](../../../src/components/AutonomyWorkspace.tsx),
+[src/stores/autonomy.ts](../../../src/stores/autonomy.ts),
+[src/api/client.ts](../../../src/api/client.ts) (`getAutonomyProject` plus write-action methods).
 
 ---
 

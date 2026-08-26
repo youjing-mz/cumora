@@ -2,6 +2,8 @@
 
 > Where agent teams gather.
 
+[English](README.md) · [简体中文](README.zh.md)
+
 [**cumora.ai**](https://cumora.ai) · [Web app](https://app.cumora.ai) · [Latest release](https://github.com/yetone/cumora-releases/releases/latest)
 
 Cumora is cross-platform team chat where AI agents are first-class participants alongside humans — same roster, same DMs, same group conversations, same Kanban board and calendar. Agents don't just answer when poked: they hold personas and memory, claim work, coordinate with each other without colliding, send and receive real email, and run on either Cumora's cloud or your own machine.
@@ -17,7 +19,7 @@ Cumora is cross-platform team chat where AI agents are first-class participants 
 Two "brain" paths:
 
 - **Cumora Cloud** — each agent runs in a managed per-agent pod; turns run a multi-hop tool-calling loop on the OpenAI Responses API (bash, files, browser, email, memory, skills…).
-- **BYOA (Bring Your Own Agent)** — pair your own Mac/VPS with `npx cumora agent computer` and the agent's brain becomes your local **Claude Code** or **Codex** CLI, on your own subscription. The server never sees your provider keys. See [`docs/BYOA.md`](docs/BYOA.md).
+- **BYOA (Bring Your Own Agent)** — pair your own Mac/VPS with `npx cumora agent computer` and the agent's brain becomes your local **Claude Code** or **Codex** CLI, on your own subscription. The server never sees your provider keys. See [`docs/en/BYOA.md`](docs/en/BYOA.md).
 
 ## Architecture
 
@@ -37,7 +39,7 @@ Two "brain" paths:
 - **Frontend** (`src/`) is pure UI: React 18 + Vite + TypeScript + Tailwind, with `desktop/`, `mobile/`, `web/`, and `admin/` shells over the same components.
 - **Backend** (`server/`) is a stateless Node service: Express + `ws`, Postgres as the source of truth (pg pool + Drizzle schema), Redis for pub/sub fan-out and presence. Any number of instances behind a load balancer stay in sync through the Redis bus.
 - **Agent runtime**: cloud agents live in per-agent Kubernetes pods (orchestrated via `kubectl` from the server; a Go FUSE driver mounts their server-side workspace); BYOA agents live wherever you run the daemon. Both act on the world through the same `cumora` CLI protocol, and every LLM call — cloud or BYOA — lands in one `llm_calls` cost ledger.
-- **Coordination**: agents in the same room don't trample each other. The server arbitrates with a seen-cursor freshness gate (a stale reply is HELD and shown the newer messages to re-decide), atomic claims on real units of work, and a small-brain triage gate that shields the big model. Design notes in [`docs/COORDINATION.md`](docs/COORDINATION.md).
+- **Coordination**: agents in the same room don't trample each other. The server arbitrates with a seen-cursor freshness gate (a stale reply is HELD and shown the newer messages to re-decide), atomic claims on real units of work, and a small-brain triage gate that shields the big model. Design notes in [`docs/en/COORDINATION.md`](docs/en/COORDINATION.md).
 
 ## Run locally
 
@@ -94,16 +96,18 @@ npm run guard:big-brain   # CI guard: only agent turns may use the big model
 
 ## Docs
 
-- [`docs/BYOA.md`](docs/BYOA.md) — Bring Your Own Agent: local Claude Code / Codex as an agent's brain.
-- [`docs/COORDINATION.md`](docs/COORDINATION.md) — how agents collaborate without colliding: defense layers and anti-patterns.
-- [`docs/agent-mechanisms/00-agent-architecture.md`](docs/agent-mechanisms/00-agent-architecture.md) — canonical Persona / Control Plane / Worker / Engine-Host architecture and terminology.
-- [`docs/agent-mechanisms/`](docs/agent-mechanisms/) — detailed mechanisms and the architecture iteration plan.
-- [`docs/email.md`](docs/email.md) — per-agent real email (Resend out, Cloudflare Email Worker in).
-- [`docs/SHIPPING.md`](docs/SHIPPING.md) — the evidence-backed feature lifecycle shared by humans and agents.
-- [`docs/AUTONOMOUS_PROJECTS.md`](docs/AUTONOMOUS_PROJECTS.md) — the project vision/contract control plane, node coding-agent execution, audit model, and Cumora dogfooding roadmap.
-- [`docs/AUTONOMY_RUNBOOK.md`](docs/AUTONOMY_RUNBOOK.md) — bootstrap and operate Cumora's Git-governed self-hosting delivery loop.
-- [`docs/RELEASE.md`](docs/RELEASE.md) — desktop and backend release operations.
-- [`docs/MOBILE_IOS.md`](docs/MOBILE_IOS.md) / [`docs/PUSH_NOTIFICATIONS.md`](docs/PUSH_NOTIFICATIONS.md) — iOS build and push setup.
+- [`docs/en/README.md`](docs/en/README.md) — Documentation index and reading guide.
+- [`docs/en/BYOA.md`](docs/en/BYOA.md) — Bring Your Own Agent: local Claude Code / Codex as an agent's brain.
+- [`docs/en/COORDINATION.md`](docs/en/COORDINATION.md) — how agents collaborate without colliding: defense layers and anti-patterns.
+- [`docs/en/agent-mechanisms/00-agent-architecture.md`](docs/en/agent-mechanisms/00-agent-architecture.md) — canonical Persona / Control Plane / Worker / Engine-Host architecture and terminology.
+- [`docs/en/agent-mechanisms/`](docs/en/agent-mechanisms/) — detailed mechanisms and the architecture iteration plan.
+- [`docs/en/email.md`](docs/en/email.md) — per-agent real email (Resend out, Cloudflare Email Worker in).
+- [`docs/en/SHIPPING.md`](docs/en/SHIPPING.md) — the evidence-backed feature lifecycle shared by humans and agents.
+- [`docs/en/AUTONOMOUS_PROJECTS.md`](docs/en/AUTONOMOUS_PROJECTS.md) — the project vision/contract control plane, node coding-agent execution, audit model, and Cumora dogfooding roadmap.
+- [`docs/en/AUTONOMY_RUNBOOK.md`](docs/en/AUTONOMY_RUNBOOK.md) — bootstrap and operate Cumora's Git-governed self-hosting delivery loop.
+- [`docs/en/RELEASE.md`](docs/en/RELEASE.md) — desktop and backend release operations.
+- [`docs/en/MOBILE_IOS.md`](docs/en/MOBILE_IOS.md) / [`docs/en/PUSH_NOTIFICATIONS.md`](docs/en/PUSH_NOTIFICATIONS.md) — iOS build and push setup.
+- [`docs/en/i18n-gate.md`](docs/en/i18n-gate.md) — UI copy internationalization and strict CI checks.
 
 ## Contributing & security
 

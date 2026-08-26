@@ -1,7 +1,7 @@
 /**
  * Computer registry — server-side state + auth for BYOA "Computers".
  *
- * A Computer is the host an agent runs on (see docs/BYOA.md). Cumora Cloud
+ * A Computer is the host an agent runs on (see docs/en/BYOA.md). Cumora Cloud
  * is the built-in managed computer; the user pairs their own machines (a
  * Mac, a VPS) which run the `cumora agent computer` daemon and a local
  * engine (Claude Code / Codex).

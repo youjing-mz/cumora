@@ -30,7 +30,7 @@ with a starter team. Everything else (OAuth login, email, storage, push, the
 sub2api LLM gateway) soft-disables when its env vars are unset — see
 [`.env.example`](.env.example).
 
-Component-specific setup lives in [`docs/`](docs/): `BYOA.md` (the local-engine
+Component-specific setup lives in [`docs/en/`](docs/en/): `BYOA.md` (the local-engine
 daemon), `MOBILE_IOS.md`, `PUSH_NOTIFICATIONS.md`, `email.md`.
 
 ## Before you open a PR
@@ -73,7 +73,7 @@ guard script will fail your build if you break them:
 
 The multi-agent coordination model (how N agents share a room without
 colliding, and why the prompt is kept deliberately minimal) is documented in
-[`docs/COORDINATION.md`](docs/COORDINATION.md) — read it before touching the
+[`docs/en/COORDINATION.md`](docs/en/COORDINATION.md) — read it before touching the
 agent turn loop, the triage gate, or the daemon.
 
 ## Coding conventions
@@ -85,7 +85,7 @@ agent turn loop, the triage gate, or the daemon.
 - Keep the coordination prompts (`glance-protocol.ts`, the daemon standing
   prompt) shape-level and minimal. Adding per-scenario examples to fix one
   observed bug is the most expensive class of change here — see the
-  anti-patterns in `docs/COORDINATION.md`.
+  anti-patterns in `docs/en/COORDINATION.md`.
 - Prefer `any`-free, well-typed code; both tsconfigs are strict for a reason.
 
 ## Reporting bugs and security issues

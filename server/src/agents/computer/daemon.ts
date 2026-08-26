@@ -3,7 +3,7 @@
  *
  * A long-running process on the user's machine (laptop or VPS) that hosts one
  * or more of their Cumora agents, using a local engine (Claude Code / Codex)
- * as each agent's brain. See docs/BYOA.md.
+ * as each agent's brain. See docs/en/BYOA.md.
  *
  * It talks to the Cumora server only over HTTP — no DB/Redis — so it can run
  * anywhere:

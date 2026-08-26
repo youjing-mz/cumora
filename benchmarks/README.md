@@ -138,7 +138,7 @@ by `trials` for total cost). Be specific with the pass bar — vague
 ## Anti-patterns
 
 Same shape as the broader coord stack — see
-[`docs/COORDINATION.md`](../docs/COORDINATION.md) Anti-patterns section.
+[`docs/en/COORDINATION.md`](../docs/en/COORDINATION.md) Anti-patterns section.
 Specific to benchmarks:
 
 - **Don't make pass/fail per-trial.** LLM judgment is stochastic.

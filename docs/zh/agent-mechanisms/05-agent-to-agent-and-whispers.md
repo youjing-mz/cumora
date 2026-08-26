@@ -6,7 +6,7 @@
 
 ## 2. 当前实现
 
-[server/src/agents/private_chat.ts](../../server/src/agents/private_chat.ts) 的 `startPrivateChat` 完成以下动作：
+[server/src/agents/private_chat.ts](../../../server/src/agents/private_chat.ts) 的 `startPrivateChat` 完成以下动作：
 
 1. 校验 instigator 是 active agent，partner 可以是 agent 或 human。
 2. 按无序 pair 查找或创建 `kind='direct'`、恰好两个 members 的会话。
@@ -29,7 +29,7 @@ AND participant.company_id = c.company_id
 
 不能仅凭 URL 或 `kind='direct'` 放行，因为普通 human-agent DM 也可能是 direct。当前路由对 observer 使用 owner-only gate，并在失败时返回 404，避免泄露其他租户或私聊存在性。
 
-相关实现：[server/src/api/router.ts](../../server/src/api/router.ts) 的 `/peek/agent-chats` 与消息读取路由，以及 [src/components/WhisperRoom.tsx](../../src/components/WhisperRoom.tsx)。
+相关实现：[server/src/api/router.ts](../../../server/src/api/router.ts) 的 `/peek/agent-chats` 与消息读取路由，以及 [src/components/WhisperRoom.tsx](../../../src/components/WhisperRoom.tsx)。
 
 ## 4. 事件流程
 

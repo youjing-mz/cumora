@@ -57,11 +57,11 @@ Engine / Host    managed or Codex/Claude on Cumora Cloud/Mac/VPS
 > `POST /api/autonomy/projects/:projectId/runs/:runId/assignments`、
 > `run.assignment.created/changed` 事件、snapshot 的 `assignments` 投影，以及
 > completion 对 lease-bound builder 身份的独立性校验均已落地并有测试覆盖。
-> 关键实现：[server/src/autonomy/responsibilities.ts](../../server/src/autonomy/responsibilities.ts)、
-> [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)、
-> [server/src/db/migrate.ts](../../server/src/db/migrate.ts)；
-> 测试：[server/src/__tests__/autonomy-assignments.test.ts](../../server/src/__tests__/autonomy-assignments.test.ts)、
-> [server/src/__integration__/autonomy-assignments.test.ts](../../server/src/__integration__/autonomy-assignments.test.ts)。
+> 关键实现：[server/src/autonomy/responsibilities.ts](../../../server/src/autonomy/responsibilities.ts)、
+> [server/src/autonomy/coordinator.ts](../../../server/src/autonomy/coordinator.ts)、
+> [server/src/db/migrate.ts](../../../server/src/db/migrate.ts)；
+> 测试：[server/src/__tests__/autonomy-assignments.test.ts](../../../server/src/__tests__/autonomy-assignments.test.ts)、
+> [server/src/__integration__/autonomy-assignments.test.ts](../../../server/src/__integration__/autonomy-assignments.test.ts)。
 
 ### 目标
 
@@ -127,12 +127,12 @@ created_at
 
 > 状态：**已实现（当前实现）**。表 `autonomy_plans`（每个 Work Item 一个受策略校验的
 > 计划修订）、`autonomy_runs.plan_id`、确定性且无 LLM 的默认 planner
-> ([server/src/autonomy/planner.ts](../../server/src/autonomy/planner.ts))、把 plan
+> ([server/src/autonomy/planner.ts](../../../server/src/autonomy/planner.ts))、把 plan
 > `responsibilities` 落成 Phase 1 assignment、以及“越权/未知 action → Decision Request”
 > 分支均已落地并有测试覆盖。snapshot 现返回 `plans`。
-> 测试：[server/src/__tests__/autonomy-planner.test.ts](../../server/src/__tests__/autonomy-planner.test.ts)、
-> [server/src/__integration__/autonomy-planner.test.ts](../../server/src/__integration__/autonomy-planner.test.ts)、
-> 以及端到端 [server/src/__e2e__/autonomy-loop.e2e.test.ts](../../server/src/__e2e__/autonomy-loop.e2e.test.ts)（`npm run test:e2e`）。
+> 测试：[server/src/__tests__/autonomy-planner.test.ts](../../../server/src/__tests__/autonomy-planner.test.ts)、
+> [server/src/__integration__/autonomy-planner.test.ts](../../../server/src/__integration__/autonomy-planner.test.ts)、
+> 以及端到端 [server/src/__e2e__/autonomy-loop.e2e.test.ts](../../../server/src/__e2e__/autonomy-loop.e2e.test.ts)（`npm run test:e2e`）。
 
 ### 目标
 
@@ -171,11 +171,11 @@ Planner 可以参考 Persona role 和项目历史，但 Policy Engine必须验�
 > fencing（`autonomy_runs.leased_by_computer_id` + 过期即 attempt+1）、副作用前的
 > `POST /api/autonomy/jobs/:runId/preflight`（worker 在 push/deploy 前调用）、以及
 > `POST /api/autonomy/computers/:computerId/capabilities` 均已落地并有测试。
-> 关键实现：[server/src/autonomy/capabilities.ts](../../server/src/autonomy/capabilities.ts)、
-> [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)、
-> [server/src/autonomy/worker.ts](../../server/src/autonomy/worker.ts)。
-> 测试：[server/src/__tests__/autonomy-capabilities.test.ts](../../server/src/__tests__/autonomy-capabilities.test.ts)、
-> [server/src/__integration__/autonomy-scheduler.test.ts](../../server/src/__integration__/autonomy-scheduler.test.ts)（capability mismatch、并发 claim、lease 过期、fencing、并发上限）。
+> 关键实现：[server/src/autonomy/capabilities.ts](../../../server/src/autonomy/capabilities.ts)、
+> [server/src/autonomy/coordinator.ts](../../../server/src/autonomy/coordinator.ts)、
+> [server/src/autonomy/worker.ts](../../../server/src/autonomy/worker.ts)。
+> 测试：[server/src/__tests__/autonomy-capabilities.test.ts](../../../server/src/__tests__/autonomy-capabilities.test.ts)、
+> [server/src/__integration__/autonomy-scheduler.test.ts](../../../server/src/__integration__/autonomy-scheduler.test.ts)（capability mismatch、并发 claim、lease 过期、fencing、并发上限）。
 > 尚未做：把 Evidence producer 完全从 worker 凭据推导、独立 verifier 的服务端签发身份（归入 P4）。
 
 ### 目标
@@ -237,10 +237,10 @@ environment
 > builder owner 独立性在提交时强制；design review 只作为证据、不改变 Run/Contract 状态；
 > 被指派的 independent verifier Persona 可用服务端可信身份满足 merge gate；snapshot 新增
 > `reviews` 投影（区分 Persona 判断与 Worker 执行）。
-> 关键实现：[server/src/autonomy/reviews.ts](../../server/src/autonomy/reviews.ts)、
-> [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)。
-> 测试：[server/src/__tests__/autonomy-reviews.test.ts](../../server/src/__tests__/autonomy-reviews.test.ts)、
-> [server/src/__integration__/autonomy-reviews.test.ts](../../server/src/__integration__/autonomy-reviews.test.ts)。
+> 关键实现：[server/src/autonomy/reviews.ts](../../../server/src/autonomy/reviews.ts)、
+> [server/src/autonomy/coordinator.ts](../../../server/src/autonomy/coordinator.ts)。
+> 测试：[server/src/__tests__/autonomy-reviews.test.ts](../../../server/src/__tests__/autonomy-reviews.test.ts)、
+> [server/src/__integration__/autonomy-reviews.test.ts](../../../server/src/__integration__/autonomy-reviews.test.ts)。
 > 说明：本阶段交付 Control Plane 侧的结构化 review 通道；由 agent turn loop 通过
 > `cumora` 命令自动产出 review 属后续接线工作。
 
@@ -270,10 +270,9 @@ environment
 > Work Item 列表，右侧 Work Item 详情把快照投影为 Responsible Personas / Execution /
 > Verification / Approval / Plan 五段，一次点击即可回答“谁负责、谁在执行”。Persona、
 > Computer/Host、Worker 保持在各自的界面（Autonomy 视图只做投影，不重实现 pairing）。
-> 关键实现：[src/components/AutonomyWorkspace.tsx](../../src/components/AutonomyWorkspace.tsx)、
-> [src/stores/autonomy.ts](../../src/stores/autonomy.ts)、[src/api/client.ts](../../src/api/client.ts)。
-> 所有文案经 i18n（en+zh）。视图说明见文档
-> [09-autonomy-view.md](./09-autonomy-view.md)（及 [英文版](./09-autonomy-view.en.md)）。
+> 关键实现：[src/components/AutonomyWorkspace.tsx](../../../src/components/AutonomyWorkspace.tsx)、
+> [src/stores/autonomy.ts](../../../src/stores/autonomy.ts)、[src/api/client.ts](../../../src/api/client.ts)。
+> 所有文案经 i18n（en+zh）。视图说明见文档 [09-autonomy-view.md](./09-autonomy-view.md)。
 >
 > 视图已从只读投影升级为可操作：owner/admin 可在视图内**指派 Persona**、**提交评审**、
 > **批准/驳回 merge 审批**（分别对接 assignments / reviews / approval decision 端点），

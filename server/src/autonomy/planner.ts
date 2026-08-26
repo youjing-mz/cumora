@@ -1,6 +1,6 @@
 /**
  * Phase 2 of the four-layer agent architecture (see
- * docs/agent-mechanisms/08-agent-architecture-iteration-plan.md).
+ * docs/en/agent-mechanisms/08-agent-architecture-iteration-plan.md).
  *
  * The Planner turns a raw goal into a structured, auditable plan BEFORE any
  * implementation Run is created: the problem, acceptance criteria, required

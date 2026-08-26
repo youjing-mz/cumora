@@ -1,6 +1,6 @@
 /**
  * Phase 3 of the four-layer agent architecture (see
- * docs/agent-mechanisms/08-agent-architecture-iteration-plan.md).
+ * docs/en/agent-mechanisms/08-agent-architecture-iteration-plan.md).
  *
  * Capabilities turn a node's implicit fitness (engines + environment) into an
  * explicit, server-verifiable allow-set the scheduler checks before handing it

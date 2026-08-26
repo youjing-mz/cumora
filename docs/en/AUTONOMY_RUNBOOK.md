@@ -2,7 +2,7 @@
 
 This runbook operates the first self-hosting loop described in
 [`AUTONOMOUS_PROJECTS.md`](AUTONOMOUS_PROJECTS.md). Cumora's editable Vision
-and Operating Contract live in [`.cumora/`](../.cumora/); PostgreSQL contains
+and Operating Contract live in [`.cumora/`](../../.cumora/); PostgreSQL contains
 activated immutable snapshots and runtime projections only.
 
 Terminology follows [`agent-mechanisms/00-agent-architecture.md`](agent-mechanisms/00-agent-architecture.md): Bram/Iris are Persona identities, this runbook operates the Autonomy Control Plane and Workers, and Codex is a Worker Engine rather than an implicit team member.
@@ -201,7 +201,7 @@ a local adapter, so no OpenAI and no GitHub are contacted. The runner
 auto-provisions an e2e database (`cumora_e2e_test` by default; override with
 `E2E_DATABASE_URL`) and enables pgvector if available.
 
-The suite ([server/src/__e2e__/autonomy-loop.e2e.test.ts](../server/src/__e2e__/autonomy-loop.e2e.test.ts))
+The suite ([server/src/__e2e__/autonomy-loop.e2e.test.ts](../../server/src/__e2e__/autonomy-loop.e2e.test.ts))
 asserts the loop reaches a `git.merge_master` approval, records the Phase 1
 execution assignments (builder/deployment/readback bound to the worker
 computer), and completes through deployment and readback — a fast, hermetic
