@@ -125,6 +125,15 @@ created_at
 
 ## 5. Phase 2：显式 Planner 与角色选择
 
+> 状态：**已实现（当前实现）**。表 `autonomy_plans`（每个 Work Item 一个受策略校验的
+> 计划修订）、`autonomy_runs.plan_id`、确定性且无 LLM 的默认 planner
+> ([server/src/autonomy/planner.ts](../../server/src/autonomy/planner.ts))、把 plan
+> `responsibilities` 落成 Phase 1 assignment、以及“越权/未知 action → Decision Request”
+> 分支均已落地并有测试覆盖。snapshot 现返回 `plans`。
+> 测试：[server/src/__tests__/autonomy-planner.test.ts](../../server/src/__tests__/autonomy-planner.test.ts)、
+> [server/src/__integration__/autonomy-planner.test.ts](../../server/src/__integration__/autonomy-planner.test.ts)、
+> 以及端到端 [server/src/__e2e__/autonomy-loop.e2e.test.ts](../../server/src/__e2e__/autonomy-loop.e2e.test.ts)（`npm run test:e2e`）。
+
 ### 目标
 
 当前 message/manual intake 可以直接生成 implementation Run。此阶段增加独立 Planning Attempt，使 Persona 分工成为可审计决策，而不是隐含在 prompt 中。
@@ -305,9 +314,9 @@ P0 术语收敛                                          ✅ 已完成
   ↓
 P1 Run assignments                                  ✅ 已完成
   ↓
-P2 Planner + Persona role selection                 ← 下一步
+P2 Planner + Persona role selection                 ✅ 已完成
   ↓
-P3 Capability scheduler + authenticated worker identity + fencing
+P3 Capability scheduler + authenticated worker identity + fencing   ← 下一步
   ↓
 P4 Persona-mediated review
   ↓
