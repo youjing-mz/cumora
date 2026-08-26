@@ -1,6 +1,7 @@
 import { type Request, Router } from 'express'
 import { resolveDevice } from '../agents/computer/registry.js'
 import {
+  assignRunResponsibility,
   AutonomyError,
   claimNextRun,
   completeAutonomyRun,
@@ -8,6 +9,7 @@ import {
   createWorkItem,
   decideApproval,
   heartbeatRun,
+  parseResponsibility,
   projectAutonomySnapshot,
   recordMergedWorkItem,
   syncGitGovernance,
@@ -105,6 +107,26 @@ export function createAutonomyRouter(deps: RouterDeps): Router {
         sourceKey: typeof req.body?.idempotencyKey === 'string' ? `manual:${req.body.idempotencyKey}` : null,
         priority: req.body?.priority,
         riskLevel: req.body?.riskLevel,
+      })
+      res.status(result.created ? 201 : 200).json(result)
+    } catch (error) { handleError(res, error) }
+  })
+
+  // Bind a Persona (visible responsibility) or an explicit executor to a Run.
+  // The Control Plane already recorded the executor at claim time; this names
+  // who is accountable. Owner/admin only — it is a control-plane decision.
+  router.post('/projects/:projectId/runs/:runId/assignments', async (req, res) => {
+    try {
+      const { companyId, userId } = await deps.requireCompanyRole(req)
+      const result = await assignRunResponsibility({
+        companyId,
+        projectId: req.params.projectId,
+        runId: req.params.runId,
+        actorId: userId,
+        responsibility: parseResponsibility(req.body?.responsibility),
+        personaAgentId: typeof req.body?.personaAgentId === 'string' ? req.body.personaAgentId : null,
+        computerId: typeof req.body?.computerId === 'string' ? req.body.computerId : null,
+        visibility: req.body?.visibility === 'internal' ? 'internal' : undefined,
       })
       res.status(result.created ? 201 : 200).json(result)
     } catch (error) { handleError(res, error) }

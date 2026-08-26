@@ -1889,6 +1889,40 @@ CREATE TABLE IF NOT EXISTS autonomy_events (
 CREATE INDEX IF NOT EXISTS idx_autonomy_events_work_item
   ON autonomy_events(work_item_id, created_at ASC);
 
+-- Phase 1 (four-layer architecture): a Run records BOTH the visible
+-- responsibility (a Persona) and the actual executor (Worker/Computer/Engine).
+-- One mutable row per (run, responsibility) — the append-only autonomy_events
+-- ledger keeps the change history. Tenant, off-board and builder≠verifier
+-- independence rules are enforced in the coordinator, not by cross-table FKs:
+-- persona_agent_id points at a composite-PK participant and worker_id is a
+-- Control-Plane-issued identity, neither of which maps cleanly to an FK here.
+CREATE TABLE IF NOT EXISTS autonomy_run_assignments (
+  id                TEXT PRIMARY KEY,
+  company_id        TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  project_id        TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  work_item_id      TEXT NOT NULL REFERENCES autonomy_work_items(id) ON DELETE CASCADE,
+  run_id            TEXT NOT NULL REFERENCES autonomy_runs(id) ON DELETE CASCADE,
+  responsibility    TEXT NOT NULL,
+  persona_agent_id  TEXT,
+  worker_id         TEXT,
+  computer_id       TEXT,
+  engine            TEXT,
+  producer_id       TEXT,
+  visibility        TEXT NOT NULL DEFAULT 'visible',
+  assigned_by       TEXT NOT NULL,
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  CONSTRAINT autonomy_run_assignment_responsibility_check CHECK
+    (responsibility IN ('planner','researcher','builder_owner','design_reviewer',
+                        'independent_verifier','deployment_operator','readback_operator')),
+  CONSTRAINT autonomy_run_assignment_visibility_check CHECK (visibility IN ('visible','internal')),
+  UNIQUE (run_id, responsibility)
+);
+CREATE INDEX IF NOT EXISTS idx_autonomy_run_assignments_run
+  ON autonomy_run_assignments(run_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_autonomy_run_assignments_work_item
+  ON autonomy_run_assignments(work_item_id, created_at ASC);
+
 -- Back-fill: one managed Cumora Cloud computer per existing PAID company. The
 -- id is deterministic ('cloud-' || company_id) so this is idempotent and
 -- so other code can resolve it without a lookup. New companies get theirs

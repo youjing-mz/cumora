@@ -10,6 +10,11 @@ import {
   type ProjectOperatingContract,
   sha256,
 } from './contract.js'
+import {
+  executionResponsibility,
+  isRunResponsibility,
+  type RunResponsibility,
+} from './responsibilities.js'
 
 type Json = Record<string, unknown>
 
@@ -21,6 +26,66 @@ export class AutonomyError extends Error {
 
 function id(prefix: string): string {
   return `${prefix}-${randomUUID()}`
+}
+
+/** Validate a client-supplied responsibility, throwing a 400 on anything
+ *  outside the first-batch set. */
+export function parseResponsibility(value: unknown): RunResponsibility {
+  if (isRunResponsibility(value)) return value
+  throw new AutonomyError(400, `unknown responsibility: ${String(value)}`)
+}
+
+interface UpsertAssignmentInput {
+  companyId: string
+  projectId: string
+  workItemId: string
+  runId: string
+  responsibility: RunResponsibility
+  personaAgentId?: string | null
+  workerId?: string | null
+  computerId?: string | null
+  engine?: string | null
+  producerId?: string | null
+  visibility?: 'visible' | 'internal'
+  assignedBy: string
+}
+
+/**
+ * Insert-or-merge one assignment row keyed by (run, responsibility). Worker
+ * and persona facets are filled independently — the Control Plane binds the
+ * executor at claim time (worker/computer/engine) while a human/planner later
+ * names the accountable Persona — so we COALESCE each facet instead of
+ * overwriting. `visibility` is derived: a row with a Persona is always
+ * `visible`; a pure worker binding stays `internal`. Returns whether the row
+ * was freshly created (drives created-vs-changed events).
+ */
+async function upsertAssignment(
+  db: { query: typeof pool.query },
+  input: UpsertAssignmentInput,
+): Promise<{ id: string; created: boolean }> {
+  const { rows } = await db.query<{ id: string; created: boolean }>(
+    `INSERT INTO autonomy_run_assignments
+       (id,company_id,project_id,work_item_id,run_id,responsibility,persona_agent_id,
+        worker_id,computer_id,engine,producer_id,visibility,assigned_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+     ON CONFLICT (run_id,responsibility) DO UPDATE SET
+       persona_agent_id=COALESCE(EXCLUDED.persona_agent_id,autonomy_run_assignments.persona_agent_id),
+       worker_id=COALESCE(EXCLUDED.worker_id,autonomy_run_assignments.worker_id),
+       computer_id=COALESCE(EXCLUDED.computer_id,autonomy_run_assignments.computer_id),
+       engine=COALESCE(EXCLUDED.engine,autonomy_run_assignments.engine),
+       producer_id=COALESCE(EXCLUDED.producer_id,autonomy_run_assignments.producer_id),
+       visibility=CASE
+         WHEN COALESCE(EXCLUDED.persona_agent_id,autonomy_run_assignments.persona_agent_id) IS NOT NULL
+           THEN 'visible' ELSE EXCLUDED.visibility END,
+       assigned_by=EXCLUDED.assigned_by,
+       updated_at=NOW()
+     RETURNING id,(xmax=0) AS created`,
+    [id('ara'), input.companyId, input.projectId, input.workItemId, input.runId,
+      input.responsibility, input.personaAgentId ?? null, input.workerId ?? null,
+      input.computerId ?? null, input.engine ?? null, input.producerId ?? null,
+      input.visibility ?? (input.personaAgentId ? 'visible' : 'internal'), input.assignedBy],
+  )
+  return rows[0]
 }
 
 function sourceRevision(): string | null {
@@ -384,10 +449,14 @@ export async function claimNextRun(input: {
       leaseMinutes: number
       workItemId: string
       projectId: string
+      jobType: string
+      engine: string | null
     }>(
       `SELECT r.id, r.job_envelope AS envelope, r.work_item_id AS "workItemId",
-              r.project_id AS "projectId",
-              COALESCE((g.content->'runtime'->>'leaseMinutes')::int,10) AS "leaseMinutes"
+              r.project_id AS "projectId", r.job_type AS "jobType",
+              COALESCE((g.content->'runtime'->>'leaseMinutes')::int,10) AS "leaseMinutes",
+              (SELECT c.available_engines->>0 FROM computers c
+                WHERE c.id=$2 AND c.company_id=$1) AS engine
          FROM autonomy_runs r
          JOIN project_governance_versions g ON g.id=r.contract_version_id
         WHERE r.company_id=$1 AND r.status='queued'
@@ -423,6 +492,40 @@ export async function claimNextRun(input: {
       actorId: input.computerId,
       kind: 'run.leased',
       data: { computerId: input.computerId, leaseExpiresAt: leased.rows[0]?.leaseExpiresAt },
+    }, client as never)
+    // Bind the execution identity server-side. The claiming device — not any
+    // self-reported string in a later /complete body — is the Run's executor.
+    // Evidence producer identity and the builder≠verifier gate are derived from
+    // this row, so a worker cannot rename itself into (or out of) independence.
+    const execResponsibility = executionResponsibility(row.jobType)
+    const assignment = await upsertAssignment(client as never, {
+      companyId: input.companyId,
+      projectId: row.projectId,
+      workItemId: row.workItemId,
+      runId: row.id,
+      responsibility: execResponsibility,
+      workerId: input.computerId,
+      computerId: input.computerId,
+      engine: row.engine,
+      producerId: input.computerId,
+      visibility: 'internal',
+      assignedBy: 'control-plane',
+    })
+    await appendEvent({
+      companyId: input.companyId,
+      projectId: row.projectId,
+      workItemId: row.workItemId,
+      runId: row.id,
+      actorId: input.computerId,
+      kind: assignment.created ? 'run.assignment.created' : 'run.assignment.changed',
+      data: {
+        assignmentId: assignment.id,
+        responsibility: execResponsibility,
+        workerId: input.computerId,
+        computerId: input.computerId,
+        engine: row.engine,
+        visibility: 'internal',
+      },
     }, client as never)
     await client.query('COMMIT')
     return {
@@ -504,10 +607,31 @@ export async function completeImplementationRun(input: {
     const row = rows[0]
     if (!row) throw new AutonomyError(409, 'run lease is stale or run cannot be completed')
 
+    // Server-issued builder identity from the claim-time execution assignment.
+    // Independence is checked against these identities, not the self-reported
+    // builderId alone, so a node cannot present its own verification under a
+    // different producer string.
+    const { rows: builderRows } = await client.query<{
+      workerId: string | null; computerId: string | null; producerId: string | null
+    }>(
+      `SELECT worker_id AS "workerId", computer_id AS "computerId", producer_id AS "producerId"
+         FROM autonomy_run_assignments
+        WHERE run_id=$1 AND responsibility='builder_owner'`,
+      [input.runId],
+    )
+    const builderExec = builderRows[0]
+    if (builderExec?.computerId && builderExec.computerId !== input.computerId) {
+      throw new AutonomyError(409, 'completing device does not match the run execution assignment')
+    }
+    const builderIdentities = new Set<string>([input.builderId, input.computerId])
+    for (const identity of [builderExec?.workerId, builderExec?.computerId, builderExec?.producerId]) {
+      if (identity) builderIdentities.add(identity)
+    }
+
     const submittedIndependent = input.evidence.find((item) =>
       item.kind === 'independent_verification' && (item.status ?? 'passed') === 'passed',
     )
-    if ((submittedIndependent?.producerId ?? input.builderId) === input.builderId && submittedIndependent) {
+    if (submittedIndependent && builderIdentities.has(submittedIndependent.producerId ?? input.builderId)) {
       throw new AutonomyError(409, 'builder cannot provide independent_verification evidence')
     }
 
@@ -564,7 +688,7 @@ export async function completeImplementationRun(input: {
     const passedKinds = new Set(passed.map((item) => item.kind))
     const missingEvidence = required.filter((kind) => !passedKinds.has(kind))
     const independent = passed.find((item) => item.kind === 'independent_verification')
-    if (independent?.producerId === input.builderId) {
+    if (independent?.producerId && builderIdentities.has(independent.producerId)) {
       throw new AutonomyError(409, 'builder cannot provide independent_verification evidence')
     }
     if (missingEvidence.length > 0) {
@@ -970,6 +1094,119 @@ export async function decideApproval(input: {
   }
 }
 
+/**
+ * Attach a Persona (or an explicit executor) to one of a Run's
+ * responsibilities. This is the visible half of the four-layer model: the
+ * Control Plane already bound the executor at claim time; a human/planner
+ * names who is accountable. Enforces the Phase 1 acceptance rules:
+ *  - the persona must be an active (non-off-boarded) agent in this company;
+ *  - the persona/computer cannot belong to another company;
+ *  - one Run's builder_owner and independent_verifier cannot be the same
+ *    persona.
+ * Merges onto the existing (run, responsibility) row and appends a
+ * created/changed event.
+ */
+export async function assignRunResponsibility(input: {
+  companyId: string
+  projectId: string
+  runId: string
+  actorId: string
+  responsibility: RunResponsibility
+  personaAgentId?: string | null
+  computerId?: string | null
+  visibility?: 'visible' | 'internal'
+}): Promise<{ assignmentId: string; created: boolean }> {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { rows } = await client.query<{ workItemId: string; projectId: string }>(
+      `SELECT work_item_id AS "workItemId", project_id AS "projectId"
+         FROM autonomy_runs
+        WHERE id=$1 AND company_id=$2 AND project_id=$3
+        FOR UPDATE`,
+      [input.runId, input.companyId, input.projectId],
+    )
+    const run = rows[0]
+    if (!run) throw new AutonomyError(404, 'run not found')
+
+    let engine: string | null = null
+    if (input.personaAgentId) {
+      const persona = await client.query<{ engine: string | null }>(
+        `SELECT engine FROM participants
+          WHERE id=$1 AND company_id=$2 AND kind='agent' AND departed_at IS NULL`,
+        [input.personaAgentId, input.companyId],
+      )
+      if (!persona.rows[0]) {
+        throw new AutonomyError(400, 'persona is unknown, not an agent, off-boarded, or in another company')
+      }
+      engine = persona.rows[0].engine
+    }
+    if (input.computerId) {
+      const computer = await client.query(
+        `SELECT 1 FROM computers WHERE id=$1 AND company_id=$2 AND revoked_at IS NULL`,
+        [input.computerId, input.companyId],
+      )
+      if (!computer.rows[0]) {
+        throw new AutonomyError(400, 'computer is unknown, revoked, or in another company')
+      }
+    }
+
+    // builder_owner and independent_verifier must be different personas.
+    if (
+      input.personaAgentId &&
+      (input.responsibility === 'builder_owner' || input.responsibility === 'independent_verifier')
+    ) {
+      const other: RunResponsibility =
+        input.responsibility === 'builder_owner' ? 'independent_verifier' : 'builder_owner'
+      const conflict = await client.query(
+        `SELECT 1 FROM autonomy_run_assignments
+          WHERE run_id=$1 AND responsibility=$2 AND persona_agent_id=$3`,
+        [input.runId, other, input.personaAgentId],
+      )
+      if (conflict.rows[0]) {
+        throw new AutonomyError(409, 'builder owner cannot also be the independent verifier for the same run')
+      }
+    }
+
+    const visibility = input.personaAgentId ? 'visible' : input.visibility ?? 'internal'
+    const assignment = await upsertAssignment(client as never, {
+      companyId: input.companyId,
+      projectId: run.projectId,
+      workItemId: run.workItemId,
+      runId: input.runId,
+      responsibility: input.responsibility,
+      personaAgentId: input.personaAgentId ?? null,
+      computerId: input.computerId ?? null,
+      engine,
+      visibility,
+      assignedBy: input.actorId,
+    })
+    await appendEvent({
+      companyId: input.companyId,
+      projectId: run.projectId,
+      workItemId: run.workItemId,
+      runId: input.runId,
+      actorId: input.actorId,
+      kind: assignment.created ? 'run.assignment.created' : 'run.assignment.changed',
+      data: {
+        assignmentId: assignment.id,
+        responsibility: input.responsibility,
+        personaAgentId: input.personaAgentId ?? null,
+        computerId: input.computerId ?? null,
+        engine,
+        visibility,
+      },
+    }, client as never)
+    await client.query('COMMIT')
+    return { assignmentId: assignment.id, created: assignment.created }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 export async function projectAutonomySnapshot(companyId: string, projectId: string): Promise<Json> {
   const { rows: projects } = await pool.query(
     `SELECT p.id,p.name,p.autonomy_mode AS "autonomyMode",
@@ -984,7 +1221,7 @@ export async function projectAutonomySnapshot(companyId: string, projectId: stri
     [projectId, companyId],
   )
   if (!projects[0]) throw new AutonomyError(404, 'project not found')
-  const [workItems, approvals, events] = await Promise.all([
+  const [workItems, approvals, events, assignments] = await Promise.all([
     pool.query(
       `SELECT id,goal,status,priority,risk_level AS "riskLevel",shipping_feature_id AS "shippingFeatureId",
               created_at AS "createdAt",updated_at AS "updatedAt"
@@ -1003,6 +1240,24 @@ export async function projectAutonomySnapshot(companyId: string, projectId: stri
          FROM autonomy_events WHERE project_id=$1 AND company_id=$2 ORDER BY created_at DESC LIMIT 200`,
       [projectId, companyId],
     ),
+    pool.query(
+      `SELECT a.run_id AS "runId",a.work_item_id AS "workItemId",a.responsibility,
+              a.persona_agent_id AS "personaAgentId",pa.name AS "personaName",
+              a.worker_id AS "workerId",a.computer_id AS "computerId",a.engine,
+              a.producer_id AS "producerId",a.visibility,a.assigned_by AS "assignedBy",
+              a.created_at AS "createdAt",a.updated_at AS "updatedAt"
+         FROM autonomy_run_assignments a
+         LEFT JOIN participants pa ON pa.id=a.persona_agent_id AND pa.company_id=a.company_id
+        WHERE a.project_id=$1 AND a.company_id=$2
+        ORDER BY a.created_at ASC LIMIT 200`,
+      [projectId, companyId],
+    ),
   ])
-  return { project: projects[0], workItems: workItems.rows, approvals: approvals.rows, events: events.rows }
+  return {
+    project: projects[0],
+    workItems: workItems.rows,
+    approvals: approvals.rows,
+    events: events.rows,
+    assignments: assignments.rows,
+  }
 }

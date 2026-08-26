@@ -159,8 +159,15 @@ test('[integration] Cumora Git governance drives instruction to audited merge ap
   assert.equal(snapshot.json.workItems[0].status, 'awaiting_merge')
   assert.equal(snapshot.json.approvals[0].action, 'git.merge_master')
   assert.deepEqual(
-    snapshot.json.events.slice(0, 3).map((event: any) => event.kind),
-    ['approval.requested', 'run.evidence_missing', 'run.leased'],
+    snapshot.json.events.slice(0, 2).map((event: any) => event.kind),
+    ['approval.requested', 'run.evidence_missing'],
+  )
+  // `run.leased` and `run.assignment.created` are emitted in the same claim
+  // transaction (identical timestamps), so assert on the set rather than a
+  // tie-dependent order.
+  assert.deepEqual(
+    new Set(snapshot.json.events.slice(2, 4).map((event: any) => event.kind)),
+    new Set(['run.leased', 'run.assignment.created']),
   )
 
   const approved = await human(`/approvals/${completed.json.approvalId}/decision`, 'POST', {

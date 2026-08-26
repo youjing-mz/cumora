@@ -160,22 +160,26 @@ Work Item: 修复重复 conversation
 
 “Bram 负责实现”意味着 Bram 对方案、取舍和对外说明负责；“Codex Worker 执行”意味着 Codex 在 Envelope 允许的 worktree 中完成机械执行和代码修改。两者可以绑定，也可以由 Bram 自己的 Codex Engine完成，但审计必须同时记录责任身份和执行身份。
 
-### 5.1 推荐的 Run assignment
+### 5.1 Run assignment（当前实现）
 
 ```text
-autonomy_run_assignments
+autonomy_run_assignments                             -- 每个 (run_id, responsibility) 一行
   run_id
-  responsibility       planner | researcher | builder_owner | design_reviewer | verifier
+  responsibility       planner | researcher | builder_owner | design_reviewer
+                       | independent_verifier | deployment_operator | readback_operator
   persona_agent_id     nullable，例 bram/iris
-  worker_id            nullable，例 codex-builder-17
+  worker_id            nullable，例 executing computer / worker id
   computer_id          nullable
   engine               nullable，例 codex
-  producer_id          Evidence 使用的服务端认证身份
+  producer_id          Evidence 使用的服务端认证身份（claim 时取自设备身份）
   visibility           visible | internal
-  assigned_at
+  assigned_by
+  created_at / updated_at
 ```
 
-同一个 assignment 可以只有 Persona，例如 Nova 负责澄清；也可以只有 Worker，例如生产 readback；代码实现通常同时具有 `persona_agent_id=bram` 与 `worker_id=codex-builder-17`。
+同一个 assignment 可以只有 Persona，例如 Nova 负责澄清；也可以只有 Worker，例如生产 readback；代码实现通常同时具有 `persona_agent_id=bram` 与 Control Plane 在 claim 时绑定的执行者。执行绑定由 `job_type` 推导 responsibility 并写入签名设备身份；随后 owner/admin 通过 `POST /api/autonomy/projects/:projectId/runs/:runId/assignments` 命名可见责任 Persona，两次写入合并进同一行（`run.assignment.created` / `run.assignment.changed`）。
+
+当前实现：[server/src/autonomy/responsibilities.ts](../../server/src/autonomy/responsibilities.ts)、[server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)。
 
 ## 6. 典型交互
 
@@ -262,7 +266,7 @@ Bram · Engineering owner
 | Persona Host/Engine | `participants.computer_id/engine` 已支持 managed/BYOA | UI 明确拆开 Persona 与 runtime |
 | Control Plane | Work Item、Run、lease、Evidence、Approval 已有 | 增加显式 Planner/assignment/capability matching |
 | Worker | 通用 autonomy worker 已能启动 Codex builder/verifier | 服务端认证 worker/verifier identity，完善 fencing |
-| Persona ↔ Run | 尚无正式绑定，默认 `codex-builder` 与 Bram 无关 | 新增 assignment，UI 展示责任人与执行者 |
+| Persona ↔ Run | `autonomy_run_assignments` 已记录责任人与执行者（claim 绑定执行身份 + 人工绑定 Persona） | UI 展示责任人与执行者（P5） |
 | Planner | message/manual 可直接创建 implementation Run | 先生成结构化 plan，再由 policy 校验和调度 |
 | Evidence | 已持久化并检查 builder != verifier 的字符串 identity | identity 由 Control Plane 签发，不能由 Worker 自报 |
 

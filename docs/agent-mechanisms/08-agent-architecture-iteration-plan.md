@@ -53,13 +53,24 @@ Engine / Host    managed or Codex/Claude on Cumora Cloud/Mac/VPS
 
 ## 4. Phase 1：Run responsibility 与 execution assignment
 
+> 状态：**已实现（当前实现）**。表 `autonomy_run_assignments`、claim 时的执行绑定、
+> `POST /api/autonomy/projects/:projectId/runs/:runId/assignments`、
+> `run.assignment.created/changed` 事件、snapshot 的 `assignments` 投影，以及
+> completion 对 lease-bound builder 身份的独立性校验均已落地并有测试覆盖。
+> 关键实现：[server/src/autonomy/responsibilities.ts](../../server/src/autonomy/responsibilities.ts)、
+> [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)、
+> [server/src/db/migrate.ts](../../server/src/db/migrate.ts)；
+> 测试：[server/src/__tests__/autonomy-assignments.test.ts](../../server/src/__tests__/autonomy-assignments.test.ts)、
+> [server/src/__integration__/autonomy-assignments.test.ts](../../server/src/__integration__/autonomy-assignments.test.ts)。
+
 ### 目标
 
 让自治 Run 同时记录可见责任人和实际执行者，解决“Bram 还是 codex-builder 在做事”的核心歧义。
 
 ### 数据模型
 
-新增 `autonomy_run_assignments`：
+新增 `autonomy_run_assignments`（每个 `(run_id, responsibility)` 一行，历史保存在
+append-only `autonomy_events` 中）：
 
 ```text
 id
@@ -90,16 +101,27 @@ created_at
 
 ### API 与事件
 
-- Work Item/Run snapshot 返回 assignments。
+- Project snapshot（`GET /api/autonomy/projects/:projectId`）返回 `assignments`，
+  每条含 `responsibility`、`personaAgentId`/`personaName`、`workerId`、`computerId`、
+  `engine`、`producerId`、`visibility`。
+- claim 时 Control Plane 自动写入执行绑定（responsibility 由 `job_type` 推导：
+  implementation→`builder_owner`，deployment→`deployment_operator`，
+  readback→`readback_operator`），`worker_id`/`producer_id`/`computer_id` 取自签名的
+  设备身份而非请求体；随后 `POST .../runs/:runId/assignments` 由 owner/admin 绑定
+  可见责任 Persona。
 - 新增 `run.assignment.created`、`run.assignment.changed` 事件。
-- complete API 不再仅接受任意 `builderId` 字符串，而是校验当前 lease 对应的 worker assignment。
+- complete API 不再仅相信请求体里的 `builderId`：独立性校验对照 lease 对应的
+  `builder_owner` 执行 assignment（`worker_id`/`computer_id`/`producer_id`）以及完成
+  设备身份，`independent_verification` 的 producer 若命中其中任一即拒绝。
 
 ### 验收
 
-- 一个 Run 可以显示 `builder_owner=Bram`、`worker=codex-builder-17`。
-- off-board 的 Persona 不会获得新 assignment，但历史 assignment 保留。
+- 一个 Run 可以显示 `builder_owner=Bram`、`worker=<executing computer>`（执行绑定与
+  Persona 合并在同一行）。
+- off-board 的 Persona（`departed_at` 已设）不会获得新 assignment，但历史 assignment 保留。
 - assignment 不能引用其他 company 的 Persona、Computer 或 Worker。
-- builder assignment 不能同时成为 required independent verifier。
+- builder_owner Persona 不能同时成为同一 Run 的 independent_verifier；完成时也拒绝由
+  builder 执行身份提交的 `independent_verification`。
 
 ## 5. Phase 2：显式 Planner 与角色选择
 
@@ -279,11 +301,11 @@ Agent roster 只展示 Persona；Computers 页面展示 Host/Engine；自治页�
 ## 10. 推荐实施顺序
 
 ```text
-P0 术语收敛
+P0 术语收敛                                          ✅ 已完成
   ↓
-P1 Run assignments
+P1 Run assignments                                  ✅ 已完成
   ↓
-P2 Planner + Persona role selection
+P2 Planner + Persona role selection                 ← 下一步
   ↓
 P3 Capability scheduler + authenticated worker identity + fencing
   ↓
