@@ -231,6 +231,19 @@ environment
 
 ## 7. Phase 4：Persona-mediated review 与沟通
 
+> 状态：**已实现（当前实现）**。`POST /api/autonomy/runs/:runId/reviews` 让持有 review
+> assignment 的 Persona 提交结构化 `review_evidence` 或 `decision_request`；Evidence 的
+> producer 由服务端从 assignment 校验（不接受自报字符串），independent verifier 与
+> builder owner 独立性在提交时强制；design review 只作为证据、不改变 Run/Contract 状态；
+> 被指派的 independent verifier Persona 可用服务端可信身份满足 merge gate；snapshot 新增
+> `reviews` 投影（区分 Persona 判断与 Worker 执行）。
+> 关键实现：[server/src/autonomy/reviews.ts](../../server/src/autonomy/reviews.ts)、
+> [server/src/autonomy/coordinator.ts](../../server/src/autonomy/coordinator.ts)。
+> 测试：[server/src/__tests__/autonomy-reviews.test.ts](../../server/src/__tests__/autonomy-reviews.test.ts)、
+> [server/src/__integration__/autonomy-reviews.test.ts](../../server/src/__integration__/autonomy-reviews.test.ts)。
+> 说明：本阶段交付 Control Plane 侧的结构化 review 通道；由 agent turn loop 通过
+> `cumora` 命令自动产出 review 属后续接线工作。
+
 ### 目标
 
 让 Bram/Iris 等 Persona 真正参与 Loop Task，但不让聊天成为状态真相。
@@ -330,9 +343,9 @@ P2 Planner + Persona role selection                 ✅ 已完成
   ↓
 P3 Capability scheduler + authenticated worker identity + fencing   ✅ 已完成
   ↓
-P4 Persona-mediated review                          ← 下一步
+P4 Persona-mediated review                          ✅ 已完成
   ↓
-P5 UI projections
+P5 UI projections                                   ← 下一步
   ↓
 P6 Dogfood and migration hardening
 ```
