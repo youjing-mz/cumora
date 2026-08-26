@@ -152,8 +152,25 @@ GET /api/autonomy/projects/<project-id>
 ```
 
 The snapshot returns project governance hashes, Work Items, pending/decided
-approvals and the most recent append-only events. Shipping contains the
-corresponding evidence squares and production release/readback record.
+approvals, Run assignments, plans, the most recent append-only events, and
+Persona `reviews`. Shipping contains the corresponding evidence squares and
+production release/readback record.
+
+A Persona that holds a review assignment on a Run submits a structured result
+(Phase 4) instead of relying on chat:
+
+```http
+POST /api/autonomy/runs/<run-id>/reviews
+
+{ "personaAgentId": "iris", "responsibility": "design_reviewer",
+  "submission": "review_evidence", "verdict": "passed", "summary": "…" }
+```
+
+The producer is the Persona, verified server-side against the Run's
+assignments; a design review is evidence only and never changes Run state,
+while an assigned `independent_verifier` Persona can satisfy the merge gate.
+Use `"submission":"decision_request"` to open an Approval (e.g. a goal
+clarification) instead of asserting a verdict.
 
 Important recovery behavior:
 
