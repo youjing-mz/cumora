@@ -268,7 +268,7 @@ Bram · Engineering owner
 | Worker | 通用 autonomy worker + 服务端能力/并发门控调度、attempt-scoped fencing 与副作用前 preflight | 服务端签发独立 verifier identity（P4） |
 | Persona ↔ Run | `autonomy_run_assignments` 已记录责任人与执行者（claim 绑定执行身份 + 人工绑定 Persona） | UI 展示责任人与执行者（P5） |
 | Planner | `autonomy_plans` 已在建 Run 前生成受策略校验的结构化计划（确定性默认 planner，无 LLM），plan 责任落成 assignment，越权动作触发 Decision Request | 引入模型辅助 planner（沿用同一 `Planner` 接口）与更丰富的角色选择 |
-| Evidence | 已持久化并检查 builder != verifier 的字符串 identity | identity 由 Control Plane 签发，不能由 Worker 自报 |
+| Evidence | 持久化 + builder≠verifier 独立性；Persona review 的 producer 由 assignment 服务端校验，被指派的 independent verifier 可满足 merge gate | Worker 侧 builder evidence producer 也完全由凭据推导（后续硬化） |
 
 ## 10. 文档导航
 

@@ -22,6 +22,13 @@ import {
   validatePlanPolicy,
 } from './planner.js'
 import { isUnconstrained, normalizeCapabilities } from './capabilities.js'
+import {
+  isReviewResponsibility,
+  REVIEW_EVIDENCE_KINDS,
+  type ReviewResponsibility,
+  reviewEvidenceKind,
+  requiresIndependence,
+} from './reviews.js'
 
 type Json = Record<string, unknown>
 
@@ -51,6 +58,12 @@ function id(prefix: string): string {
 export function parseResponsibility(value: unknown): RunResponsibility {
   if (isRunResponsibility(value)) return value
   throw new AutonomyError(400, `unknown responsibility: ${String(value)}`)
+}
+
+/** Validate a client-supplied review responsibility (a reviewer role). */
+export function parseReviewResponsibility(value: unknown): ReviewResponsibility {
+  if (isReviewResponsibility(value)) return value
+  throw new AutonomyError(400, `unknown review responsibility: ${String(value)}`)
 }
 
 interface UpsertAssignmentInput {
@@ -1422,6 +1435,136 @@ export async function assignRunResponsibility(input: {
   }
 }
 
+/**
+ * Persona-mediated review (Phase 4). A Persona that holds a review assignment
+ * on the Run submits a structured result:
+ *  - `review_evidence`: recorded as content-hashed Evidence whose producer is
+ *    the Persona (server-verified from the assignment — the caller cannot
+ *    override it). An assigned independent verifier can thereby satisfy the
+ *    merge gate; a design review is just evidence and never mutates the
+ *    contract or code state.
+ *  - `decision_request`: opens a pending Approval (e.g. Nova escalating a goal
+ *    conflict) without changing Run status — a failed/uncertain Persona turn
+ *    escalates instead of losing the Run.
+ *
+ * Guards: the Persona must be an active agent in the company AND actually hold
+ * the claimed review responsibility on the Run; an independent verifier cannot
+ * be the Run's builder owner or its execution identity.
+ */
+export async function submitPersonaReview(input: {
+  companyId: string
+  runId: string
+  actorId: string
+  personaAgentId: string
+  responsibility: ReviewResponsibility
+  submission: 'review_evidence' | 'decision_request'
+  verdict?: 'passed' | 'failed'
+  summary: string
+  detail?: Json
+  decisionAction?: string
+  decisionRole?: string
+}): Promise<{ evidenceId?: string; decisionRequestId?: string }> {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { rows: runs } = await client.query<{ projectId: string; workItemId: string }>(
+      `SELECT project_id AS "projectId", work_item_id AS "workItemId"
+         FROM autonomy_runs WHERE id=$1 AND company_id=$2 FOR UPDATE`,
+      [input.runId, input.companyId],
+    )
+    const run = runs[0]
+    if (!run) throw new AutonomyError(404, 'run not found')
+
+    const persona = await client.query(
+      `SELECT 1 FROM participants
+        WHERE id=$1 AND company_id=$2 AND kind='agent' AND departed_at IS NULL`,
+      [input.personaAgentId, input.companyId],
+    )
+    if (!persona.rows[0]) {
+      throw new AutonomyError(400, 'persona is unknown, not an agent, off-boarded, or in another company')
+    }
+
+    // The Persona must actually hold this review responsibility on the Run —
+    // server-verified identity, not a self-reported string.
+    const assignment = await client.query(
+      `SELECT 1 FROM autonomy_run_assignments
+        WHERE run_id=$1 AND responsibility=$2 AND persona_agent_id=$3`,
+      [input.runId, input.responsibility, input.personaAgentId],
+    )
+    if (!assignment.rows[0]) {
+      throw new AutonomyError(403, `persona is not assigned ${input.responsibility} on this run`)
+    }
+
+    // Independence: an independent verifier cannot be the builder owner Persona
+    // nor the Run's execution identity.
+    if (requiresIndependence(input.responsibility)) {
+      const { rows: builderRows } = await client.query<{
+        personaAgentId: string | null; workerId: string | null; computerId: string | null
+      }>(
+        `SELECT persona_agent_id AS "personaAgentId", worker_id AS "workerId", computer_id AS "computerId"
+           FROM autonomy_run_assignments WHERE run_id=$1 AND responsibility='builder_owner'`,
+        [input.runId],
+      )
+      const builder = builderRows[0]
+      const builderIdentities = new Set<string>()
+      for (const identity of [builder?.personaAgentId, builder?.workerId, builder?.computerId]) {
+        if (identity) builderIdentities.add(identity)
+      }
+      if (builderIdentities.has(input.personaAgentId)) {
+        throw new AutonomyError(409, 'builder owner cannot provide independent verification')
+      }
+    }
+
+    if (input.submission === 'decision_request') {
+      const decisionRequestId = id('aap')
+      await client.query(
+        `INSERT INTO autonomy_approvals
+           (id,company_id,project_id,work_item_id,run_id,action,required_role,status,reason,context,requested_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8,$9::jsonb,$10)`,
+        [decisionRequestId, input.companyId, run.projectId, run.workItemId, input.runId,
+          input.decisionAction ?? 'clarification', input.decisionRole ?? 'project_owner',
+          input.summary,
+          JSON.stringify({ kind: 'decision_request', persona: input.personaAgentId, responsibility: input.responsibility, detail: input.detail ?? null }),
+          input.actorId],
+      )
+      await appendEvent({
+        companyId: input.companyId, projectId: run.projectId, workItemId: run.workItemId, runId: input.runId,
+        actorId: input.personaAgentId, kind: 'decision_request.opened',
+        data: { decisionRequestId, persona: input.personaAgentId, responsibility: input.responsibility, action: input.decisionAction ?? 'clarification' },
+      }, client as never)
+      await client.query('COMMIT')
+      return { decisionRequestId }
+    }
+
+    // review_evidence — producer is the server-verified Persona, never a
+    // caller-supplied string. Recorded as Evidence; it does NOT change Run or
+    // Work Item status (a design review can't silently override code state).
+    const evidenceId = id('aev')
+    const kind = reviewEvidenceKind(input.responsibility)
+    const payload = { summary: input.summary, persona: input.personaAgentId, detail: input.detail ?? null }
+    const payloadText = canonicalJson(payload)
+    await client.query(
+      `INSERT INTO autonomy_evidence
+         (id,company_id,work_item_id,run_id,kind,status,producer_id,payload,content_hash)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)`,
+      [evidenceId, input.companyId, run.workItemId, input.runId, kind,
+        input.verdict ?? 'passed', input.personaAgentId, payloadText, sha256(payloadText)],
+    )
+    await appendEvent({
+      companyId: input.companyId, projectId: run.projectId, workItemId: run.workItemId, runId: input.runId,
+      actorId: input.personaAgentId, kind: 'review.submitted',
+      data: { evidenceId, kind, verdict: input.verdict ?? 'passed', persona: input.personaAgentId, responsibility: input.responsibility },
+    }, client as never)
+    await client.query('COMMIT')
+    return { evidenceId }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 export async function projectAutonomySnapshot(companyId: string, projectId: string): Promise<Json> {
   const { rows: projects } = await pool.query(
     `SELECT p.id,p.name,p.autonomy_mode AS "autonomyMode",
@@ -1436,7 +1579,7 @@ export async function projectAutonomySnapshot(companyId: string, projectId: stri
     [projectId, companyId],
   )
   if (!projects[0]) throw new AutonomyError(404, 'project not found')
-  const [workItems, approvals, events, assignments, plans] = await Promise.all([
+  const [workItems, approvals, events, assignments, plans, reviews] = await Promise.all([
     pool.query(
       `SELECT id,goal,status,priority,risk_level AS "riskLevel",shipping_feature_id AS "shippingFeatureId",
               created_at AS "createdAt",updated_at AS "updatedAt"
@@ -1477,6 +1620,20 @@ export async function projectAutonomySnapshot(companyId: string, projectId: stri
         ORDER BY created_at DESC LIMIT 100`,
       [projectId, companyId],
     ),
+    // Persona reviews are Evidence rows whose kind is a review kind; join the
+    // producing Persona so the UI can say "Iris · design_review · PASS" and
+    // distinguish a Persona's judgment from a Worker's execution result.
+    pool.query(
+      `SELECT e.id,e.work_item_id AS "workItemId",e.run_id AS "runId",e.kind,e.status,
+              e.producer_id AS "producerId",pp.name AS "producerName",e.payload,
+              e.created_at AS "createdAt"
+         FROM autonomy_evidence e
+         JOIN autonomy_work_items w ON w.id=e.work_item_id
+         LEFT JOIN participants pp ON pp.id=e.producer_id AND pp.company_id=e.company_id
+        WHERE w.project_id=$1 AND e.company_id=$2 AND e.kind = ANY($3::text[])
+        ORDER BY e.created_at DESC LIMIT 200`,
+      [projectId, companyId, REVIEW_EVIDENCE_KINDS],
+    ),
   ])
   return {
     project: projects[0],
@@ -1485,5 +1642,6 @@ export async function projectAutonomySnapshot(companyId: string, projectId: stri
     events: events.rows,
     assignments: assignments.rows,
     plans: plans.rows,
+    reviews: reviews.rows,
   }
 }

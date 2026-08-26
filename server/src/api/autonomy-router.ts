@@ -10,10 +10,12 @@ import {
   decideApproval,
   heartbeatRun,
   parseResponsibility,
+  parseReviewResponsibility,
   preflightRun,
   projectAutonomySnapshot,
   recordMergedWorkItem,
   setComputerCapabilities,
+  submitPersonaReview,
   syncGitGovernance,
 } from '../autonomy/coordinator.js'
 
@@ -131,6 +133,30 @@ export function createAutonomyRouter(deps: RouterDeps): Router {
         visibility: req.body?.visibility === 'internal' ? 'internal' : undefined,
       })
       res.status(result.created ? 201 : 200).json(result)
+    } catch (error) { handleError(res, error) }
+  })
+
+  // Persona-mediated review (Phase 4): an assigned reviewer Persona submits a
+  // structured review evidence or a decision request. The producer identity is
+  // the Persona, verified server-side against the Run's assignments.
+  router.post('/runs/:runId/reviews', async (req, res) => {
+    try {
+      const { companyId, userId } = await deps.requireCompany(req)
+      const submission = req.body?.submission === 'decision_request' ? 'decision_request' : 'review_evidence'
+      const result = await submitPersonaReview({
+        companyId,
+        runId: req.params.runId,
+        actorId: userId,
+        personaAgentId: requiredText(req.body?.personaAgentId, 'personaAgentId', 200),
+        responsibility: parseReviewResponsibility(req.body?.responsibility),
+        submission,
+        verdict: req.body?.verdict === 'failed' ? 'failed' : 'passed',
+        summary: requiredText(req.body?.summary, 'summary'),
+        detail: req.body?.detail && typeof req.body.detail === 'object' ? req.body.detail : undefined,
+        decisionAction: typeof req.body?.decisionAction === 'string' ? req.body.decisionAction : undefined,
+        decisionRole: typeof req.body?.decisionRole === 'string' ? req.body.decisionRole : undefined,
+      })
+      res.status(201).json(result)
     } catch (error) { handleError(res, error) }
   })
 
