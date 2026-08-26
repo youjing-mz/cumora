@@ -3676,7 +3676,7 @@ api.post('/conversations/:id/messages', async (req, res) => {
   // active Git governance snapshot. Intake failure must not roll back a message
   // people have already seen, but it is returned to the sender and logged so it
   // cannot masquerade as accepted autonomous work.
-  let autonomyIntake: { workItemId: string; runId: string; created: boolean } | null = null
+  let autonomyIntake: Awaited<ReturnType<typeof intakeProjectMessage>> = null
   let autonomyError: string | null = null
   try {
     autonomyIntake = await intakeProjectMessage({
