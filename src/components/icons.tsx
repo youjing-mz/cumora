@@ -86,6 +86,12 @@ export const IBoard = (p: IconProps) => (
 export const IShip = (p: IconProps) => (
   <svg {...base} {...p}><path d="M12 3v13M8 7h8M5 21h14"/><path d="M4 13l8 5 8-5M6 10l-2 3M18 10l2 3"/></svg>
 )
+export const ILayers = (p: IconProps) => (
+  <svg {...base} {...p}><path d="M12 3l9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
+)
+export const IRefresh = (p: IconProps) => (
+  <svg {...base} {...p}><path d="M21 12a9 9 0 11-3-6.7L21 8M21 3v5h-5"/></svg>
+)
 export const ITrash = (p: IconProps) => (
   <svg {...base} {...p}><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
 )

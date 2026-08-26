@@ -257,7 +257,7 @@ export interface Message {
 }
 
 export interface ViewKey {
-  view: 'conversations' | 'whispers' | 'convene' | 'agents' | 'boards' | 'calendar' | 'documents' | 'shipping' | 'observability' | 'me' | 'library'
+  view: 'conversations' | 'whispers' | 'convene' | 'agents' | 'boards' | 'calendar' | 'documents' | 'shipping' | 'autonomy' | 'observability' | 'me' | 'library'
 }
 
 /* ============== Calendar (AI-native shared schedule) ============== */
