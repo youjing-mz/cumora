@@ -263,7 +263,7 @@ Bram · Engineering owner
 | 能力 | 当前实现 | 目标状态 |
 | --- | --- | --- |
 | Persona | Bram/Iris/Atlas/Nova 已是持久 participant | 保持现状，增加 Run responsibility |
-| Persona Host/Engine | `participants.computer_id/engine` 已支持 managed/BYOA | UI 明确拆开 Persona 与 runtime |
+| Persona Host/Engine | `participants.computer_id/engine` 已支持 managed/BYOA；Autonomy 视图把 Persona 责任与 Worker/Host 执行分段展示 | 保持三类对象在各自界面 |
 | Control Plane | Work Item、Run、lease、Evidence、Approval 已有 | 增加显式 Planner/assignment/capability matching |
 | Worker | 通用 autonomy worker + 服务端能力/并发门控调度、attempt-scoped fencing 与副作用前 preflight | 服务端签发独立 verifier identity（P4） |
 | Persona ↔ Run | `autonomy_run_assignments` 已记录责任人与执行者（claim 绑定执行身份 + 人工绑定 Persona） | UI 展示责任人与执行者（P5） |

@@ -266,6 +266,15 @@ environment
 
 ## 8. Phase 5：UI 信息架构
 
+> 状态：**已实现（当前实现）**。新增顶层 Autonomy 视图（rail 图标）：左侧项目选择 +
+> Work Item 列表，右侧 Work Item 详情把快照投影为 Responsible Personas / Execution /
+> Verification / Approval / Plan 五段，一次点击即可回答“谁负责、谁在执行”。Persona、
+> Computer/Host、Worker 保持在各自的界面（Autonomy 视图只做投影，不重实现 pairing）。
+> 关键实现：[src/components/AutonomyWorkspace.tsx](../../src/components/AutonomyWorkspace.tsx)、
+> [src/stores/autonomy.ts](../../src/stores/autonomy.ts)、[src/api/client.ts](../../src/api/client.ts)
+> 的 `getAutonomyProject`。所有文案经 i18n（en+zh）。
+> 尚未做：assignment/审批的写操作 UI（当前为只读投影）、移动端视图。
+
 ### 目标
 
 在不暴露内部噪音的前提下，让用户理解责任、执行和状态。
@@ -345,9 +354,9 @@ P3 Capability scheduler + authenticated worker identity + fencing   ✅ 已完�
   ↓
 P4 Persona-mediated review                          ✅ 已完成
   ↓
-P5 UI projections                                   ← 下一步
+P5 UI projections                                   ✅ 已完成
   ↓
-P6 Dogfood and migration hardening
+P6 Dogfood and migration hardening                  ← 下一步
 ```
 
 优先级上，P1 与 P3 是架构正确性的核心；P4 与 P5 决定产品体验是否真正清晰。不要先做“Bram 正在指挥 Codex”的 UI 动画，再补 assignment 和 evidence identity，否则界面会表达数据库无法证明的关系。
